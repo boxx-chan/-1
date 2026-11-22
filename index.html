@@ -101,7 +101,7 @@ function vib(p){try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}}
 let state='title',P,enemies,bullets,parts,slashes,texts,markers,lines;
 let wave,waveQueue,waveT,spawnT,score,combo,comboT,maxCombo,kills,flashes;
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1123.5';
+const VERSION='1123.6';
 let hitSrc='',runT=0,endless=false,clearBonus=0;const BOSS_NAMES=['검은 파수꾼','검은 파수꾼 II','심연의 파수꾼'];
 let ult=null;const ultMax=()=>U.ultFast?30:40,ultN=()=>U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#c9a0ff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
@@ -382,7 +382,7 @@ const ET={grunt:{r:14,hp:4,col:'#ff3d7f',pts:100},shooter:{r:13,hp:3,col:'#ffb02
 function makeEnemy(type,x,y){const d=ET[type];const hpScale=1+Math.max(0,wave-2)*0.25;
   return{type,x,y,r:d.r,hp:Math.round(d.hp*hpScale*2)/2,maxHp:Math.round(d.hp*hpScale*2)/2,col:d.col,pts:d.pts,state:'move',t:rnd(0.3,0.8),kvx:0,kvy:0,ax:1,ay:0,hitF:0,
     fireCD:rnd(1.2,2.2),strafe:Math.random()<0.5?1:-1,spawnT:0.35,dead:false,slamR:type==='bomber'?95:120,slammed:false,shield:type==='shield',rot:Math.random()*TAU};}
-function makeBoss(x,y){const k=Math.max(1,Math.round(wave/5)),e=makeEnemy('boss',x,y);e.k=k;e.hp=e.maxHp=80+(k-1)*90;e.gmax=e.guard=30+(k-1)*10;e.slamR=200;e.t=1.2;e.lastHit=9;e.pat=null;e.lastPat='';e.ph2=false;
+function makeBoss(x,y){const k=Math.max(1,Math.round(wave/5)),e=makeEnemy('boss',x,y);e.k=k;e.hp=e.maxHp=240+(k-1)*270;e.gmax=e.guard=30+(k-1)*10;e.slamR=200;e.t=1.2;e.lastHit=9;e.pat=null;e.lastPat='';e.ph2=false;
   e.name=BOSS_NAMES[Math.min(k,3)-1]+(k>3?' +'+(k-3):'');return e;}
 function updateEnemies(dt){
   const p=P;
