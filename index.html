@@ -62,7 +62,7 @@ function vib(p){try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}}
 let state='title',P,enemies,bullets,parts,slashes,texts,markers,lines;
 let wave,waveQueue,waveT,spawnT,score,combo,comboT,maxCombo,kills,flashes;
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1122.5';
+const VERSION='1122.6';
 const CHAIN_MUL=[1,1.5,2],CHAIN_KEEP=2.5,MAX_CHARGE=3,GRACE=0.25,FLASH_CD=3,THRUST_L=175,FLASH_DUR=1.6;
 let DASH_CD=0.95,COMBO_WIN=1.2,POW_DUR=4,POW_MUL=2;
 let U,owned,pickOpts=[],pickT=0,pickNext=false;
@@ -267,7 +267,7 @@ function hurt(sx,sy){
 }
 function enemyHits(sx,sy){
   if(tryJust())return;
-  if(P.inv>0||P.dashT>0||P.grace>0)return;
+  if(P.inv>0||P.grace>0)return;
   hurt(sx,sy);
 }
 function updatePlayer(dt){
