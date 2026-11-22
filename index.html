@@ -86,8 +86,7 @@ const SFX={
   kill(){sTone(320,55,0.3,0.45,'triangle');sNoise(0.25,900,0.7,0.35,'lowpass',150);},
   dash(){sNoise(0.2,700,1.1,0.26,'bandpass',3200,{a:0.03});sNoise(0.12,5000,0.5,0.05,'highpass',null,{a:0.02});},
   flash(){sTone(1300,2600,0.55,0.22,'sine');sTone(650,1300,0.7,0.18,'triangle');sNoise(0.4,6000,0.5,0.15,'highpass');},
-  strike(){sNoise(0.03,4000,0.5,0.7,'highpass');sNoise(0.5,6000,0.6,0.42,'highpass',1600,{rv:0.6});sTone(150,26,0.9,0.85,'sine',{sw:0.5});sTone(90,30,0.5,0.5,'triangle',{dist:true});
-    sRing(1760,1.2,0.07,{rv:0.8});sNoise(0.6,400,0.7,0.25,'lowpass',60,{d:0.02});},
+  strike(){sNoise(0.45,5000,0.5,0.5,'highpass',1500);sTone(130,28,0.55,0.9,'sine');},
   hurt(){sTone(180,50,0.35,0.45,'square',{lp:1200,dist:true});sNoise(0.25,500,0.8,0.35,'lowpass',120);sTone(90,40,0.3,0.4,'sine');},
   shoot(){sTone(1200,320,0.1,0.09,'square',{lp:3000});sNoise(0.04,3000,1,0.06,'bandpass');},
   lunge(){sNoise(0.14,900,2,0.17,'bandpass',300,{a:0.02});},
@@ -102,7 +101,7 @@ function vib(p){try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}}
 let state='title',P,enemies,bullets,parts,slashes,texts,markers,lines;
 let wave,waveQueue,waveT,spawnT,score,combo,comboT,maxCombo,kills,flashes;
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1122.24';
+const VERSION='1122.25';
 const ULT_MAX=40,ULT_N=6;let ult=null;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#c9a0ff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
   {id:'bolt',name:'번개',price:2500,col:'#fff07a'},{id:'fire',name:'화염',price:4000,col:'#ff8a3d'},{id:'sakura',name:'벚꽃',price:6000,col:'#ffb3d6'}];
