@@ -252,7 +252,7 @@ function flashStrike(){
   if(U.shock){ring(ex,ey,10,140,'#ffe066',0.4,6);for(const e of enemies){if(!e.dead&&e.spawnT<=0&&Math.hypot(e.x-ex,e.y-ey)<140+e.r)hitEnemy(e,3*U.strike*cm,Math.atan2(e.y-ey,e.x-ex),400,true);}}
   addText(ex,ey-50,'공격력 x'+POW_MUL+'!','#ffe066',22,1);p.pow=POW_DUR;p.chainT=CHAIN_KEEP;
   if(p.chain>1){addText(ex,ey-80,'연속 섬광 '+p.chain+'  ·  일격 x'+cm,p.chain===3?'#fff':'#9ff',22+p.chain*4,1.2);trauma=Math.min(1,trauma+0.2*p.chain);hitstop=Math.max(hitstop,0.15+0.04*p.chain);ring(ex,ey,10,140+p.chain*60,p.chain===3?'#fff':'#9ff',0.5,6);}
-  flashT=0;ts=0.25;hitstop=Math.max(hitstop,n?0.17:0.1);trauma=Math.min(1,trauma+(n?0.9:0.6));strikeFlash=1;if(n){burst(ex,ey,26,'#bff',650,0.5,3);ring(ex,ey,10,170,'#fff',0.4,5);}
+  flashT=0;ts=1;hitstop=Math.max(hitstop,n?0.17:0.1);trauma=Math.min(1,trauma+(n?0.9:0.6));strikeFlash=1;if(n){burst(ex,ey,26,'#bff',650,0.5,3);ring(ex,ey,10,170,'#fff',0.4,5);}
   SFX.strike();vib(n?[40,30,80]:60);
 }
 function hurt(sx,sy){
@@ -385,10 +385,10 @@ function updateFx(dt){
   for(const l of lines)l.t+=dt;lines=lines.filter(l=>l.t<l.dur);
 }
 function update(rdt){
-  if(flashT>0){flashT-=rdt;ts=0.15;if(flashT<=0){ts=0.3;P.grace=GRACE;}}
-  if(P.flashCD>0&&flashT<=0)P.flashCD-=rdt;
-  if(P.grace>0&&ts>=1)P.grace-=rdt;
-  if(P.chainT>0&&flashT<=0){P.chainT-=rdt;if(P.chainT<=0)P.chain=0;}else ts=Math.min(1,ts+rdt*2.5);
+  if(flashT>0){flashT-=rdt;ts=0.15;if(flashT<=0){ts=1;P.grace=GRACE;}}
+  else ts=1;
+  if(P.grace>0&&flashT<=0)P.grace-=rdt;
+  if(P.chainT>0&&flashT<=0){P.chainT-=rdt;if(P.chainT<=0)P.chain=0;}
   trauma=Math.max(0,trauma-rdt*1.7);hurtFlash=Math.max(0,hurtFlash-rdt*2.2);bannerT-=rdt;strikeFlash=Math.max(0,strikeFlash-rdt*3);
   for(const k in btnAnim)btnAnim[k]=Math.max(0,btnAnim[k]-rdt*6);
   readMove();
