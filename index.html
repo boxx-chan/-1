@@ -101,7 +101,7 @@ function vib(p){try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}}
 let state='title',P,enemies,bullets,parts,slashes,texts,markers,lines;
 let wave,waveQueue,waveT,spawnT,score,combo,comboT,maxCombo,kills,flashes;
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1123.2';
+const VERSION='1123.3';
 let hitSrc='',runT=0,endless=false,clearBonus=0;const BOSS_NAMES=['검은 파수꾼','검은 파수꾼 II','심연의 파수꾼'];
 let ult=null;const ultMax=()=>U.ultFast?30:40,ultN=()=>U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#c9a0ff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
@@ -115,7 +115,7 @@ let DASH_CD=0.95,COMBO_WIN=1.2,POW_DUR=4,POW_MUL=2;
 let bonusPick=0,U,owned,pickOpts=[],pickT=0,pickNext=false;
 function applyU(){DASH_CD=0.95-U.dashRed;COMBO_WIN=1.2+U.comboAdd;POW_DUR=4+U.powDur;POW_MUL=2+U.powMul;}
 function reset(){
-  U={slash:1,thrust:1,strike:1,range:1,powDur:0,powMul:0,dashRed:0,comboAdd:0,wave:false,chain:false,shock:false,vamp:false,waveBig:false,ultFast:false,ultMore:false,ultFin:false};owned={};applyU();pickNext=false;waves2=[];
+  U={slash:1,thrust:1,strike:1,range:1,powDur:0,powMul:0,dashRed:0,comboAdd:0,wave:false,chain:false,shock:false,vamp:false,waveBig:false,ultFast:false,ultMore:false,ultFin:false,bigDmg:false};owned={};applyU();pickNext=false;waves2=[];
   ult=null;P={ult:0,chain:0,chainT:0,charge:1,flashCD:0,grace:0,pow:0,chainT:0,x:AW/2,y:AH/2,vx:0,vy:0,r:15,hp:5,maxHp:5,face:0,dashT:0,dashCD:0,dx:1,dy:0,inv:0,just:0,justUsed:true,atkCD:0,comboStep:0,comboWin:0,trail:[]};
   enemies=[];bullets=[];parts=[];slashes=[];texts=[];markers=[];lines=[];
   runT=0;endless=false;bonusPick=0;wave=0;waveQueue=[];waveT=1.2;spawnT=0;score=0;combo=0;comboT=0;maxCombo=0;kills=0;flashes=0;
@@ -236,7 +236,7 @@ function swing(){
 function hitEnemy(e,dmg,a,kb,strike,pierce){
   if(e.type==='boss'){hitBoss(e,dmg,a,kb,strike,pierce);return;}
   const vul=P.pow>0&&!strike;
-  if(vul)dmg*=POW_MUL;
+  if(vul)dmg*=POW_MUL+(U.bigDmg&&e.type==='brute'?0.5:0);
   const brk=strike||pierce;
   if(!vul&&e.type==='shield'&&e.shield&&Math.abs(angDiff(e.rot,a+Math.PI))<1.15){
     if(!brk){e.hitF=0.06;addText(e.x,e.y-e.r-14,'막힘','#cfd',13,0.45);sparks(e.x-Math.cos(a)*e.r,e.y-Math.sin(a)*e.r,a+Math.PI,6,'#efe',300);SFX.tink();
@@ -482,7 +482,7 @@ function bossAI(e,dt,d,ux,uy){
   return[vx,vy];
 }
 function hitBoss(e,dmg,a,kb,strike,pierce){
-  const vul=P.pow>0&&!strike;if(vul)dmg*=POW_MUL;
+  const vul=P.pow>0&&!strike;if(vul)dmg*=POW_MUL+(U.bigDmg?0.5:0);
   const stun=e.state==='stun';
   if(!stun){const gd=hitSrc==='ult'||hitSrc==='shock'?e.gmax*0.1:strike?e.gmax*0.4:dmg;e.guard-=gd;e.lastHit=0;dmg*=0.5;}else dmg*=2;
   e.hp-=dmg;e.hitF=0.08;e.kvx+=Math.cos(a)*kb*0.03;e.kvy+=Math.sin(a)*kb*0.03;
@@ -584,14 +584,14 @@ function update(rdt){
 const TRACKS=[
   {id:'hp',k:'hp',name:'체력',base:'체력 1 회복',bonus:{2:'흡수: 적 25마리 처치마다 체력 1 회복',4:'날렵함: 회피 쿨타임 -0.15초'}},
   {id:'atk',k:'atk',name:'공격력',base:'베기 · 찌르기 공격력 +25%',bonus:{2:'큰 휘두르기: 베기 범위 +25%',3:'검기: 2단 베기가 관통하는 검기를 날림',4:'긴 창: 찌르기 길이 +40% · 폭 2배 · 꿰뚫을 때마다 데미지 +50%',5:'검기 확장: 검기 크기·사거리 +50%'}},
-  {id:'flash',k:'fx',name:'섬광',base:'섬광 일격 데미지 +30% · 일격 후 공격력 버프 지속 +0.5초',bonus:{2:'격노: 일격 후 공격력 버프 x2 → x2.5',3:'난무 수련: 난무 게이지가 25% 빨리 참',4:'충격파: 일격 착지점에 폭발',5:'난무 극의: 난무 돌진 6회 → 8회 + 마지막 돌진이 큰 폭발로 끝남'}},
+  {id:'flash',k:'fx',name:'섬광',base:'섬광 일격 데미지 +30% · 일격 후 공격력 버프 지속 +0.5초',bonus:{2:'거인 사냥: 버프 중 보라 큰 적·보스에게 x2 → x2.5',3:'난무 수련: 난무 게이지가 25% 빨리 참',4:'충격파: 일격 착지점에 폭발',5:'난무 극의: 난무 돌진 6회 → 8회 + 마지막 돌진이 큰 폭발로 끝남'}},
 ];
 const CARDS=TRACKS;
 const CARD_COL={atk:'#ffe066',fx:'#7ff4ff',hp:'#ff7fa6'};
 function applyTrack(id,lv){
   if(id==='hp'){P.hp=Math.min(P.maxHp,P.hp+1);if(lv===2)U.vamp=true;if(lv===4)U.dashRed+=0.15;}
   else if(id==='atk'){U.slash+=0.25;U.thrust+=0.25;if(lv===2)U.range+=0.25;if(lv===3)U.wave=true;if(lv===4)U.chain=true;if(lv===5)U.waveBig=true;}
-  else{U.strike+=0.3;U.powDur+=0.5;if(lv===2)U.powMul+=0.5;if(lv===4)U.shock=true;if(lv===3)U.ultFast=true;if(lv===5){U.ultMore=true;U.ultFin=true;}}
+  else{U.strike+=0.3;U.powDur+=0.5;if(lv===2)U.bigDmg=true;if(lv===4)U.shock=true;if(lv===3)U.ultFast=true;if(lv===5){U.ultMore=true;U.ultFin=true;}}
 }
 function openPick(){
   pickOpts=TRACKS.filter(t=>!t.max||(owned[t.id]||0)<t.max);
