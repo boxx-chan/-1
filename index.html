@@ -101,7 +101,7 @@ function vib(p){try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}}
 let state='title',P,enemies,bullets,parts,slashes,texts,markers,lines;
 let wave,waveQueue,waveT,spawnT,score,combo,comboT,maxCombo,kills,flashes;
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1123.4';
+const VERSION='1123.5';
 let hitSrc='',runT=0,endless=false,clearBonus=0;const BOSS_NAMES=['검은 파수꾼','검은 파수꾼 II','심연의 파수꾼'];
 let ult=null;const ultMax=()=>U.ultFast?30:40,ultN=()=>U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#c9a0ff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
@@ -111,9 +111,9 @@ try{const m=JSON.parse(localStorage.getItem('flash_meta')||'null');if(m&&typeof 
 function saveMeta(){try{localStorage.setItem('flash_meta',JSON.stringify(META))}catch(e){}}
 const skinById=id=>SKINS.find(k=>k.id===id)||SKINS[0];
 const CHAIN_MUL=[1,1.5,2],CHAIN_KEEP=2,MAX_CHARGE=3,GRACE=0.25,FLASH_CD=3,THRUST_L=175,FLASH_DUR=1.6;
-let DASH_CD=0.95,COMBO_WIN=1.2,POW_DUR=4,POW_MUL=2;
+let DASH_CD=0.95,COMBO_WIN=1.2,POW_DUR=3,POW_MUL=2;
 let bonusPick=0,U,owned,pickOpts=[],pickT=0,pickNext=false;
-function applyU(){DASH_CD=0.95-U.dashRed;COMBO_WIN=1.2+U.comboAdd;POW_DUR=4+U.powDur;POW_MUL=2+U.powMul;}
+function applyU(){DASH_CD=0.95-U.dashRed;COMBO_WIN=1.2+U.comboAdd;POW_DUR=3+U.powDur;POW_MUL=2+U.powMul;}
 function reset(){
   U={slash:1,thrust:1,strike:1,range:1,powDur:0,powMul:0,dashRed:0,comboAdd:0,wave:false,chain:false,shock:false,vamp:false,waveBig:false,ultFast:false,ultMore:false,ultFin:false,bigDmg:false};owned={};applyU();pickNext=false;waves2=[];
   ult=null;P={ult:0,chain:0,chainT:0,charge:1,flashCD:0,grace:0,pow:0,chainT:0,x:AW/2,y:AH/2,vx:0,vy:0,r:15,hp:5,maxHp:5,face:0,dashT:0,dashCD:0,dx:1,dy:0,inv:0,just:0,justUsed:true,atkCD:0,comboStep:0,comboWin:0,trail:[]};
@@ -939,7 +939,7 @@ const HELP=[
   ['섬광 충전','캐릭터 위 ◆ 3칸. 일반 공격을 적에게 맞히면 참\n베기 1회 = 1/4칸, 찌르기 1회 = 1/2칸'],
   ['섬광 발동','◆가 1칸 이상일 때 타이밍 회피 성공 → 섬광 (1칸 사용)\n1.6초 동안 세상이 느려지고 공격 버튼이 "섬광"으로 바뀜'],
   ['섬광 일격','섬광 중 공격 = 적에게 순간이동하며 꿰뚫는 강한 일격\n보라색 큰 적의 내려찍기를 끊고, 방패를 깨고 기절시킴'],
-  ['공격력 버프','일격 후 4초간 일반 공격 데미지 2배 (왼쪽 위 노란 바)'],
+  ['공격력 버프','일격 후 3초간 일반 공격 데미지 2배 (왼쪽 위 노란 바)\n섬광 강화로 시간이 늘어남'],
   ['연속 섬광','일격 후 2초 안에(캐릭터 주위 하늘색 링) 다시 섬광 일격\n2번째 x1.5, 3번째 x2 데미지 → ◆를 모아서 몰아 쓰는 이유'],
   ['충전이 없을 때','타이밍 회피는 "회피!"만 뜨고 피해만 막음']]},
  {t:'난무 · 적 · 강화',rows:[
