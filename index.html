@@ -62,7 +62,7 @@ function vib(p){try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}}
 let state='title',P,enemies,bullets,parts,slashes,texts,markers,lines;
 let wave,waveQueue,waveT,spawnT,score,combo,comboT,maxCombo,kills,flashes;
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1122.4';
+const VERSION='1122.5';
 const CHAIN_MUL=[1,1.5,2],CHAIN_KEEP=2.5,MAX_CHARGE=3,GRACE=0.25,FLASH_CD=3,THRUST_L=175,FLASH_DUR=1.6;
 let DASH_CD=0.95,COMBO_WIN=1.2,POW_DUR=4,POW_MUL=2;
 let U,owned,pickOpts=[],pickT=0,pickNext=false;
@@ -227,7 +227,7 @@ function tryJust(){
     if((e.type==='grunt'||e.type==='shield')&&((e.state==='act'&&d<e.r+p.r+34)||(e.state==='wind'&&e.t<0.22&&d<140)))return triggerFlash(e.x,e.y);
     if(e.type==='brute'&&((e.state==='wind'&&e.t<0.28)||e.state==='act')&&d<e.slamR+p.r+10)return triggerFlash(e.x,e.y);}
   for(const b of bullets){if(b.dead)continue;const dx=p.x-b.x,dy=p.y-b.y,d=Math.hypot(dx,dy);
-    if(d<p.r+b.r+46&&(dx*b.vx+dy*b.vy)>0)return triggerFlash(b.x,b.y);}
+    if(p.just>0.11&&d<p.r+b.r+34&&(dx*b.vx+dy*b.vy)>0)return triggerFlash(b.x,b.y);}
   return false;
 }
 function triggerFlash(sx,sy){
@@ -277,7 +277,7 @@ function updatePlayer(dt){
   if(flashT>0)inp.dash=0;
   if(inp.dash>0&&p.dashCD<=0&&p.dashT<=0){
     inp.dash=0;const a=mm>0.2?Math.atan2(my,mx):p.face;p.dx=Math.cos(a);p.dy=Math.sin(a);p.face=a;
-    p.dashT=0.15;p.dashCD=DASH_CD;p.inv=Math.max(p.inv,0.15);p.just=0.2;p.justUsed=false;
+    p.dashT=0.15;p.dashCD=DASH_CD;p.just=0.2;p.justUsed=false;
     SFX.dash();vib(8);tryJust();
   }
   if(p.dashT>0){p.dashT-=dt;p.vx=p.dx*1050;p.vy=p.dy*1050;p.trail.push({x:p.x,y:p.y,t:0});
@@ -351,7 +351,7 @@ function updateBullets(dt){
   for(const b of bullets){if(b.dead)continue;b.x+=b.vx*dt;b.y+=b.vy*dt;b.life-=dt;
     if(b.life<=0||b.x<-20||b.y<-20||b.x>AW+20||b.y>AH+20){b.dead=true;continue;}
     const d=Math.hypot(b.x-p.x,b.y-p.y);
-    if(d<p.r+b.r){if(tryJust())continue;if(p.inv>0||p.dashT>0||p.grace>0)continue;b.dead=true;hurt(b.x-b.vx,b.y-b.vy);}}
+    if(d<p.r+b.r){if(tryJust())continue;if(p.inv>0||p.grace>0)continue;b.dead=true;hurt(b.x-b.vx,b.y-b.vy);}}
   bullets=bullets.filter(b=>!b.dead);
 }
 function buildWave(w){
