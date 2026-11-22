@@ -101,7 +101,7 @@ function vib(p){try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}}
 let state='title',P,enemies,bullets,parts,slashes,texts,markers,lines;
 let wave,waveQueue,waveT,spawnT,score,combo,comboT,maxCombo,kills,flashes;
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1122.27';
+const VERSION='1122.28';
 const ULT_MAX=40,ULT_N=6;let ult=null;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#c9a0ff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
   {id:'bolt',name:'번개',price:2500,col:'#fff07a'},{id:'fire',name:'화염',price:4000,col:'#ff8a3d'},{id:'sakura',name:'벚꽃',price:6000,col:'#ffb3d6'}];
@@ -138,7 +138,8 @@ function menuTap(x,y){
   if(state==='pause'){const i=pauseHit(x,y);if(i===0)resumeGame();else if(i===1){reset();state='play';}else if(i===2){reset();state='title';}return;}
   if(state==='pick'){if(pickT<0.35)return;const i=pickHit(x,y);if(i>=0)choose(i);return;}
   if(state==='shop'){shopTap(x,y);return;}
-  if(state==='title'){if(inR(x,y,shopBtnR)){openShop();return;}if(x!==undefined&&!inR(x,y,startBtnR))return;reset();state='play';goFS();}
+  if(state==='help'){helpTap(x,y);return;}
+  if(state==='title'){if(inR(x,y,shopBtnR)){openShop();return;}if(inR(x,y,helpBtnR)){state='help';helpPage=0;return;}if(x!==undefined&&!inR(x,y,startBtnR))return;reset();state='play';goFS();}
   else if(state==='over'&&overT>1.0){reset();state='play';}
 }
 cvs.addEventListener('pointerdown',e=>{
@@ -765,7 +766,7 @@ function drawHUD(){
   if(bannerT>0&&state==='play'){const a=Math.min(1,bannerT*2.5);ctx.globalAlpha=a;txt(bannerText,W/2,H*0.32,Math.round(H*0.09),bannerText==='CLEAR'?'#9fe':'#fff',900);ctx.globalAlpha=1;}
 }
 const inR=(x,y,r)=>r&&x>=r.x&&x<=r.x+r.w&&y>=r.y&&y<=r.y+r.h;
-let shopBtnR=null,startBtnR=null,shopUI={back:null,act:null,cards:[]};
+let shopBtnR=null,startBtnR=null,helpBtnR=null,helpPage=0,helpUI={back:null,tabs:[],next:null},shopUI={back:null,act:null,cards:[]};
 const pv={sl:[],pt:[],wv:[],t:0,wait:0.3,step:0,sel:'flash',msg:'',msgT:0};
 function openShop(){state='shop';pv.sl=[];pv.pt=[];pv.wv=[];pv.t=0;pv.wait=0.3;pv.step=0;pv.sel=META.eq;pv.msgT=0;}
 function updShop(dt){
@@ -819,6 +820,59 @@ function drawShop(){
     txt(sk.name,cx+cw/2,cy+ch*0.62,Math.round(clamp(ch*0.13,13,18)),'#fff',800);
     txt(e?'장착중':o?'보유':'◆ '+sk.price.toLocaleString(),cx+cw/2,cy+ch*0.82,Math.round(clamp(ch*0.1,11,14)),e?'#8ff':o?'rgba(255,255,255,0.55)':META.coins>=sk.price?'#ffe066':'rgba(255,224,102,0.45)',700);});
 }
+const HELP=[
+ {t:'기본 조작',rows:[
+  ['이동','왼쪽 화면 아무 데나 누르고 드래그'],
+  ['공격 (탭)','공격 버튼을 짧게 누르면 가까운 적을 자동으로 노려서 공격'],
+  ['공격 (드래그)','공격 버튼을 누른 채 끌면 조준선이 보이고, 손을 떼면 그 방향으로 공격'],
+  ['콤보','1.2초 안에 다시 공격하면 1단 → 2단 → 3단으로 이어짐\n캐릭터 아래 게이지 = 콤보가 이어지는 남은 시간'],
+  ['1·2단 베기','앞쪽 넓은 범위를 벰. 날아오는 총알도 쳐냄'],
+  ['3단 찌르기','좁고 길게 찌름. 데미지 3배, 꿰뚫음\n초록 방패 적의 방패를 정면에서도 뚫음'],
+  ['회피','짧게 대시 (쿨타임 약 1초). 무적이 아님!\n그냥 회피하면 맞음 → 타이밍 회피만 공격을 피함 (다음 페이지)']]},
+ {t:'섬광',rows:[
+  ['타이밍 회피','적 공격이 닿기 직전에 회피 (빨간 선·빨간 원 신호가 끝날 때)\n성공하면 피해를 받지 않음'],
+  ['섬광 충전','캐릭터 위 ◆ 3칸. 일반 공격을 적에게 맞히면 참\n베기 1회 = 1/4칸, 찌르기 1회 = 1/2칸'],
+  ['섬광 발동','◆가 1칸 이상일 때 타이밍 회피 성공 → 섬광 (1칸 사용)\n1.6초 동안 세상이 느려지고 공격 버튼이 "섬광"으로 바뀜'],
+  ['섬광 일격','섬광 중 공격 = 적에게 순간이동하며 꿰뚫는 강한 일격\n보라색 큰 적의 내려찍기를 끊고, 방패를 깨고 기절시킴'],
+  ['공격력 버프','일격 후 4초간 일반 공격 데미지 2배 (왼쪽 위 노란 바)'],
+  ['연속 섬광','일격 후 2초 안에(캐릭터 주위 하늘색 링) 다시 섬광 일격\n2번째 x1.5, 3번째 x2 데미지 → ◆를 모아서 몰아 쓰는 이유'],
+  ['충전이 없을 때','타이밍 회피는 "회피!"만 뜨고 피해만 막음']]},
+ {t:'난무 · 적 · 강화',rows:[
+  ['난무 (궁극기)','왼쪽 위 체력 아래 게이지. 공격을 맞힐 때마다 참\n가득 찬 상태에서 섬광 중 회피 버튼(금색 "난무") → 적들 사이를 6번 돌진'],
+  ['빨간 적','빨간 선으로 방향을 알린 뒤 돌진','#ff3d7f'],
+  ['주황 적','레이저로 조준한 뒤 총알 발사. 총알은 베기로 쳐낼 수 있음','#ffb020'],
+  ['보라 큰 적','빨간 원 범위를 내려찍음. 섬광 일격만 공격을 끊을 수 있음','#b44dff'],
+  ['초록 방패 적','정면 공격을 막음 → 옆·뒤로 돌아가거나 3단 찌르기·섬광으로 뚫기','#7dff6a'],
+  ['웨이브 강화','웨이브를 깰 때마다 체력·공격력·섬광 중 하나 강화 + 체력 1 회복\n레벨이 오르면 검기, 충격파 같은 기술이 열림'],
+  ['코인 · 상점','죽으면 (웨이브×20 + 처치 수) 코인 → 처음 화면 상점에서 베기 스킨 구매']]}
+];
+function helpTap(x,y){
+  if(x===undefined){helpPage=(helpPage+1)%HELP.length;return;}
+  if(inR(x,y,helpUI.back)){state='title';return;}
+  for(let i=0;i<helpUI.tabs.length;i++)if(inR(x,y,helpUI.tabs[i])){helpPage=i;return;}
+  if(inR(x,y,helpUI.next)){if(helpPage<HELP.length-1)helpPage++;else state='title';}
+}
+function drawHelp(){
+  drawBg();
+  const back={x:14,y:12,w:84,h:34};helpUI.back=back;rrect(back.x,back.y,back.w,back.h,8);ctx.fillStyle='rgba(255,255,255,0.08)';ctx.fill();ctx.strokeStyle='rgba(255,255,255,0.25)';ctx.lineWidth=1;ctx.stroke();
+  txt('← 뒤로',back.x+back.w/2,back.y+back.h/2,14,'#fff',700);
+  const tw=Math.min(150,(W-240)/3),tx0=W/2-tw*1.5;helpUI.tabs=[];
+  HELP.forEach((pg,i)=>{const r={x:tx0+i*tw+3,y:12,w:tw-6,h:34};helpUI.tabs.push(r);const on=i===helpPage;rrect(r.x,r.y,r.w,r.h,8);
+    ctx.fillStyle=on?'rgba(90,240,255,0.22)':'rgba(255,255,255,0.04)';ctx.fill();ctx.strokeStyle=on?'#5ff4ff':'rgba(255,255,255,0.15)';ctx.lineWidth=on?2:1;ctx.stroke();
+    txt((i+1)+'. '+pg.t,r.x+r.w/2,r.y+r.h/2,Math.round(clamp(tw*0.1,11,14)),on?'#fff':'rgba(255,255,255,0.6)',800);});
+  const pg=HELP[helpPage],top=60,bot=H-56;let fs=Math.round(clamp(H*0.036,11,16));
+  const lc=r=>r[1].split('\n').length;let total=0;for(const r of pg.rows)total+=lc(r)*1.35+0.55;
+  fs=Math.max(10,Math.min(fs,Math.floor((bot-top)/(total))));
+  const lx=Math.min(W*0.27,210),dx=lx+14;let y=top+fs*0.8;
+  ctx.font=`500 ${fs}px ${FONT}`;const maxW=W-dx-16;
+  for(const r of pg.rows){const ls=r[1].split('\n');
+    txt(r[0],lx,y,fs,r[2]||'#8ff',800,'right');
+    for(const l of ls){ctx.font=`500 ${fs}px ${FONT}`;let f=fs;const w=ctx.measureText(l).width;if(w>maxW)f=Math.floor(fs*maxW/w);txt(l,dx,y,f,'rgba(255,255,255,0.88)',500,'left');y+=fs*1.35;}
+    y+=fs*0.55;}
+  const last=helpPage===HELP.length-1,nx={x:W/2-90,y:H-48,w:180,h:38};helpUI.next=nx;rrect(nx.x,nx.y,nx.w,nx.h,10);
+  ctx.fillStyle='rgba(90,240,255,0.18)';ctx.fill();ctx.strokeStyle='#5ff4ff';ctx.lineWidth=1.5;ctx.stroke();
+  txt(last?'닫기':'다음 ▶',nx.x+nx.w/2,nx.y+nx.h/2,15,'#fff',800);
+}
 function drawTitle(){
   drawBg();
   const cy=H*0.26;ctx.fillStyle='rgba(80,240,255,0.12)';ctx.beginPath();ctx.arc(W/2,cy,H*0.16,0,TAU);ctx.fill();
@@ -832,6 +886,8 @@ function drawTitle(){
     rrect(bx,by,bw,bh,12);ctx.fillStyle=`rgba(90,240,255,${0.18+0.12*pu})`;ctx.fill();ctx.strokeStyle='#5ff4ff';ctx.lineWidth=2;ctx.stroke();txt('시작',W/2,by+bh/2,Math.round(fs*1.25),'#fff',900);}
   if(best)txt('최고 '+best.toLocaleString(),W-16,20,13,'rgba(255,255,255,0.5)',600,'right');
   txt('v'+VERSION,16,20,11,'rgba(255,255,255,0.3)',600,'left');
+  const hb={x:14,y:34,w:136,h:40};helpBtnR=hb;rrect(hb.x,hb.y,hb.w,hb.h,10);ctx.fillStyle='rgba(90,240,255,0.1)';ctx.fill();ctx.strokeStyle='rgba(90,240,255,0.6)';ctx.lineWidth=1.5;ctx.stroke();
+  txt('게임 방법',hb.x+hb.w/2,hb.y+hb.h/2,14,'#8ff',800);
   const sb={x:W-150,y:34,w:136,h:40};shopBtnR=sb;rrect(sb.x,sb.y,sb.w,sb.h,10);ctx.fillStyle='rgba(255,224,102,0.12)';ctx.fill();ctx.strokeStyle='rgba(255,224,102,0.6)';ctx.lineWidth=1.5;ctx.stroke();
   txt('상점  ◆ '+META.coins.toLocaleString(),sb.x+sb.w/2,sb.y+sb.h/2,14,'#ffe066',800);
 }
@@ -851,6 +907,7 @@ function render(){
   ctx.setTransform(DPR,0,0,DPR,0,0);
   if(state==='title'){drawTitle();}
   else if(state==='shop'){drawShop();}
+  else if(state==='help'){drawHelp();}
   else{
     ctx.fillStyle='#05070f';ctx.fillRect(0,0,W,H);
     const sh=trauma*trauma*18,ox=(Math.random()*2-1)*sh,oy=(Math.random()*2-1)*sh;
