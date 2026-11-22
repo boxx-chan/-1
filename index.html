@@ -62,7 +62,7 @@ function vib(p){try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}}
 let state='title',P,enemies,bullets,parts,slashes,texts,markers,lines;
 let wave,waveQueue,waveT,spawnT,score,combo,comboT,maxCombo,kills,flashes;
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1122.10';
+const VERSION='1122.11';
 const ULT_MAX=40,ULT_N=6;let ult=null;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#c9a0ff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
   {id:'bolt',name:'번개',price:2500,col:'#fff07a'},{id:'fire',name:'화염',price:4000,col:'#ff8a3d'},{id:'sakura',name:'벚꽃',price:6000,col:'#ffb3d6'}];
@@ -241,7 +241,7 @@ function tryJust(){
 }
 function triggerFlash(sx,sy){
   const p=P;
-  if(p.charge<1){p.justUsed=true;p.dashCD=Math.min(p.dashCD,0.15);addText(p.x,p.y-36,'회피!','#cff',16,0.6);sparks(sx,sy,Math.atan2(p.y-sy,p.x-sx),6,'#cff',300);SFX.tink();vib(12);return true;}
+  if(p.charge<1){p.justUsed=true;addText(p.x,p.y-36,'회피!','#cff',16,0.6);sparks(sx,sy,Math.atan2(p.y-sy,p.x-sx),6,'#cff',300);SFX.tink();vib(12);return true;}
   p.charge-=1;p.justUsed=true;flashT=FLASH_DUR;inp.dash=0;p.inv=Math.max(p.inv,1.0);p.dashCD=0;flashes++;
   addText(p.x,p.y-40,'섬광!','#8ff',24,0.9);
   SFX.flash();vib([15,25,15]);
