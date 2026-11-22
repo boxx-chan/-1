@@ -62,6 +62,7 @@ function vib(p){try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}}
 let state='title',P,enemies,bullets,parts,slashes,texts,markers,lines;
 let wave,waveQueue,waveT,spawnT,score,combo,comboT,maxCombo,kills,flashes;
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
+const VERSION='1122.3';
 const CHAIN_MUL=[1,1.5,2],CHAIN_KEEP=2.5,MAX_CHARGE=3,GRACE=0.25,FLASH_CD=3,THRUST_L=175,FLASH_DUR=1.6;
 let DASH_CD=0.95,COMBO_WIN=1.2,POW_DUR=4,POW_MUL=2;
 let U,owned,pickOpts=[],pickT=0,pickNext=false;
@@ -627,6 +628,7 @@ function drawTitle(){
   txt('빨간 선/원 = 곧 공격이 온다는 신호',W/2,y+4,Math.round(fs*0.85),'rgba(255,120,130,0.85)',600);
   if(Math.floor(time*2)%2===0)txt('화면을 터치해서 시작',W/2,H*0.92,Math.round(fs*1.1),'#fff',800);
   if(best)txt('최고 '+best.toLocaleString(),W-16,20,13,'rgba(255,255,255,0.5)',600,'right');
+  txt('v'+VERSION,16,20,11,'rgba(255,255,255,0.3)',600,'left');
 }
 function drawOver(){
   ctx.fillStyle=`rgba(5,7,15,${Math.min(0.78,overT)})`;ctx.fillRect(0,0,W,H);
