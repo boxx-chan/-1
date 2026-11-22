@@ -53,14 +53,14 @@ function sTone(f1,f2,dur,vol,type,o){if(!AC)return;o=o||{};const t=AC.currentTim
 function sRing(f,dur,vol,o){o=o||{};const P=[[1,1],[2.76,0.5],[5.4,0.28],[8.93,0.14]];for(const [m,v] of P)sTone(f*m,f*m*0.995,dur*(1.2-m*0.06),vol*v,'sine',o);}
 let kayaBuf=null;
 function gayageum(d){if(!AC)return;
-  if(!kayaBuf){const sr=AC.sampleRate,len=sr*1.8|0,N=Math.round(sr/196);kayaBuf=AC.createBuffer(1,len,sr);const y=kayaBuf.getChannelData(0);let lp=0;
+  if(!kayaBuf){const sr=AC.sampleRate,len=sr*1.8|0,N=Math.round(sr/98);kayaBuf=AC.createBuffer(1,len,sr);const y=kayaBuf.getChannelData(0);let lp=0;
     for(let i=0;i<N;i++){lp=lp*0.55+(Math.random()*2-1)*0.45;y[i]=lp;}
-    for(let i=N+1;i<len;i++)y[i]=0.5*(y[i-N]+y[i-N-1])*0.9975;}
+    for(let i=N+1;i<len;i++)y[i]=0.5*(y[i-N]+y[i-N-1])*0.996;}
   const t=AC.currentTime+(d||0),src=AC.createBufferSource();src.buffer=kayaBuf;
   const pr=src.playbackRate;pr.setValueAtTime(1,t);pr.setValueAtTime(1,t+0.22);pr.linearRampToValueAtTime(0.945,t+0.42);pr.linearRampToValueAtTime(0.985,t+0.6);pr.linearRampToValueAtTime(0.955,t+0.78);pr.linearRampToValueAtTime(0.975,t+0.95);
-  const fl=AC.createBiquadFilter();fl.type='lowpass';fl.frequency.value=3400;const g=AC.createGain();g.gain.setValueAtTime(0.55,t);g.gain.exponentialRampToValueAtTime(0.001,t+1.5);
+  const fl=AC.createBiquadFilter();fl.type='lowpass';fl.frequency.value=2000;const g=AC.createGain();g.gain.setValueAtTime(0.3,t);g.gain.exponentialRampToValueAtTime(0.001,t+1.5);
   src.connect(fl);fl.connect(g);outTo(g,{rv:0.35});src.start(t);src.stop(t+1.6);
-  sNoise(0.025,2200,1.5,0.12,'bandpass',null,{d:d||0});}
+  sNoise(0.025,1200,1.5,0.06,'bandpass',null,{d:d||0});}
 let lastHitSfx=0;
 const SFX={
   swing(s,sk){
@@ -104,7 +104,7 @@ function vib(p){try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}}
 let state='title',P,enemies,bullets,parts,slashes,texts,markers,lines;
 let wave,waveQueue,waveT,spawnT,score,combo,comboT,maxCombo,kills,flashes;
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1122.18';
+const VERSION='1122.19';
 const ULT_MAX=40,ULT_N=6;let ult=null;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#c9a0ff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
   {id:'bolt',name:'번개',price:2500,col:'#fff07a'},{id:'fire',name:'화염',price:4000,col:'#ff8a3d'},{id:'sakura',name:'벚꽃',price:6000,col:'#ffb3d6'}];
