@@ -78,10 +78,10 @@ const SFX={
     sNoise(0.16,6200,9,0.2*v,'bandpass',5600,{d:0.045,rv:0.25});for(const [f,a] of [[4180,0.03],[5870,0.022],[7340,0.016]])sTone(f,f*0.99,0.14,a*v,'triangle',{d:0.045,rv:0.25,a:0.002});},
   swingB(s,v,d){if(s===3){sNoise(0.14,6000,1.4,0.32*v,'bandpass',1800,{a:0.012,d});sNoise(0.05,9000,0.7,0.12*v,'highpass',null,{d});if(!d)this.chiching(v);}
     else{const up=s===2;
-      sNoise(0.12,up?2600:5200,2.8,0.34*v,'bandpass',up?5600:1900,{a:0.006,d});
-      sNoise(0.07,8500,1,0.1*v,'highpass',null,{a:0.004,d});
-      sNoise(0.1,up?8200:7600,14,0.13*v,'bandpass',up?8800:6800,{a:0.005,d:d+0.012});
-      for(const [f,a] of [[up?6600:6200,0.012],[up?8700:8100,0.008]])sTone(f,f*0.985,0.09,a*v,'triangle',{a:0.003,d:d+0.012});}},
+      sNoise(0.13,up?2000:4200,2.2,0.36*v,'bandpass',up?4400:1500,{a:0.008,d});
+      sNoise(0.08,6000,0.8,0.06*v,'highpass',null,{a:0.006,d});
+      sNoise(0.09,up?3400:4300,5,0.1*v,'bandpass',up?4200:3100,{a:0.006,d:d+0.01});
+      sNoise(0.1,700,0.8,0.12*v,'lowpass',300,{a:0.01,d});}},
   hit(big){const n=performance.now();if(n-lastHitSfx<30)return;lastHitSfx=n;
     sNoise(0.012,6000,0.5,0.45,'highpass');sTone(big?190:260,big?45:70,big?0.2:0.12,big?0.5:0.32,'sine');sNoise(big?0.12:0.08,1400,1.1,big?0.35:0.22,'bandpass',500);if(big)sTone(110,40,0.18,0.4,'triangle',{dist:true});},
   kill(){sNoise(0.008,7000,0.5,0.5,'highpass');sTone(300,45,0.32,0.38,'sawtooth',{lp:900,dist:true});sNoise(0.3,1600,0.9,0.32,'lowpass',180,{rv:0.25});sRing(2600,0.25,0.03,{rv:0.3});},
@@ -104,7 +104,7 @@ function vib(p){try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}}
 let state='title',P,enemies,bullets,parts,slashes,texts,markers,lines;
 let wave,waveQueue,waveT,spawnT,score,combo,comboT,maxCombo,kills,flashes;
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1122.19';
+const VERSION='1122.20';
 const ULT_MAX=40,ULT_N=6;let ult=null;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#c9a0ff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
   {id:'bolt',name:'번개',price:2500,col:'#fff07a'},{id:'fire',name:'화염',price:4000,col:'#ff8a3d'},{id:'sakura',name:'벚꽃',price:6000,col:'#ffb3d6'}];
