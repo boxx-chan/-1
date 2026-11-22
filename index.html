@@ -62,7 +62,7 @@ function vib(p){try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}}
 let state='title',P,enemies,bullets,parts,slashes,texts,markers,lines;
 let wave,waveQueue,waveT,spawnT,score,combo,comboT,maxCombo,kills,flashes;
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1122.9';
+const VERSION='1122.10';
 const ULT_MAX=40,ULT_N=6;let ult=null;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#c9a0ff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
   {id:'bolt',name:'번개',price:2500,col:'#fff07a'},{id:'fire',name:'화염',price:4000,col:'#ff8a3d'},{id:'sakura',name:'벚꽃',price:6000,col:'#ffb3d6'}];
@@ -70,7 +70,7 @@ let META={coins:0,own:{flash:1},eq:'flash'},lastEarn=0;
 try{const m=JSON.parse(localStorage.getItem('flash_meta')||'null');if(m&&typeof m==='object'){META.coins=Math.max(0,+m.coins||0);META.own=Object.assign({flash:1},m.own||{});if(SKINS.some(k=>k.id===m.eq)&&META.own[m.eq])META.eq=m.eq;}}catch(e){}
 function saveMeta(){try{localStorage.setItem('flash_meta',JSON.stringify(META))}catch(e){}}
 const skinById=id=>SKINS.find(k=>k.id===id)||SKINS[0];
-const CHAIN_MUL=[1,1.5,2],CHAIN_KEEP=2.5,MAX_CHARGE=3,GRACE=0.25,FLASH_CD=3,THRUST_L=175,FLASH_DUR=1.6;
+const CHAIN_MUL=[1,1.5,2],CHAIN_KEEP=2,MAX_CHARGE=3,GRACE=0.25,FLASH_CD=3,THRUST_L=175,FLASH_DUR=1.6;
 let DASH_CD=0.95,COMBO_WIN=1.2,POW_DUR=4,POW_MUL=2;
 let U,owned,pickOpts=[],pickT=0,pickNext=false;
 function applyU(){DASH_CD=0.95-U.dashRed;COMBO_WIN=1.2+U.comboAdd;POW_DUR=4+U.powDur;POW_MUL=2+U.powMul;}
@@ -306,7 +306,7 @@ function enemyHits(sx,sy){
 }
 function updatePlayer(dt){
   const p=P,mx=inp.jx,my=inp.jy,mm=Math.hypot(mx,my);
-  p.dashCD-=realDt;if(p.chainT>0)p.chainT-=realDt;p.atkCD-=dt;if(p.pow>0)p.pow-=dt;p.comboWin-=dt;p.inv-=dt;p.just-=dt;
+  p.dashCD-=realDt;p.atkCD-=dt;if(p.pow>0)p.pow-=dt;p.comboWin-=dt;p.inv-=dt;p.just-=dt;
   if(mm>0.1&&p.atkCD<=0.04&&p.dashT<=0)p.face=Math.atan2(my,mx);
   if(flashT>0&&inp.dash>0&&p.ult>=ULT_MAX&&!ult){startUlt();return;}
   if(flashT>0)inp.dash=0;
