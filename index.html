@@ -101,9 +101,9 @@ function vib(p){try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}}
 let state='title',P,enemies,bullets,parts,slashes,texts,markers,lines;
 let wave,waveQueue,waveT,spawnT,score,combo,comboT,maxCombo,kills,flashes;
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1123.6';
-let hitSrc='',runT=0,endless=false,clearBonus=0;const BOSS_NAMES=['검은 파수꾼','검은 파수꾼 II','심연의 파수꾼'];
-let ult=null;const ultMax=()=>U.ultFast?30:40,ultN=()=>U.ultMore?8:6;
+const VERSION='1123.7';
+let hitSrc='',runT=0,endless=false,clearBonus=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
+let ult=null,mines=[];const ultMax=()=>U.ultFast?30:40,ultN=()=>U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#c9a0ff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
   {id:'bolt',name:'번개',price:2500,col:'#fff07a'},{id:'fire',name:'화염',price:4000,col:'#ff8a3d'},{id:'sakura',name:'벚꽃',price:6000,col:'#ffb3d6'}];
 let META={coins:0,own:{flash:1},eq:'flash'},lastEarn=0;
@@ -117,7 +117,7 @@ function applyU(){DASH_CD=0.95-U.dashRed;COMBO_WIN=1.2+U.comboAdd;POW_DUR=3+U.po
 function reset(){
   U={slash:1,thrust:1,strike:1,range:1,powDur:0,powMul:0,dashRed:0,comboAdd:0,wave:false,chain:false,shock:false,vamp:false,waveBig:false,ultFast:false,ultMore:false,ultFin:false,bigDmg:false};owned={};applyU();pickNext=false;waves2=[];
   ult=null;P={ult:0,chain:0,chainT:0,charge:1,flashCD:0,grace:0,pow:0,chainT:0,x:AW/2,y:AH/2,vx:0,vy:0,r:15,hp:5,maxHp:5,face:0,dashT:0,dashCD:0,dx:1,dy:0,inv:0,just:0,justUsed:true,atkCD:0,comboStep:0,comboWin:0,trail:[]};
-  enemies=[];bullets=[];parts=[];slashes=[];texts=[];markers=[];lines=[];
+  mines=[];enemies=[];bullets=[];parts=[];slashes=[];texts=[];markers=[];lines=[];
   runT=0;endless=false;bonusPick=0;wave=0;waveQueue=[];waveT=1.2;spawnT=0;score=0;combo=0;comboT=0;maxCombo=0;kills=0;flashes=0;
   hitstop=0;trauma=0;ts=1;flashT=0;hurtFlash=0;overT=0;camX=P.x;camY=P.y;bannerT=0;strikeFlash=0;
 }
@@ -283,7 +283,10 @@ function tryJust(){
     if(e.type==='bomber'&&e.state==='wind'&&e.t<0.24&&d<e.slamR+p.r+10)return triggerFlash(e.x,e.y);
     if(e.type==='shadow'&&((e.state==='wind'&&e.t<0.22&&d<140)||(e.state==='act'&&d<100)))return triggerFlash(e.x,e.y);
     if(e.type==='boss'){if(e.pat==='dash'&&((e.state==='wind'&&e.t<0.22&&d<320)||(e.state==='act'&&d<e.r+p.r+40)))return triggerFlash(e.x,e.y);
-      if(e.pat==='slam'&&((e.state==='wind'&&e.t<0.3)||e.state==='act')&&d<e.slamR+p.r+10)return triggerFlash(e.x,e.y);}}
+      if(e.pat==='slam'&&((e.state==='wind'&&e.t<0.3)||e.state==='act')&&d<e.slamR+p.r+10)return triggerFlash(e.x,e.y);
+      if(e.pat==='spin'&&e.state==='act'&&!e.hitDone&&d<230+p.r&&Math.abs(angDiff(e.ca,Math.atan2(p.y-e.y,p.x-e.x)))<0.8)return triggerFlash(e.x,e.y);
+      if(e.pat==='bslash'&&((e.state==='wind'&&e.t<0.22&&d<170)||(e.state==='act'&&d<140)))return triggerFlash(e.x,e.y);}}
+  for(const m of mines){if(m.t<0.25&&Math.hypot(m.x-p.x,m.y-p.y)<m.r+p.r+10)return triggerFlash(m.x,m.y);}
   for(const b of bullets){if(b.dead)continue;const dx=p.x-b.x,dy=p.y-b.y,d=Math.hypot(dx,dy);
     if(p.just>0.11&&d<p.r+b.r+34&&(dx*b.vx+dy*b.vy)>0)return triggerFlash(b.x,b.y);}
   return false;
@@ -383,7 +386,7 @@ function makeEnemy(type,x,y){const d=ET[type];const hpScale=1+Math.max(0,wave-2)
   return{type,x,y,r:d.r,hp:Math.round(d.hp*hpScale*2)/2,maxHp:Math.round(d.hp*hpScale*2)/2,col:d.col,pts:d.pts,state:'move',t:rnd(0.3,0.8),kvx:0,kvy:0,ax:1,ay:0,hitF:0,
     fireCD:rnd(1.2,2.2),strafe:Math.random()<0.5?1:-1,spawnT:0.35,dead:false,slamR:type==='bomber'?95:120,slammed:false,shield:type==='shield',rot:Math.random()*TAU};}
 function makeBoss(x,y){const k=Math.max(1,Math.round(wave/5)),e=makeEnemy('boss',x,y);e.k=k;e.hp=e.maxHp=240+(k-1)*270;e.gmax=e.guard=30+(k-1)*10;e.slamR=200;e.t=1.2;e.lastHit=9;e.pat=null;e.lastPat='';e.ph2=false;
-  e.name=BOSS_NAMES[Math.min(k,3)-1]+(k>3?' +'+(k-3):'');return e;}
+  e.name=BOSS_NAMES[(k<=3?k:((k-1)%3)+1)-1]+(k>3?' +'+(k-3):'');return e;}
 function updateEnemies(dt){
   const p=P;
   for(const e of enemies){
@@ -454,29 +457,51 @@ function bomberBlow(e){
   if(Math.hypot(P.x-e.x,P.y-e.y)<R+P.r)enemyHits(e.x,e.y);
   hitSrc='bomb';for(const o of enemies){if(o===e||o.dead||o.spawnT>0)continue;if(Math.hypot(o.x-e.x,o.y-e.y)<R+o.r)hitEnemy(o,4,Math.atan2(o.y-e.y,o.x-e.x),420,false);}hitSrc='';
 }
+function updateMines(dt){for(const m of mines){m.t-=dt;if(m.t<=0&&!m.done){m.done=true;SFX.slam();ring(m.x,m.y,6,m.r,'#ff8a3d',0.35,6);burst(m.x,m.y,16,'#ff8a3d',400,0.4,2);trauma=Math.min(1,trauma+0.2);
+  if(Math.hypot(P.x-m.x,P.y-m.y)<m.r+P.r)enemyHits(m.x,m.y);}}mines=mines.filter(m=>!m.done);}
+const bossKind=e=>e.k<=3?e.k:((e.k-1)%3)+1;
+function bossPats(e){const kd=bossKind(e);if(kd===1)return['dash','slam','spin'];if(kd===2)return['nova','barrage','mines'];
+  const a=['dash','slam','spin','nova','barrage','mines'];if(e.ph2)a.push('clone','blink','blink');return a;}
 function bossAI(e,dt,d,ux,uy){
-  const p=P,sp=e.ph2?1.25:1,tm=e.ph2?0.75:1;let vx=0,vy=0;
-  e.lastHit+=dt;if(e.state!=='stun'&&e.lastHit>2.5)e.guard=Math.min(e.gmax,e.guard+e.gmax*0.08*dt);
+  const p=P,sp=e.ph2?1.25:1,tm=e.ph2?0.75:1,kd=bossKind(e);let vx=0,vy=0;
+  e.lastHit+=dt;e.tpCD=(e.tpCD||0)-dt;e.cloneCD=(e.cloneCD||0)-dt;if(e.state!=='stun'&&e.lastHit>2.5)e.guard=Math.min(e.gmax,e.guard+e.gmax*0.08*dt);
   if(e.k>=3&&!e.ph2&&e.hp<e.maxHp/2){e.ph2=true;banner('분노!');ring(e.x,e.y,e.r,300,'#ff4a5a',0.6,8);trauma=1;SFX.slam();}
   if(e.state==='stun'){e.rot+=dt*0.5;if(e.t<=0){e.state='move';e.t=0.8;e.guard=e.gmax;addText(e.x,e.y-e.r-30,'가드 회복','#fff',16,0.8);}return[0,0];}
   e.rot+=dt*(e.state==='wind'?3:0.8);
-  if(e.state==='move'){vx=ux*70*sp;vy=uy*70*sp;if(d<150){vx=-ux*40;vy=-uy*40;}
-    if(e.t<=0){const pats=['dash','nova','slam'];if(e.k>=2)pats.push('barrage');const c=pats.filter(x=>x!==e.lastPat);
-      if(d>330)c.splice(c.indexOf('slam')>=0?c.indexOf('slam'):99,1);
-      e.pat=c[Math.floor(Math.random()*c.length)];e.lastPat=e.pat;e.n=0;e.slammed=false;
-      if(e.pat==='dash'){e.state='wind';e.t=0.6*tm;}else if(e.pat==='nova'){e.state='wind';e.t=0.85*tm;}else if(e.pat==='slam'){e.state='wind';e.t=1.0*tm;}else{e.state='wind';e.t=0.75*tm;}}}
+  if(e.state==='move'){
+    if(kd===2){const want=d<260?-1:d>380?1:0;vx=ux*want*90*sp-uy*e.strafe*60;vy=uy*want*90*sp+ux*e.strafe*60;if(Math.random()<dt*0.3)e.strafe*=-1;
+      if(d<150&&e.tpCD<=0){e.tpCD=6;burst(e.x,e.y,20,'#ff4a5a',300,0.4,2);let x,y,n=0;do{x=rnd(80,AW-80);y=rnd(80,AH-80);n++;}while(Math.hypot(x-p.x,y-p.y)<380&&n<30);e.x=x;e.y=y;burst(x,y,20,'#ffd0d0',300,0.4,2);SFX.dash();}}
+    else{vx=ux*70*sp;vy=uy*70*sp;if(d<150){vx=-ux*40;vy=-uy*40;}}
+    if(e.t<=0){let c=bossPats(e).filter(x=>x!==e.lastPat);if(e.cloneCD>0)c=c.filter(x=>x!=='clone');if(d>330&&c.length>1)c=c.filter(x=>x!=='slam'&&x!=='spin');
+      e.pat=c[Math.floor(Math.random()*c.length)];e.lastPat=e.pat;e.n=0;e.slammed=false;e.hitDone=false;e.state='wind';
+      e.t={dash:0.6,nova:0.85,slam:1.0,barrage:0.75,spin:0.8,mines:0.5,clone:0.7,blink:0.2}[e.pat]*tm;
+      if(e.pat==='spin'){e.sa=Math.atan2(uy,ux)+Math.PI*0.6;e.sdir=Math.random()<0.5?1:-1;}}}
   else if(e.state==='wind'){
     if(e.pat==='dash'){if(e.t>0.2*tm){e.ax=ux;e.ay=uy;}if(e.t<=0){e.state='act';e.t=0.24;SFX.lunge();}}
-    else if(e.pat==='slam'){vx=ux*40;vy=uy*40;if(e.t<=0){e.state='act';e.t=0.1;e.slammed=false;}}
+    else if(e.pat==='slam'){vx=ux*40;vy=uy*40;if(e.t<=0){e.state='act';e.t=0.1;}}
     else if(e.pat==='barrage'){if(e.t>0.25*tm){e.ax=ux;e.ay=uy;}if(e.t<=0){e.state='act';e.t=0;e.n=0;}}
+    else if(e.pat==='spin'){if(e.t<=0){e.state='act';e.t=1.2*tm;SFX.swing(3);}}
+    else if(e.pat==='blink'){if(e.t<=0){const bx=clamp(p.x-Math.cos(p.face)*95,e.r,AW-e.r),by=clamp(p.y-Math.sin(p.face)*95,e.r,AH-e.r);burst(e.x,e.y,20,'#7b86ff',300,0.4,2);e.x=bx;e.y=by;burst(bx,by,20,'#c0c6ff',300,0.4,2);SFX.dash();
+      e.pat='bslash';e.t=0.55;}}
+    else if(e.pat==='bslash'){if(e.t>0.18){e.ax=ux;e.ay=uy;}if(e.t<=0){e.state='act';e.t=0.15;e.slammed=false;SFX.swing(1);}}
     else if(e.t<=0){e.state='act';e.t=0;e.n=0;}}
   else if(e.state==='act'){
     if(e.pat==='dash'){vx=e.ax*900*sp;vy=e.ay*900*sp;if(d<e.r+p.r+4)enemyHits(e.x,e.y);
       if(e.t<=0){e.n++;if(e.n<3){e.state='wind';e.t=0.45*tm;}else{e.state='rec';e.t=1.1*tm;}}}
     else if(e.pat==='slam'){if(!e.slammed){e.slammed=true;SFX.slam();trauma=Math.min(1,trauma+0.5);vib(35);ring(e.x,e.y,e.r,e.slamR,'#ff8090',0.4,8);burst(e.x,e.y,26,'#ff4a5a',500,0.45,3);
         if(d<e.slamR+p.r)enemyHits(e.x,e.y);}if(e.t<=0){e.state='rec';e.t=1.0*tm;}}
-    else if(e.pat==='nova'){if(e.t<=0){const n=e.k>=2?18:14,off=e.n*Math.PI/n;for(let i=0;i<n;i++){const a=off+i*TAU/n;bullets.push({x:e.x+Math.cos(a)*e.r,y:e.y+Math.sin(a)*e.r,vx:Math.cos(a)*250*sp,vy:Math.sin(a)*250*sp,r:8,life:4,dead:false});}
+    else if(e.pat==='spin'){const T=1.2*tm;e.ca=e.sa+e.sdir*TAU*(1-e.t/T);const pa=Math.atan2(p.y-e.y,p.x-e.x);
+      if(!e.hitDone&&d<210+p.r&&Math.abs(angDiff(e.ca,pa))<0.45){e.hitDone=true;enemyHits(e.x,e.y);}
+      if(Math.random()<0.5)sparks(e.x+Math.cos(e.ca)*190,e.y+Math.sin(e.ca)*190,e.ca+e.sdir*Math.PI/2,1,'#ff8090',300);
+      if(e.t<=0){e.state='rec';e.t=1.0*tm;}}
+    else if(e.pat==='nova'){if(e.t<=0){const n=kd>=2?18:14,off=e.n*Math.PI/n;for(let i=0;i<n;i++){const a=off+i*TAU/n;bullets.push({x:e.x+Math.cos(a)*e.r,y:e.y+Math.sin(a)*e.r,vx:Math.cos(a)*250*sp,vy:Math.sin(a)*250*sp,r:8,life:4,dead:false});}
         SFX.shoot();ring(e.x,e.y,e.r,e.r*2,'#ffb020',0.3,4);e.n++;e.t=0.35;if(e.n>=(e.ph2?3:2)){e.state='rec';e.t=1.0*tm;}}}
+    else if(e.pat==='mines'){const n=e.ph2?5:4;for(let i=0;i<n;i++){const a=rnd(0,TAU),r=i===0?0:rnd(60,170);mines.push({x:clamp(p.x+Math.cos(a)*r,40,AW-40),y:clamp(p.y+Math.sin(a)*r,40,AH-40),r:70,t:1.5+i*0.12,T:1.5+i*0.12});}
+      SFX.shoot();e.state='rec';e.t=0.9*tm;}
+    else if(e.pat==='clone'){for(let i=0;i<2;i++){const a=rnd(0,TAU);markers.push({x:clamp(e.x+Math.cos(a)*120,60,AW-60),y:clamp(e.y+Math.sin(a)*120,60,AH-60),type:'shadow',t:0,dur:0.6});}
+      e.cloneCD=12;banner('분신');e.state='rec';e.t=0.8;}
+    else if(e.pat==='bslash'){if(!e.slammed){e.slammed=true;sparks(e.x+e.ax*60,e.y+e.ay*60,Math.atan2(e.ay,e.ax),12,'#c0c6ff',500);
+        if(d<125+p.r&&Math.abs(angDiff(Math.atan2(e.ay,e.ax),Math.atan2(p.y-e.y,p.x-e.x)))<1.1)enemyHits(e.x,e.y);}if(e.t<=0){e.state='rec';e.t=0.9;}}
     else{if(e.t<=0){const a=Math.atan2(e.ay,e.ax)+rnd(-0.08,0.08);bullets.push({x:e.x+Math.cos(a)*e.r,y:e.y+Math.sin(a)*e.r,vx:Math.cos(a)*360*sp,vy:Math.sin(a)*360*sp,r:7,life:3.5,dead:false});
         SFX.shoot();e.n++;e.t=0.11;if(e.n>=(e.ph2?7:5)){e.state='rec';e.t=0.9*tm;}}}}
   else if(e.t<=0){e.state='move';e.t=rnd(0.5,0.9)*tm;}
@@ -574,7 +599,7 @@ function update(rdt){
   if(ult)updateUlt(rdt);else updatePlayer(pdt);
   inp.atk=Math.max(0,inp.atk-rdt);inp.dash=Math.max(0,inp.dash-rdt);
   if(state!=='play')return;
-  updateEnemies(dt);updateWavesProj(dt);updateBullets(dt);updateWaves(dt);updateFx(dt);
+  updateEnemies(dt);updateMines(dt);updateWavesProj(dt);updateBullets(dt);updateWaves(dt);updateFx(dt);
   comboT-=dt;if(comboT<=0)combo=0;
   const vw=W/S,vh=H/S,tx=P.x+P.vx*0.12,ty=P.y+P.vy*0.12;const k=1-Math.exp(-7*rdt);
   camX+=(tx-camX)*k;camY+=(ty-camY)*k;
@@ -665,6 +690,9 @@ function drawArena(){
   ctx.strokeStyle='rgba(80,230,255,0.12)';ctx.lineWidth=12;ctx.strokeRect(-6,-6,AW+12,AH+12);
 }
 function drawTelegraphs(){
+  for(const m of mines){const p=1-m.t/m.T;ctx.fillStyle=`rgba(255,90,40,${0.08+p*0.2})`;ctx.beginPath();ctx.arc(m.x,m.y,m.r,0,TAU);ctx.fill();ctx.strokeStyle=`rgba(255,120,60,${0.5+0.4*Math.sin(time*25)})`;ctx.lineWidth=2;ctx.stroke();
+    ctx.strokeStyle='rgba(255,190,120,0.9)';ctx.lineWidth=3;ctx.beginPath();ctx.arc(m.x,m.y,Math.max(0.1,m.r*p),0,TAU);ctx.stroke();}
+  for(const e of enemies){if(e.type==='boss'&&e.state==='act'&&e.pat==='spin'){ctx.fillStyle='rgba(255,70,90,0.45)';ctx.beginPath();ctx.moveTo(e.x,e.y);ctx.arc(e.x,e.y,210,e.ca-0.45,e.ca+0.45);ctx.closePath();ctx.fill();}}
   for(const e of enemies){
     if(e.spawnT>0||e.state!=='wind')continue;
     if(e.type==='grunt'){const p=1-e.t/0.5,locked=e.t<=0.18;
@@ -680,6 +708,8 @@ function drawTelegraphs(){
       if(e.pat==='dash'){const locked=e.t<=0.2*tm;ctx.strokeStyle=locked?'rgba(255,80,90,0.95)':'rgba(255,60,80,0.45)';ctx.lineWidth=locked?7:3;ctx.beginPath();ctx.moveTo(e.x,e.y);ctx.lineTo(e.x+e.ax*300,e.y+e.ay*300);ctx.stroke();}
       else if(e.pat==='slam'){const p=1-e.t/(1.0*tm);ctx.fillStyle=`rgba(255,40,70,${0.06+p*0.18})`;ctx.beginPath();ctx.arc(e.x,e.y,e.slamR,0,TAU);ctx.fill();ctx.strokeStyle=`rgba(255,70,90,${0.4+p*0.5})`;ctx.lineWidth=2;ctx.stroke();
         ctx.strokeStyle='rgba(255,120,130,0.85)';ctx.lineWidth=4;ctx.beginPath();ctx.arc(e.x,e.y,e.slamR*p,0,TAU);ctx.stroke();}
+      else if(e.pat==='spin'){ctx.fillStyle='rgba(255,60,80,0.18)';ctx.beginPath();ctx.arc(e.x,e.y,210,0,TAU);ctx.fill();ctx.strokeStyle='rgba(255,90,100,0.8)';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(e.x,e.y);ctx.arc(e.x,e.y,210,e.sa-0.45,e.sa+0.45);ctx.closePath();ctx.stroke();}
+      else if(e.pat==='bslash'){const locked=e.t<=0.18,a=Math.atan2(e.ay,e.ax);ctx.fillStyle=locked?'rgba(255,70,90,0.35)':'rgba(255,60,80,0.15)';ctx.beginPath();ctx.moveTo(e.x,e.y);ctx.arc(e.x,e.y,125,a-1.1,a+1.1);ctx.closePath();ctx.fill();ctx.strokeStyle='rgba(255,90,100,0.9)';ctx.lineWidth=locked?3:1.5;ctx.stroke();}
       else if(e.pat==='nova'){ctx.strokeStyle=`rgba(255,176,32,${0.4+0.4*Math.sin(time*25)})`;ctx.lineWidth=3;ctx.beginPath();ctx.arc(e.x,e.y,e.r+18+10*(1-e.t),0,TAU);ctx.stroke();}
       else{const locked=e.t<=0.25*tm;ctx.strokeStyle=locked?'rgba(255,180,60,0.9)':'rgba(255,170,40,0.35)';ctx.lineWidth=locked?3:1.5;ctx.setLineDash(locked?[]:[8,8]);ctx.beginPath();ctx.moveTo(e.x,e.y);ctx.lineTo(e.x+e.ax*800,e.y+e.ay*800);ctx.stroke();ctx.setLineDash([]);}}
     else if(e.type==='shooter'){const locked=e.t<=0.22;ctx.strokeStyle=locked?'rgba(255,180,60,0.9)':'rgba(255,170,40,0.3)';ctx.lineWidth=locked?2.5:1;
@@ -950,7 +980,7 @@ const HELP=[
   ['초록 방패 적','정면 공격을 막음 → 옆·뒤로 돌아가거나 3단 찌르기·섬광으로 뚫기','#7dff6a'],
   ['주황 자폭병 (6~)','달려와서 빨간 원을 띄우고 터짐. 다른 적도 휘말림 → 적 무리로 유인','#ff6a2a'],
   ['그림자 검객 (11~)','등 뒤로 순간이동 후 베기. 빨간 부채꼴이 신호 → 계속 움직이기','#7b86ff'],
-  ['보스 (5·10·15)','가드(흰 바)를 깨면 3초 기절 + 일반 공격 2배\n섬광 일격 = 가드 40% · 평소엔 받는 데미지 절반 · 웨이브 15 보스 = 클리어','#ff4a5a'],
+  ['보스 (5·10·15)','가드(흰 바)를 깨면 3초 기절 + 일반 공격 2배\n5 근접형 · 10 원거리형(지뢰·순간이동) · 15 종합형(분노 시 분신)\n섬광 일격 = 가드 40% · 평소엔 받는 데미지 절반 · 15 보스 = 클리어','#ff4a5a'],
   ['웨이브 강화','웨이브를 깰 때마다 체력·공격력·섬광 중 하나 강화 + 체력 1 회복\n레벨이 오르면 검기·긴 창·난무 강화 같은 기술이 열림'],
   ['코인 · 상점','죽으면 (웨이브×20 + 처치 수) 코인 → 처음 화면 상점에서 베기 스킨 구매']]}
 ];
