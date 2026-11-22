@@ -101,7 +101,7 @@ function vib(p){try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}}
 let state='title',P,enemies,bullets,parts,slashes,texts,markers,lines;
 let wave,waveQueue,waveT,spawnT,score,combo,comboT,maxCombo,kills,flashes;
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1123.7';
+const VERSION='1123.8';
 let hitSrc='',runT=0,endless=false,clearBonus=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
 let ult=null,mines=[];const ultMax=()=>U.ultFast?30:40,ultN=()=>U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#c9a0ff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
@@ -336,7 +336,7 @@ function ultDash(){
   for(const b of bullets){if(!b.dead&&segDist(b.x,b.y,sx,sy,ex,ey)<40){b.dead=true;sparks(b.x,b.y,a,5,'#ffd27a',300);}}
   for(let i=0;i<=10;i++){const k=i/10;sparks(sx+(ex-sx)*k,sy+(ey-sy)*k,a,2,i%2?'#ffe066':'#fff',520);}
   lines.push({x1:sx,y1:sy,x2:ex,y2:ey,t:0,dur:0.4,c:'255,214,90'});
-  p.x=ex;p.y=ey;p.vx=0;p.vy=0;p.face=a;p.inv=Math.max(p.inv,1);ult.last=t;
+  p.x=ex;p.y=ey;p.vx=0;p.vy=0;p.face=a;p.inv=Math.max(p.inv,1);if(ult)ult.last=t;
   trauma=Math.min(1,trauma+(last?0.9:0.35));if(n)hitstop=Math.max(hitstop,last?0.16:0.035);
   if(last&&U.ultFin){hitSrc='ult';for(const e of enemies){if(!e.dead&&e.spawnT<=0&&Math.hypot(e.x-ex,e.y-ey)<240+e.r)hitEnemy(e,6*U.strike,Math.atan2(e.y-ey,e.x-ex),600,true);}hitSrc='';ring(ex,ey,10,260,'#fff',0.6,10);strikeFlash=1;}
   if(last){ring(ex,ey,10,220,'#ffe066',0.5,7);burst(ex,ey,30,'#ffe066',700,0.55,3);SFX.strike();vib([40,30,90]);}
@@ -344,7 +344,7 @@ function ultDash(){
 }
 function updateUlt(rdt){
   ult.t-=rdt;P.inv=Math.max(P.inv,0.5);
-  if(ult.t<=0){if(ult.i>=ultN()){ult=null;P.grace=GRACE;P.inv=0;P.atkCD=0.2;P.comboWin=0;return;}ultDash();ult.i++;ult.t=ult.i>=ultN()?0.25:0.12;}
+  if(ult.t<=0){if(ult.i>=ultN()){ult=null;P.grace=GRACE;P.inv=0;P.atkCD=0.2;P.comboWin=0;return;}ultDash();if(!ult)return;ult.i++;ult.t=ult.i>=ultN()?0.25:0.12;}
 }
 function hurt(sx,sy){
   const p=P;p.hp--;p.inv=1.1;combo=0;hurtFlash=1;trauma=Math.min(1,trauma+0.6);hitstop=Math.max(hitstop,0.1);
