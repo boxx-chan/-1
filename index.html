@@ -101,7 +101,7 @@ function vib(p){try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}}
 let state='title',P,enemies,bullets,parts,slashes,texts,markers,lines;
 let wave,waveQueue,waveT,spawnT,score,combo,comboT,maxCombo,kills,flashes;
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1123.1';
+const VERSION='1123.2';
 let hitSrc='',runT=0,endless=false,clearBonus=0;const BOSS_NAMES=['검은 파수꾼','검은 파수꾼 II','심연의 파수꾼'];
 let ult=null;const ultMax=()=>U.ultFast?30:40,ultN=()=>U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#c9a0ff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
@@ -584,14 +584,14 @@ function update(rdt){
 const TRACKS=[
   {id:'hp',k:'hp',name:'체력',base:'체력 1 회복',bonus:{2:'흡수: 적 25마리 처치마다 체력 1 회복',4:'날렵함: 회피 쿨타임 -0.15초'}},
   {id:'atk',k:'atk',name:'공격력',base:'베기 · 찌르기 공격력 +25%',bonus:{2:'큰 휘두르기: 베기 범위 +25%',3:'검기: 2단 베기가 관통하는 검기를 날림',4:'긴 창: 찌르기 길이 +40% · 폭 2배 · 꿰뚫을 때마다 데미지 +50%',5:'검기 확장: 검기 크기·사거리 +50%'}},
-  {id:'flash',k:'fx',name:'섬광',base:'섬광 일격 데미지 +30% · 일격 후 공격력 버프 지속 +0.5초',bonus:{2:'격노: 일격 후 공격력 버프 x2 → x2.25',3:'난무 수련: 난무 게이지가 25% 빨리 참',4:'충격파: 일격 착지점에 폭발',5:'난무 연격: 난무 돌진 6회 → 8회',6:'격노 II: 일격 후 공격력 버프 +0.25배 더',7:'난무 종결: 난무 마지막 돌진이 큰 폭발로 끝남'}},
+  {id:'flash',k:'fx',name:'섬광',base:'섬광 일격 데미지 +30% · 일격 후 공격력 버프 지속 +0.5초',bonus:{2:'격노: 일격 후 공격력 버프 x2 → x2.5',3:'난무 수련: 난무 게이지가 25% 빨리 참',4:'충격파: 일격 착지점에 폭발',5:'난무 극의: 난무 돌진 6회 → 8회 + 마지막 돌진이 큰 폭발로 끝남'}},
 ];
 const CARDS=TRACKS;
 const CARD_COL={atk:'#ffe066',fx:'#7ff4ff',hp:'#ff7fa6'};
 function applyTrack(id,lv){
   if(id==='hp'){P.hp=Math.min(P.maxHp,P.hp+1);if(lv===2)U.vamp=true;if(lv===4)U.dashRed+=0.15;}
   else if(id==='atk'){U.slash+=0.25;U.thrust+=0.25;if(lv===2)U.range+=0.25;if(lv===3)U.wave=true;if(lv===4)U.chain=true;if(lv===5)U.waveBig=true;}
-  else{U.strike+=0.3;U.powDur+=0.5;if(lv===2||lv===6)U.powMul+=0.25;if(lv===4)U.shock=true;if(lv===3)U.ultFast=true;if(lv===5)U.ultMore=true;if(lv===7)U.ultFin=true;}
+  else{U.strike+=0.3;U.powDur+=0.5;if(lv===2)U.powMul+=0.5;if(lv===4)U.shock=true;if(lv===3)U.ultFast=true;if(lv===5){U.ultMore=true;U.ultFin=true;}}
 }
 function openPick(){
   pickOpts=TRACKS.filter(t=>!t.max||(owned[t.id]||0)<t.max);
