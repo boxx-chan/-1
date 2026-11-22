@@ -62,7 +62,7 @@ function vib(p){try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}}
 let state='title',P,enemies,bullets,parts,slashes,texts,markers,lines;
 let wave,waveQueue,waveT,spawnT,score,combo,comboT,maxCombo,kills,flashes;
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1122.7';
+const VERSION='1122.8';
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#c9a0ff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
   {id:'bolt',name:'번개',price:2500,col:'#fff07a'},{id:'fire',name:'화염',price:4000,col:'#ff8a3d'},{id:'sakura',name:'벚꽃',price:6000,col:'#ffb3d6'}];
 let META={coins:0,own:{flash:1},eq:'flash'},lastEarn=0;
@@ -565,10 +565,11 @@ function drawPlayer(){
   for(const tr of p.trail){const a=1-tr.t/0.22;ctx.globalAlpha=a*0.35;ctx.fillStyle='#5ff';ctx.beginPath();ctx.arc(tr.x,tr.y,p.r*(0.7+a*0.3),0,TAU);ctx.fill();}
   ctx.globalAlpha=1;
   if(p.inv>0&&p.dashT<=0&&flashT<=0&&hurtFlash>0&&Math.floor(time*20)%2)ctx.globalAlpha=0.35;
+  if(p.grace>0&&flashT<=0&&state==='play'&&Math.floor(time*16)%2)ctx.globalAlpha=0.3;
   const fl=flashT>0;
   ctx.fillStyle=fl?'rgba(220,255,255,0.3)':'rgba(80,240,255,0.18)';ctx.beginPath();ctx.arc(p.x,p.y,p.r*(fl?3+Math.sin(time*18)*0.4:2.2),0,TAU);ctx.fill();
-  if(p.chainT>0&&state==='play'){ctx.strokeStyle=`rgba(120,255,255,${0.35+0.3*Math.sin(time*20)})`;ctx.lineWidth=2;ctx.beginPath();ctx.arc(p.x,p.y,p.r+12,0,TAU);ctx.stroke();}
-  if(p.grace>0&&state==='play'){ctx.strokeStyle=Math.floor(time*30)%2?'rgba(255,255,255,0.9)':'rgba(140,255,255,0.5)';ctx.lineWidth=3;ctx.beginPath();ctx.arc(p.x,p.y,p.r+5,0,TAU);ctx.stroke();}
+  if(p.chainT>0&&state==='play'){const ga=ctx.globalAlpha;ctx.globalAlpha=1;ctx.strokeStyle='rgba(120,255,255,0.18)';ctx.lineWidth=3;ctx.beginPath();ctx.arc(p.x,p.y,p.r+13,0,TAU);ctx.stroke();
+    ctx.strokeStyle=`rgba(120,255,255,${0.75+0.25*Math.sin(time*20)})`;ctx.beginPath();ctx.arc(p.x,p.y,p.r+13,-Math.PI/2,-Math.PI/2+TAU*Math.min(1,p.chainT/CHAIN_KEEP));ctx.stroke();ctx.globalAlpha=ga;}
   if(p.dashCD>0&&state==='play'){ctx.strokeStyle='rgba(255,255,255,0.35)';ctx.lineWidth=2;ctx.beginPath();ctx.arc(p.x,p.y,p.r+4,Math.PI/2-Math.PI*0.5*(p.dashCD/DASH_CD),Math.PI/2+Math.PI*0.5*(p.dashCD/DASH_CD));ctx.stroke();}
   if(p.pow>0){ctx.strokeStyle=`rgba(255,224,102,${0.5+0.4*Math.sin(time*14)})`;ctx.lineWidth=3;ctx.beginPath();ctx.arc(p.x,p.y,p.r+8,-Math.PI/2,-Math.PI/2+TAU*(p.pow/POW_DUR));ctx.stroke();}
   ctx.fillStyle=fl?'#fff':(p.pow>0?'#fff3b0':'#5ff4ff');ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,TAU);ctx.fill();
