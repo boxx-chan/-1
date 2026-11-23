@@ -101,7 +101,7 @@ function vib(p){try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}}
 let state='title',P,enemies,bullets,parts,slashes,texts,markers,lines;
 let wave,waveQueue,waveT,spawnT,score,combo,comboT,maxCombo,kills,flashes;
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1125.5';
+const VERSION='1125.6';
 let hitSrc='',runT=0,endless=false,clearBonus=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
 let ult=null,mines=[];const ultMax=()=>U.ultFast?75:100,ultN=()=>U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#8a6cff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
@@ -236,7 +236,7 @@ function swing(){
   let hit=0;
   if(fin){
     const L=THRUST_L*(U.chain?1.4:1),w=U.chain?28:14,ex=p.x+Math.cos(a)*L,ey=p.y+Math.sin(a)*L;
-    slashes.push({a,range:L,t:0,dur:0.22,step,thrust:true});skinFx(META.eq,p.x,p.y,a,true,L,0);
+    slashes.push({a,range:L,t:0,dur:0.22,step,thrust:true});if(META.eq==='fire')slashes.push({aura:true,t:0,dur:0.6});skinFx(META.eq,p.x,p.y,a,true,L,0);
     const tl=[];for(const e of enemies){if(e.dead||e.spawnT>0)continue;if(segDist(e.x,e.y,p.x,p.y,ex,ey)<e.r+w){tl.push(e);}}
     tl.sort((a,b)=>Math.hypot(a.x-p.x,a.y-p.y)-Math.hypot(b.x-p.x,b.y-p.y));
     tl.forEach((e,i)=>{hitEnemy(e,3*U.thrust*(U.chain?1+0.5*i:1),Math.atan2(e.y-p.y,e.x-p.x),620,false,true);hit++;});addUlt(2*hit);
@@ -817,12 +817,23 @@ function drawAim(){
 function crescent(x,y,R,r,a0,a1,dir){ctx.beginPath();if(dir>0){ctx.arc(x,y,R,a0,a1,false);ctx.arc(x,y,r,a1,a0,true);}else{ctx.arc(x,y,R,a0,a1,true);ctx.arc(x,y,r,a1,a0,false);}ctx.closePath();}
 function boltArc(x,y,R,a0,a1,amp){const n=9;ctx.beginPath();for(let i=0;i<=n;i++){const t=a0+(a1-a0)*i/n,rr=R+(i>0&&i<n?rnd(-amp,amp):0),px=x+Math.cos(t)*rr,py=y+Math.sin(t)*rr;i?ctx.lineTo(px,py):ctx.moveTo(px,py);}}
 function boltLine(x1,y1,x2,y2,amp){const n=8,dx=x2-x1,dy=y2-y1,l=Math.hypot(dx,dy)||1,nx=-dy/l,ny=dx/l;ctx.beginPath();for(let i=0;i<=n;i++){const u=i/n,o=i>0&&i<n?rnd(-amp,amp):0,px=x1+dx*u+nx*o,py=y1+dy*u+ny*o;i?ctx.lineTo(px,py):ctx.moveTo(px,py);}}
+function flameTongues(x,y,R,a0,a1,al,t){const n=7;for(let i=1;i<=n;i++){const u=i/(n+1),th=a0+(a1-a0)*u,c=Math.cos(th),sn=Math.sin(th),L=(13+13*Math.sin(u*Math.PI))*(0.75+0.35*Math.sin(t*60+i*2.3))*(0.4+0.6*al),bw=6,bx=x+c*R,by=y+sn*R,tx=bx+c*L*0.8,ty=by+sn*L*0.8-L*0.55;
+  ctx.beginPath();ctx.moveTo(bx-sn*bw,by+c*bw);ctx.quadraticCurveTo(bx+c*L*0.3,by+sn*L*0.3-L*0.2,tx,ty);ctx.quadraticCurveTo(bx+c*L*0.3,by+sn*L*0.3-L*0.2,bx+sn*bw,by-c*bw);ctx.closePath();
+  ctx.fillStyle=`rgba(255,120,30,${al*0.7})`;ctx.fill();}}
+function fireAura(x,y,pr){const e=1-(1-pr)*(1-pr),R=26+42*e,al=(1-pr)*0.75,n=14;
+  const g=ctx.createRadialGradient(x,y,R*0.4,x,y,R+6);g.addColorStop(0,'rgba(255,90,20,0)');g.addColorStop(0.75,`rgba(255,110,30,${al*0.45})`);g.addColorStop(1,'rgba(255,200,110,0)');
+  ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,R+6,0,TAU);ctx.fill();
+  for(let i=0;i<n;i++){const th=i/n*TAU+pr*1.2,c=Math.cos(th),sn=Math.sin(th),L=(12+8*Math.sin(i*1.7+pr*20))*(1-pr*0.5),bx=x+c*R,by=y+sn*R,tx=bx+c*L*0.6,ty=by+sn*L*0.6-L*0.8,bw=4;
+    ctx.beginPath();ctx.moveTo(bx-sn*bw,by+c*bw);ctx.quadraticCurveTo(bx,by-L*0.3,tx,ty);ctx.quadraticCurveTo(bx,by-L*0.3,bx+sn*bw,by-c*bw);ctx.closePath();
+    ctx.fillStyle=i%2?`rgba(255,200,90,${al*0.8})`:`rgba(255,100,30,${al*0.8})`;ctx.fill();}
+  ctx.beginPath();ctx.arc(x,y,R,0,TAU);ctx.strokeStyle=`rgba(255,220,150,${al*0.7})`;ctx.lineWidth=1.5;ctx.stroke();}
 function strokeL(layers){for(const [c,w] of layers){ctx.strokeStyle=c;ctx.lineWidth=w;ctx.stroke();}}
 function drawSlashes(){drawSlashList(slashes,P.x,P.y,META.eq,U.chain);}
 function drawSlashList(list,x,y,sk,wide){
   ctx.lineCap='round';ctx.lineJoin='round';
   for(const s of list){
     const pr=s.t/s.dur,al=1-pr*pr;
+    if(s.aura){fireAura(x,y,pr);continue;}
     if(s.thrust){const k=Math.min(1,pr*3),c=Math.cos(s.a),sn=Math.sin(s.a),L=s.range*k,w=(wide?24:12)*(1-pr*0.5),ex=x+c*L,ey=y+sn*L;
       const tri=()=>{ctx.beginPath();ctx.moveTo(x-sn*w,y+c*w);ctx.lineTo(ex,ey);ctx.lineTo(x+sn*w,y-c*w);ctx.closePath();};
       const mid=()=>{ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(ex,ey);};
@@ -847,7 +858,8 @@ function drawSlashList(list,x,y,sk,wide){
       boltArc(x,y,R*0.93,a0,a1,10);strokeL([[`rgba(120,170,255,${al*0.6})`,8],[`rgba(255,242,122,${al})`,3],[`rgba(255,255,255,${al})`,1]]);
       boltArc(x,y,R*0.7,a0,a1,7);strokeL([[`rgba(255,242,122,${al*0.55})`,1.5]]);}
     else if(sk==='fire'){const g=ctx.createRadialGradient(x,y,r,x,y,R);g.addColorStop(0,`rgba(255,50,10,${al*0.15})`);g.addColorStop(0.6,`rgba(255,110,30,${al*0.8})`);g.addColorStop(1,`rgba(255,220,120,${al*0.95})`);
-      crescent(x,y,R,r,a0,a1,dir);ctx.fillStyle=g;ctx.fill();outer();strokeL([[`rgba(255,245,210,${al})`,2]]);}
+      ctx.beginPath();ctx.arc(x,y,R+3,lo,hi);strokeL([[`rgba(255,110,30,${al*0.28})`,12]]);
+      crescent(x,y,R,r,a0,a1,dir);ctx.fillStyle=g;ctx.fill();flameTongues(x,y,R,a0,a1,al,s.t);outer();strokeL([[`rgba(255,245,210,${al})`,2]]);}
     else if(sk==='sakura'){crescent(x,y,R,r,a0,a1,dir);ctx.fillStyle=`rgba(255,165,210,${al*0.7})`;ctx.fill();outer();strokeL([[`rgba(255,240,248,${al})`,2]]);}
     else{crescent(x,y,R,r,a0,a1,dir);ctx.fillStyle=`rgba(210,250,255,${al*0.75})`;ctx.fill();outer();strokeL([[`rgba(255,255,255,${al})`,2]]);}
   }
@@ -941,7 +953,7 @@ function updShop(dt){
   for(const s of pv.sl)s.t+=dt;pv.sl=pv.sl.filter(s=>s.t<s.dur);
   for(const w of pv.wv){w.t+=dt;w.x+=w.vx*dt;w.y+=w.vy*dt;}pv.wv=pv.wv.filter(w=>w.t<w.life);
   if(pv.t>=pv.wait){pv.t=0;pv.step=pv.step%3+1;const st=pv.step,sv=parts;parts=pv.pt;
-    if(st===3){pv.sl.push({a:0,range:THRUST_L,t:0,dur:0.22,step:3,thrust:true});skinFx(pv.sel,0,0,0,true,THRUST_L,0);pv.wait=1.0;}
+    if(st===3){pv.sl.push({a:0,range:THRUST_L,t:0,dur:0.22,step:3,thrust:true});if(pv.sel==='fire')pv.sl.push({aura:true,t:0,dur:0.6});skinFx(pv.sel,0,0,0,true,THRUST_L,0);pv.wait=1.0;}
     else{const a=st===1?-0.2:0.2;pv.sl.push({a,range:108,arc:2.7,t:0,dur:0.15,step:st,dir:st===2?-1:1});skinFx(pv.sel,0,0,a,false,108,2.7);
       if(st===2)pv.wv.push({x:Math.cos(a)*30,y:Math.sin(a)*30,a,vx:Math.cos(a)*620,vy:Math.sin(a)*620,t:0,life:0.45});pv.wait=0.5;}
     pv.pt=parts;parts=sv;SFX.swing(st,pv.sel);}
@@ -1156,4 +1168,4 @@ document.addEventListener('visibilitychange',()=>{last=performance.now();joy.id=
 window.__g=()=>({ult,META,pv,shopUI,shopBtnR,U,owned,pickOpts,state,P,enemies,bullets,wave,score,combo,flashT,flashes,kills,inp,keys});
 requestAnimationFrame(frame);
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{})})}
-</script></body></html>
+</script></
