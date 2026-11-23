@@ -108,7 +108,7 @@ let rush=false,rushT=0,rChain=0,rChainT=0,rMax=0,rushSpawnT=0,rushElite={},rushB
 let hc=0,hcQueue=[],hcSpawnT=0,hcCap=2,hcSpd=1,hcNew=false,hcEarn=0,hcSelUI={back:null,tiles:[]},hcBtns=[];
 const RUSH_LEN=60,RCHAIN_KEEP=2.5,rMul=()=>1+0.25*Math.min(rChain,12);
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1127.6';
+const VERSION='1127.7';
 let hitSrc='',runT=0,endless=false,clearBonus=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
 let ult=null,mines=[];const ultMax=()=>U.ultFast?75:100,ultN=()=>rush?4:U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#8a6cff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
@@ -925,13 +925,15 @@ function fireAura(x,y,pr){const e=1-(1-pr)*(1-pr),R=26+42*e,al=(1-pr)*0.75,n=14;
   const g=ctx.createRadialGradient(x,y,R*0.4,x,y,R+6);g.addColorStop(0,'rgba(255,90,20,0)');g.addColorStop(0.75,`rgba(255,110,30,${al*0.45})`);g.addColorStop(1,'rgba(255,200,110,0)');
   ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,R+6,0,TAU);ctx.fill();
   ctx.beginPath();ctx.arc(x,y,R,0,TAU);ctx.strokeStyle=`rgba(255,220,150,${al*0.7})`;ctx.lineWidth=1.5;ctx.stroke();}
-function sakuraAura(x,y,pr){const e=1-(1-pr)*(1-pr),R=24+46*e,al=(1-pr*pr)*0.9,n=10,rot=pr*1.6;
-  const g=ctx.createRadialGradient(x,y,R*0.35,x,y,R+8);g.addColorStop(0,'rgba(255,150,200,0)');g.addColorStop(0.75,`rgba(255,150,205,${al*0.42})`);g.addColorStop(1,'rgba(255,220,238,0)');
-  ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,R+8,0,TAU);ctx.fill();
-  ctx.beginPath();ctx.arc(x,y,R,0,TAU);ctx.strokeStyle=`rgba(255,228,242,${al*0.7})`;ctx.lineWidth=1.4;ctx.stroke();
-  for(let i=0;i<n;i++){const t=i/n*TAU+rot,rr=R*(i%2?0.92:1.04),px=x+Math.cos(t)*rr,py=y+Math.sin(t)*rr,w=8-2.5*pr;
-    ctx.save();ctx.translate(px,py);ctx.rotate(t+rot*2+i);ctx.fillStyle=i%3?`rgba(255,175,215,${al})`:`rgba(255,228,242,${al})`;
-    ctx.beginPath();ctx.ellipse(0,0,w,w*0.55,0,0,TAU);ctx.fill();ctx.restore();}}
+function sakuraAura(x,y,pr){const e=1-(1-pr)*(1-pr),R=24+46*e,al=(1-pr)*0.8,n=10;
+  const g=ctx.createRadialGradient(x,y,R*0.3,x,y,R+10);g.addColorStop(0,'rgba(255,150,200,0)');g.addColorStop(0.7,`rgba(255,150,205,${al*0.38})`);g.addColorStop(1,'rgba(255,200,230,0)');
+  ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,R+10,0,TAU);ctx.fill();
+  for(let i=0;i<n;i++){const h=((i*73)%10)/10,d=h*0.3,q=Math.max(0,Math.min(1,(pr-d)/(1-d)));if(q<=0)continue;
+    const qe=1-(1-q)*(1-q),t=i/n*TAU+h*0.6+qe*(0.9+h*0.6),rr=18+(36+22*h)*qe,px=x+Math.cos(t)*rr,py=y+Math.sin(t)*rr+14*q*q,
+      fa=Math.min(1,q*5)*(1-q*q),w=(5+2.5*h)*Math.min(1,0.4+q*3);
+    ctx.save();ctx.translate(px,py);ctx.rotate(t+q*4*(i%2?1:-1));ctx.globalAlpha=fa*0.95;ctx.fillStyle=i%3?'#ffb3d6':'#ffe0ef';
+    ctx.beginPath();ctx.ellipse(0,0,w,w*0.55,0,0,TAU);ctx.fill();ctx.restore();}
+  ctx.globalAlpha=1;}
 function petalBurst(x,y,n,spd){const C=['#ffb3d6','#ffc8e2','#ff8fc4','#ffe6f2'];
   for(let i=0;i<n;i++){const a=Math.random()*TAU,v=rnd(spd*0.25,spd);parts.push({x,y,vx:Math.cos(a)*v+rnd(10,50),vy:Math.sin(a)*v-rnd(20,70),t:0,life:rnd(0.9,1.5),col:C[Math.random()*4|0],w:rnd(5,8),k:'p',rot:rnd(0,TAU),vr:rnd(-8,8),fr:3,g:45});}}
 function strokeL(layers){for(const [c,w] of layers){ctx.strokeStyle=c;ctx.lineWidth=w;ctx.stroke();}}
