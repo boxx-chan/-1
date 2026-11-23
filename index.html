@@ -101,7 +101,7 @@ function vib(p){try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}}
 let state='title',P,enemies,bullets,parts,slashes,texts,markers,lines;
 let wave,waveQueue,waveT,spawnT,score,combo,comboT,maxCombo,kills,flashes;
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1125.15';
+const VERSION='1125.16';
 let hitSrc='',runT=0,endless=false,clearBonus=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
 let ult=null,mines=[];const ultMax=()=>U.ultFast?75:100,ultN=()=>U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#8a6cff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
@@ -821,8 +821,8 @@ const FL_COL=[[210,25,15,0.55],[255,75,25,0.78],[255,160,60,0.9]];
 function flameBand(x,y,R,th,a0,a1,al,sc){const n=Math.max(8,Math.round(Math.abs(a1-a0)*9));
   for(let L=0;L<3;L++){const k=1-L*0.3,[cr,cg,cb,ca]=FL_COL[L];ctx.beginPath();
     for(let i=0;i<=n;i++){const u=i/n,t=a0+(a1-a0)*u,tp=Math.sin(Math.PI*Math.min(1,u*1.15)),c=Math.cos(t),sn=Math.sin(t),
-      ext=(i%2?rnd(4,16):rnd(0,5))*tp*k*sc,rr=R-th*0.15*L+ext;ctx.lineTo(x+c*rr,y+sn*rr-ext*0.6);}
-    for(let i=n;i>=0;i--){const u=i/n,t=a0+(a1-a0)*u,tp=Math.sin(Math.PI*Math.min(1,u*1.15)),rr=R-th*k*(0.2+0.8*tp)*rnd(0.8,1.1);ctx.lineTo(x+Math.cos(t)*rr,y+Math.sin(t)*rr);}
+      ext=(i%2?rnd(4,16):rnd(0,5))*tp*k*sc,rr=R-th*0.15*L*tp+ext;ctx.lineTo(x+c*rr,y+sn*rr-ext*0.6);}
+    for(let i=n;i>=0;i--){const u=i/n,t=a0+(a1-a0)*u,tp=Math.sin(Math.PI*u),rr=R-th*k*Math.pow(tp,0.8)*(i&&i<n?rnd(0.8,1.1):1);ctx.lineTo(x+Math.cos(t)*rr,y+Math.sin(t)*rr);}
     ctx.closePath();ctx.fillStyle=`rgba(${cr},${cg},${cb},${al*ca})`;ctx.fill();}}
 function flameJet(x,y,c,sn,Lt,w,al){const n=10;
   for(let L=0;L<3;L++){const k=1-L*0.3,[cr,cg,cb,ca]=FL_COL[L];ctx.beginPath();ctx.moveTo(x,y);
@@ -842,6 +842,13 @@ function drawFireTrail(s,pr){const x=s.x,y=s.y,R=s.range,a0=s.a-s.arc/2,a1=s.a+s
       for(let i=0;i<=n;i++){const u=i/n,t=a0+(a1-a0)*u,tp=Math.sin(Math.PI*u),ext=(i%2?rnd(8,26):rnd(0,6))*tp*k*(1-q*0.5),rr=R+ext*0.4;ctx.lineTo(x+Math.cos(t)*rr,y+Math.sin(t)*rr-ext);}
       for(let i=n;i>=0;i--){const u=i/n,t=a0+(a1-a0)*u,tp=Math.sin(Math.PI*u),rr=R-th*k*tp;ctx.lineTo(x+Math.cos(t)*rr,y+Math.sin(t)*rr);}
       ctx.closePath();ctx.fillStyle=`rgba(${cr},${cg},${cb},${al*ca*0.9})`;ctx.fill();}}}
+function redBlade(x,y,R,th,a0,a1,al){const n=24,pt=(i,rr)=>{const t=a0+(a1-a0)*i/n;return[x+Math.cos(t)*rr,y+Math.sin(t)*rr];};
+  ctx.beginPath();for(let i=0;i<=n;i++){const[px,py]=pt(i,R);i?ctx.lineTo(px,py):ctx.moveTo(px,py);}
+  for(let i=n;i>=0;i--){const u=i/n,w=Math.pow(Math.sin(Math.PI*u),0.7);const[px,py]=pt(i,R-th*w);ctx.lineTo(px,py);}
+  ctx.closePath();ctx.fillStyle=`rgba(190,0,18,${al*0.85})`;ctx.fill();
+  ctx.lineCap='round';ctx.beginPath();for(let i=0;i<=n;i++){const[px,py]=pt(i,R);i?ctx.lineTo(px,py):ctx.moveTo(px,py);}
+  const g=ctx.createLinearGradient(...pt(0,R),...pt(n,R));g.addColorStop(0,`rgba(255,40,40,0)`);g.addColorStop(0.2,`rgba(255,90,80,${al})`);g.addColorStop(0.8,`rgba(255,90,80,${al})`);g.addColorStop(1,`rgba(255,40,40,0)`);
+  ctx.strokeStyle=g;ctx.lineWidth=1.8;ctx.stroke();}
 function redWave(s,pr){const e=1-(1-pr)*(1-pr),c=Math.cos(s.a),sn=Math.sin(s.a),R=s.range*0.75,d=s.range*0.85+110*e,cx=s.x+c*(d-R),cy=s.y+sn*(d-R),h=0.8,al=1-pr*pr*pr,
     ix=cx-c*R*0.05,iy=cy-sn*R*0.05,Ri=R*0.78;
   ctx.beginPath();ctx.arc(cx,cy,R,s.a-h,s.a+h);ctx.arc(ix,iy,Ri,s.a+h*1.05,s.a-h*1.05,true);ctx.closePath();
@@ -883,7 +890,7 @@ function drawSlashList(list,x,y,sk,wide){
     else if(sk==='bolt'){crescent(x,y,R,r,a0,a1,dir);ctx.fillStyle=`rgba(255,240,120,${al*0.12})`;ctx.fill();
       boltArc(x,y,R*0.93,a0,a1,10);strokeL([[`rgba(120,170,255,${al*0.6})`,8],[`rgba(255,242,122,${al})`,3],[`rgba(255,255,255,${al})`,1]]);
       boltArc(x,y,R*0.7,a0,a1,7);strokeL([[`rgba(255,242,122,${al*0.55})`,1.5]]);}
-    else if(sk==='fire'){flameBand(x,y,R,R-r,a0,a1,al,1);crescent(x,y,R*0.97,R*0.8,a0,a1,dir);ctx.fillStyle=`rgba(190,0,18,${al*0.85})`;ctx.fill();ctx.beginPath();ctx.arc(x,y,R*0.97,lo,hi);strokeL([[`rgba(255,20,35,${al*0.5})`,5],[`rgba(255,90,80,${al})`,1.6]]);}
+    else if(sk==='fire'){flameBand(x,y,R,R-r,a0,a1,al,1);redBlade(x,y,R*0.97,R*0.17,a0,a1,al);}
     else if(sk==='sakura'){crescent(x,y,R,r,a0,a1,dir);ctx.fillStyle=`rgba(255,165,210,${al*0.7})`;ctx.fill();outer();strokeL([[`rgba(255,240,248,${al})`,2]]);}
     else{crescent(x,y,R,r,a0,a1,dir);ctx.fillStyle=`rgba(210,250,255,${al*0.75})`;ctx.fill();outer();strokeL([[`rgba(255,255,255,${al})`,2]]);}
   }
