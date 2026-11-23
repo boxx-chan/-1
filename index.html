@@ -99,15 +99,15 @@ function vib(p){try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}}
 
 /* ---------- state ---------- */
 let state='title',P,enemies,bullets,parts,slashes,texts,markers,lines;
-let wave,waveQueue,waveT,spawnT,score,combo,comboT,maxCombo,kills,flashes;
+let wave,waveQueue,waveT,spawnT,score,combo,comboT,maxCombo,kills,flashes,swingHit=false,waveHurt=false;const COMBO_T=1.5;
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1125.16';
+const VERSION='1126.0';
 let hitSrc='',runT=0,endless=false,clearBonus=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
 let ult=null,mines=[];const ultMax=()=>U.ultFast?75:100,ultN=()=>U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#8a6cff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
   {id:'bolt',name:'번개',price:2500,col:'#fff07a'},{id:'fire',name:'화염',price:4000,col:'#ff8a3d'},{id:'sakura',name:'벚꽃',price:6000,col:'#ffb3d6'}];
 let META={coins:0,own:{flash:1},eq:'flash'},lastEarn=0;
-const SEASON=2;const RANK={url:'https://zepcjksuvhpafhwxaumq.supabase.co',key:'sb_publishable_N3F5KSKFTc4HX0qC3nxuWA_-B9LOLbX'};
+const SEASON=3;const RANK={url:'https://zepcjksuvhpafhwxaumq.supabase.co',key:'sb_publishable_N3F5KSKFTc4HX0qC3nxuWA_-B9LOLbX'};
 let nick='';try{nick=localStorage.getItem('flash_nick')||'';}catch(e){}
 let rankList=null,rankErr='',rankLoading=false,pendRec=null,recMsg='',clearTimeRec=null,rankUI={back:null,nick:null,tabs:[]},overRankBtn=null;
 const rankOn=()=>!!(RANK.url&&RANK.key);
@@ -140,7 +140,7 @@ function reset(){
   U={slash:1,thrust:1,strike:1,range:1,powDur:0,powMul:0,dashRed:0,comboAdd:0,wave:false,chain:false,shock:false,vamp:false,waveBig:false,ultFast:false,ultMore:false,ultFin:false,bigDmg:false};owned={};applyU();pickNext=false;waves2=[];
   ult=null;P={ult:0,hurtLock:0,chain:0,chainT:0,charge:1,flashCD:0,grace:0,pow:0,chainT:0,x:AW/2,y:AH/2,vx:0,vy:0,r:15,hp:100,maxHp:100,face:0,dashT:0,dashCD:0,dx:1,dy:0,inv:0,just:0,justUsed:true,atkCD:0,comboStep:0,comboWin:0,trail:[]};
   mines=[];enemies=[];bullets=[];parts=[];slashes=[];texts=[];markers=[];lines=[];
-  runT=0;endless=false;clearTimeRec=null;bonusPick=0;wave=0;waveQueue=[];waveT=1.2;spawnT=0;score=0;combo=0;comboT=0;maxCombo=0;kills=0;flashes=0;
+  runT=0;endless=false;clearTimeRec=null;bonusPick=0;wave=0;waveQueue=[];waveT=1.2;spawnT=0;score=0;combo=0;comboT=0;waveHurt=false;swingHit=false;maxCombo=0;kills=0;flashes=0;
   hitstop=0;trauma=0;ts=1;flashT=0;hurtFlash=0;overT=0;camX=P.x;camY=P.y;bannerT=0;strikeFlash=0;
 }
 reset();
@@ -218,11 +218,15 @@ function burst(x,y,n,col,spd,life,w){for(let i=0;i<n;i++){const a=Math.random()*
 function sparks(x,y,a,n,col,spd){for(let i=0;i<n;i++){const b=a+rnd(-0.7,0.7),v=rnd(spd*0.4,spd);parts.push({x,y,vx:Math.cos(b)*v,vy:Math.sin(b)*v,t:0,life:rnd(0.15,0.35),col,w:rnd(1.5,3),k:'s'});}}
 function ring(x,y,r0,r1,col,life,w){parts.push({x,y,r0,r1,t:0,life,col,w:w||3,k:'r'});}
 function banner(s){bannerText=s;bannerT=1.4;}
-function addCombo(){combo++;comboT=2.4;if(combo>maxCombo)maxCombo=combo;}
-const mult=()=>1+Math.min(combo,60)/10;
+
+function addCombo(){swingHit=true;}
+function bumpCombo(n){combo+=n;comboT=COMBO_T;if(combo>maxCombo)maxCombo=combo;}
+const mult=()=>1+Math.min(combo,100)/50;
+const BOSS_PAR=[30,40,40];
 
 /* ---------- player ---------- */
-function swing(){
+function swing(){swingHit=false;swingCore();if(swingHit)bumpCombo(1);}
+function swingCore(){
   const p=P,mm=Math.hypot(inp.jx,inp.jy);
   const step=p.comboWin>0?(p.comboStep%3)+1:1;p.comboStep=step;
   let a;
@@ -290,7 +294,7 @@ const fmtD=d=>d%1?d.toFixed(1):String(d);
 function killEnemy(e,strike){
   e.dead=true;kills++;
   if(U.vamp&&kills%25===0)heal(10);
-  const pts=Math.round(e.pts*mult()*(strike?2:1));score+=pts;
+  const pts=e.type==='boss'?e.pts:Math.round(e.pts*mult()*(strike?2:1));score+=pts;
   addText(e.x,e.y-e.r-22,'+'+pts,strike?'#7ff':'#9fe',13,0.9);
   burst(e.x,e.y,e.type==='brute'?40:20,e.col,e.type==='brute'?520:380,0.6,3);
   burst(e.x,e.y,8,'#fff',260,0.3,2);
@@ -321,12 +325,12 @@ function triggerFlash(sx,sy){
   addText(p.x,p.y-40,'섬광!','#8ff',24,0.9);
   SFX.flash();vib([15,25,15]);
   ring(p.x,p.y,10,140,'#9ff',0.5,4);ring(sx,sy,5,60,'#fff',0.35,2);
-  hitstop=Math.max(hitstop,0.06);score+=50;
+  hitstop=Math.max(hitstop,0.06);bumpCombo(3);score+=Math.round(500*mult());
   return true;
 }
 function flashStrike(){
   const p=P;
-  p.chain=p.chainT>0?Math.min(3,p.chain+1):1;const cm=CHAIN_MUL[p.chain-1];
+  p.chain=p.chainT>0?Math.min(3,p.chain+1):1;const cm=CHAIN_MUL[p.chain-1];if(p.chain>1){const cb=p.chain===2?500:1000;score+=cb;addText(p.x,p.y-60,'연속 섬광 +'+cb,'#8ff',16,0.9);}
   const aim=inp.aimA;const t=aim!==null?nearestEnemy(p.x,p.y,430,aim,0.6):nearestEnemy(p.x,p.y,430,p.face,Math.PI);
   let a,len;if(t){a=Math.atan2(t.y-p.y,t.x-p.x);len=Math.hypot(t.x-p.x,t.y-p.y)+t.r+55;}else{a=aim!==null?aim:p.face;len=aim!==null?300:260;}
   const sx=p.x,sy=p.y;
@@ -373,7 +377,7 @@ const BOSS_HP=[150,330,520],DMG_W=0.07,DMG_E=0.12;
 function dmgMul(){const w=Math.max(1,wave);return w<=15?1+DMG_W*(w-1):(1+DMG_W*14)*(1+DMG_E*(w-15));}
 function heal(v){const p=P,h=Math.min(p.maxHp-p.hp,Math.round(v));if(h<=0)return;p.hp+=h;addText(p.x,p.y-36,'+'+h,'#7fffa8',17,1);}
 function hurt(sx,sy,dmg){
-  const p=P;const dd=Math.max(1,Math.round((dmg||15)*dmgMul()));p.hp=Math.max(0,p.hp-dd);addText(p.x,p.y-40,'-'+dd,'#ff5d86',20,0.9);p.inv=1.1;p.hurtLock=1.1;combo=0;hurtFlash=1;trauma=Math.min(1,trauma+0.6);hitstop=Math.max(hitstop,0.1);
+  const p=P;const dd=Math.max(1,Math.round((dmg||15)*dmgMul()));p.hp=Math.max(0,p.hp-dd);addText(p.x,p.y-40,'-'+dd,'#ff5d86',20,0.9);p.inv=1.1;p.hurtLock=1.1;combo=0;waveHurt=true;hurtFlash=1;trauma=Math.min(1,trauma+0.6);hitstop=Math.max(hitstop,0.1);
   const a=Math.atan2(p.y-sy,p.x-sx);p.vx+=Math.cos(a)*380;p.vy+=Math.sin(a)*380;
   SFX.hurt();vib(160);burst(p.x,p.y,16,'#f46',300,0.5,2);
   if(p.hp<=0){state='over';overT=0;flashT=0;recMsg='';postRec(makeRec());lastEarn=wave*20+kills;META.coins+=lastEarn;saveMeta();if(score>best){best=score;try{localStorage.setItem('flash_best',best)}catch(e){}}}
@@ -411,7 +415,7 @@ const ET={grunt:{r:14,hp:4,col:'#ff3d7f',pts:100},shooter:{r:13,hp:3,col:'#ffb02
 function makeEnemy(type,x,y){const d=ET[type];const hpScale=1+Math.max(0,wave-2)*0.25;
   return{type,x,y,r:d.r,hp:Math.round(d.hp*hpScale*2)/2,maxHp:Math.round(d.hp*hpScale*2)/2,col:d.col,pts:d.pts,state:'move',t:rnd(0.3,0.8),kvx:0,kvy:0,ax:1,ay:0,hitF:0,
     fireCD:rnd(1.2,2.2),strafe:Math.random()<0.5?1:-1,spawnT:0.35,dead:false,slamR:type==='bomber'?95:120,slammed:false,shield:type==='shield',rot:Math.random()*TAU};}
-function makeBoss(x,y){const k=Math.max(1,Math.round(wave/5)),e=makeEnemy('boss',x,y);e.k=k;e.hp=e.maxHp=k<=3?BOSS_HP[k-1]:Math.round(BOSS_HP[2]*(1+0.35*(k-3)));e.gmax=e.guard=24+(k-1)*6;e.slamR=200;e.t=1.2;e.lastHit=9;e.pat=null;e.lastPat='';e.ph2=false;
+function makeBoss(x,y){const k=Math.max(1,Math.round(wave/5)),e=makeEnemy('boss',x,y);e.k=k;e.bornT=runT;e.hp=e.maxHp=k<=3?BOSS_HP[k-1]:Math.round(BOSS_HP[2]*(1+0.35*(k-3)));e.gmax=e.guard=24+(k-1)*6;e.slamR=200;e.t=1.2;e.lastHit=9;e.pat=null;e.lastPat='';e.ph2=false;
   e.name=BOSS_NAMES[(k<=3?k:((k-1)%3)+1)-1]+(k>3?' +'+(k-3):'');return e;}
 function updateEnemies(dt){
   const p=P;
@@ -551,6 +555,7 @@ function hitBoss(e,dmg,a,kb,strike,pierce){
   if(e.hp<=0)killBoss(e,vul);
 }
 function killBoss(e,vul){
+  {const bt=Math.max(1,runT-(e.bornT||runT)),sb=Math.round(e.k*15000*Math.min(2,BOSS_PAR[Math.min(e.k,3)-1]/bt));score+=sb;addText(P.x,P.y-80,'보스 속도 보너스 +'+sb+' ('+Math.round(bt)+'초)','#ff9a6a',18,2.2);}
   killEnemy(e,vul);burst(e.x,e.y,60,'#ff4a5a',700,0.8,3);ring(e.x,e.y,e.r,e.r*8,'#fff',0.6,8);hitstop=0.3;trauma=1;strikeFlash=1;vib([60,40,120]);
   heal(P.maxHp*0.5);bonusPick++;META.coins+=100;saveMeta();addText(P.x,P.y-50,'체력 50% 회복 · 강화 +1 · 코인 +100','#ffe066',18,1.8);banner('보스 처치!');
   if(e.k===3&&!endless){clearBonus=500;META.coins+=500;META.cleared=1;if(!META.bestClear||runT<META.bestClear)META.bestClear=runT;saveMeta();state='clear';overT=0;flashT=0;ult=null;ts=1;clearTimeRec=runT;recMsg='';postRec(makeRec());}
@@ -583,7 +588,7 @@ function updateWaves(dt){
   markers=markers.filter(m=>!m.done);
   if(!waveQueue.length&&!enemies.length&&!markers.length){
     waveT=0.6;pickNext=true;banner('CLEAR');heal(10);
-    score+=wave*200;
+    {const wb=wave*200*(waveHurt?1:2);score+=wb;if(!waveHurt&&wave>0)addText(P.x,P.y-70,'노피격 보너스 +'+wb,'#ffe066',16,1.2);waveHurt=false;}
   }
 }
 function updateWavesProj(dt){
@@ -631,7 +636,7 @@ function update(rdt){
   inp.atk=Math.max(0,inp.atk-rdt);inp.dash=Math.max(0,inp.dash-rdt);
   if(state!=='play')return;
   updateEnemies(dt);updateMines(dt);updateWavesProj(dt);updateBullets(dt);updateWaves(dt);updateFx(dt);
-  comboT-=dt;if(comboT<=0)combo=0;
+  if(!ult&&enemies.some(e=>!e.dead&&e.spawnT<=0)){comboT-=pdt;if(comboT<=0)combo=0;}
   const vw=W/S,vh=H/S,tx=P.x+P.vx*0.12,ty=P.y+P.vy*0.12;const k=1-Math.exp(-7*rdt);
   camX+=(tx-camX)*k;camY+=(ty-camY)*k;
   camX=AW>vw?clamp(camX,vw/2-40,AW-vw/2+40):AW/2;camY=AH>vh?clamp(camY,vh/2-40,AH-vh/2+40):AH/2;
@@ -968,9 +973,9 @@ function drawHUD(){
   if(P.pow>0){ctx.fillStyle='rgba(255,224,102,0.25)';ctx.fillRect(18,54,116,6);ctx.fillStyle='#ffe066';ctx.fillRect(18,54,116*(P.pow/POW_DUR),6);txt('공격력 x'+POW_MUL,18,72,12,'#ffe066',800,'left');}
   txt(score.toLocaleString(),W/2,24,22,'#fff',800);
   txt('WAVE '+Math.max(1,wave),W/2,46,12,'rgba(160,220,255,0.7)',700);
-  if(combo>=2){const pulse=1+Math.max(0,comboT-2.1)*1.5;txt(combo+' COMBO',W-70,28,Math.round(22*pulse),combo>=20?'#ffe066':'#8ff',900,'right');
+  if(combo>=2){const pulse=1+Math.max(0,comboT-(COMBO_T-0.3))*1.5;txt(combo+' COMBO',W-70,28,Math.round(22*pulse),combo>=20?'#ffe066':'#8ff',900,'right');
     txt('x'+mult().toFixed(1),W-70,52,13,'rgba(255,255,255,0.6)',700,'right');
-    ctx.fillStyle='rgba(140,255,255,0.5)';ctx.fillRect(W-170,62,100*Math.min(1,comboT/2.4),3);}
+    ctx.fillStyle='rgba(140,255,255,0.5)';ctx.fillRect(W-170,62,100*Math.min(1,comboT/COMBO_T),3);}
   if(flashT>0){const w=Math.min(260,W*0.3),fy=enemies.some(e=>e.type==='boss')?44:0;ctx.fillStyle='rgba(0,0,0,0.4)';ctx.fillRect(W/2-w/2,70+fy,w,6);ctx.fillStyle='#9ff';ctx.fillRect(W/2-w/2,70+fy,w*(flashT/FLASH_DUR),6);
     txt('섬광 — 공격 버튼!',W/2,92+fy,16,'#cff',800);}
   if(bannerT>0&&state==='play'){const a=Math.min(1,bannerT*2.5);ctx.globalAlpha=a;txt(bannerText,W/2,H*0.32,Math.round(H*0.09),bannerText==='CLEAR'?'#9fe':'#fff',900);ctx.globalAlpha=1;}
