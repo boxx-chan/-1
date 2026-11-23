@@ -101,7 +101,7 @@ function vib(p){try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}}
 let state='title',P,enemies,bullets,parts,slashes,texts,markers,lines;
 let wave,waveQueue,waveT,spawnT,score,combo,comboT,maxCombo,kills,flashes;
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1125.6';
+const VERSION='1125.7';
 let hitSrc='',runT=0,endless=false,clearBonus=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
 let ult=null,mines=[];const ultMax=()=>U.ultFast?75:100,ultN=()=>U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#8a6cff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
@@ -817,16 +817,23 @@ function drawAim(){
 function crescent(x,y,R,r,a0,a1,dir){ctx.beginPath();if(dir>0){ctx.arc(x,y,R,a0,a1,false);ctx.arc(x,y,r,a1,a0,true);}else{ctx.arc(x,y,R,a0,a1,true);ctx.arc(x,y,r,a1,a0,false);}ctx.closePath();}
 function boltArc(x,y,R,a0,a1,amp){const n=9;ctx.beginPath();for(let i=0;i<=n;i++){const t=a0+(a1-a0)*i/n,rr=R+(i>0&&i<n?rnd(-amp,amp):0),px=x+Math.cos(t)*rr,py=y+Math.sin(t)*rr;i?ctx.lineTo(px,py):ctx.moveTo(px,py);}}
 function boltLine(x1,y1,x2,y2,amp){const n=8,dx=x2-x1,dy=y2-y1,l=Math.hypot(dx,dy)||1,nx=-dy/l,ny=dx/l;ctx.beginPath();for(let i=0;i<=n;i++){const u=i/n,o=i>0&&i<n?rnd(-amp,amp):0,px=x1+dx*u+nx*o,py=y1+dy*u+ny*o;i?ctx.lineTo(px,py):ctx.moveTo(px,py);}}
-function flameTongues(x,y,R,a0,a1,al,t){const n=7;for(let i=1;i<=n;i++){const u=i/(n+1),th=a0+(a1-a0)*u,c=Math.cos(th),sn=Math.sin(th),L=(13+13*Math.sin(u*Math.PI))*(0.75+0.35*Math.sin(t*60+i*2.3))*(0.4+0.6*al),bw=6,bx=x+c*R,by=y+sn*R,tx=bx+c*L*0.8,ty=by+sn*L*0.8-L*0.55;
-  ctx.beginPath();ctx.moveTo(bx-sn*bw,by+c*bw);ctx.quadraticCurveTo(bx+c*L*0.3,by+sn*L*0.3-L*0.2,tx,ty);ctx.quadraticCurveTo(bx+c*L*0.3,by+sn*L*0.3-L*0.2,bx+sn*bw,by-c*bw);ctx.closePath();
-  ctx.fillStyle=`rgba(255,120,30,${al*0.7})`;ctx.fill();}}
-function fireAura(x,y,pr){const e=1-(1-pr)*(1-pr),R=26+42*e,al=(1-pr)*0.75,n=14;
-  const g=ctx.createRadialGradient(x,y,R*0.4,x,y,R+6);g.addColorStop(0,'rgba(255,90,20,0)');g.addColorStop(0.75,`rgba(255,110,30,${al*0.45})`);g.addColorStop(1,'rgba(255,200,110,0)');
-  ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,R+6,0,TAU);ctx.fill();
-  for(let i=0;i<n;i++){const th=i/n*TAU+pr*1.2,c=Math.cos(th),sn=Math.sin(th),L=(12+8*Math.sin(i*1.7+pr*20))*(1-pr*0.5),bx=x+c*R,by=y+sn*R,tx=bx+c*L*0.6,ty=by+sn*L*0.6-L*0.8,bw=4;
-    ctx.beginPath();ctx.moveTo(bx-sn*bw,by+c*bw);ctx.quadraticCurveTo(bx,by-L*0.3,tx,ty);ctx.quadraticCurveTo(bx,by-L*0.3,bx+sn*bw,by-c*bw);ctx.closePath();
-    ctx.fillStyle=i%2?`rgba(255,200,90,${al*0.8})`:`rgba(255,100,30,${al*0.8})`;ctx.fill();}
-  ctx.beginPath();ctx.arc(x,y,R,0,TAU);ctx.strokeStyle=`rgba(255,220,150,${al*0.7})`;ctx.lineWidth=1.5;ctx.stroke();}
+const FL_COL=[[255,60,20,0.5],[255,130,30,0.75],[255,215,110,0.9]];
+function flameBand(x,y,R,th,a0,a1,al,sc){const n=Math.max(8,Math.round(Math.abs(a1-a0)*9));
+  for(let L=0;L<3;L++){const k=1-L*0.3,[cr,cg,cb,ca]=FL_COL[L];ctx.beginPath();
+    for(let i=0;i<=n;i++){const u=i/n,t=a0+(a1-a0)*u,tp=Math.sin(Math.PI*Math.min(1,u*1.15)),c=Math.cos(t),sn=Math.sin(t),
+      ext=(i%2?rnd(4,16):rnd(0,5))*tp*k*sc,rr=R-th*0.15*L+ext;ctx.lineTo(x+c*rr,y+sn*rr-ext*0.6);}
+    for(let i=n;i>=0;i--){const u=i/n,t=a0+(a1-a0)*u,tp=Math.sin(Math.PI*Math.min(1,u*1.15)),rr=R-th*k*(0.2+0.8*tp)*rnd(0.8,1.1);ctx.lineTo(x+Math.cos(t)*rr,y+Math.sin(t)*rr);}
+    ctx.closePath();ctx.fillStyle=`rgba(${cr},${cg},${cb},${al*ca})`;ctx.fill();}}
+function flameJet(x,y,c,sn,Lt,w,al){const n=10;
+  for(let L=0;L<3;L++){const k=1-L*0.3,[cr,cg,cb,ca]=FL_COL[L];ctx.beginPath();ctx.moveTo(x,y);
+    for(let side=1;side>=-1;side-=2){for(let j=0;j<=n;j++){const i=side>0?j:n-j,u=i/n,ww=w*k*Math.sin(Math.PI*Math.min(1,u*1.3+0.1))*(i%2?rnd(0.9,1.5):rnd(0.5,0.9)),
+      px=x+c*Lt*u*(L?0.97:1)-sn*ww*side,py=y+sn*Lt*u*(L?0.97:1)+c*ww*side-(i%2?rnd(0,6):0)*k;ctx.lineTo(px,py);}}
+    ctx.closePath();ctx.fillStyle=`rgba(${cr},${cg},${cb},${al*ca})`;ctx.fill();}}
+function fireAura(x,y,pr){const e=1-(1-pr)*(1-pr),R=22+38*e,al=(1-pr),n=16,hw=Math.PI/n*0.9;
+  for(let L=0;L<2;L++){const k=L?0.55:1,[cr,cg,cb]=FL_COL[L+1];ctx.fillStyle=`rgba(${cr},${cg},${cb},${al*(L?0.85:0.6)})`;
+    for(let i=0;i<n;i++){const t=i/n*TAU+pr*0.8,len=rnd(10,24)*k*(1-pr*0.5),b1=t-hw*k,b2=t+hw*k,tc=Math.cos(t+rnd(-0.15,0.15)),ts=Math.sin(t),
+      tx=x+tc*(R+len),ty=y+ts*(R+len)-len*0.6,mx=x+Math.cos(t)*(R+len*0.45),my=y+Math.sin(t)*(R+len*0.45)-len*0.25;
+      ctx.beginPath();ctx.moveTo(x+Math.cos(b1)*R,y+Math.sin(b1)*R);ctx.quadraticCurveTo(mx+rnd(-3,3),my,tx,ty);ctx.quadraticCurveTo(mx+rnd(-3,3),my,x+Math.cos(b2)*R,y+Math.sin(b2)*R);ctx.closePath();ctx.fill();}}}
 function strokeL(layers){for(const [c,w] of layers){ctx.strokeStyle=c;ctx.lineWidth=w;ctx.stroke();}}
 function drawSlashes(){drawSlashList(slashes,P.x,P.y,META.eq,U.chain);}
 function drawSlashList(list,x,y,sk,wide){
@@ -841,7 +848,7 @@ function drawSlashList(list,x,y,sk,wide){
         tri();{const gr=ctx.createLinearGradient(x,y,ex+0.01,ey);gr.addColorStop(0,`rgba(70,90,255,${al*0.6})`);gr.addColorStop(1,`rgba(215,70,255,${al*0.9})`);ctx.fillStyle=gr;}ctx.fill();mid();strokeL([[`rgba(255,255,255,${al})`,2]]);}
       else if(sk==='ink'){tri();ctx.fillStyle=`rgba(10,10,16,${al})`;ctx.fill();strokeL([[`rgba(240,240,250,${al*0.85})`,2]]);}
       else if(sk==='bolt'){tri();ctx.fillStyle=`rgba(255,240,120,${al*0.18})`;ctx.fill();boltLine(x,y,ex,ey,8);strokeL([[`rgba(120,170,255,${al*0.6})`,7],[`rgba(255,242,122,${al})`,3],[`rgba(255,255,255,${al})`,1]]);}
-      else if(sk==='fire'){const g=ctx.createLinearGradient(x,y,ex+0.01,ey);g.addColorStop(0,`rgba(255,60,20,${al*0.9})`);g.addColorStop(1,`rgba(255,220,120,${al})`);tri();ctx.fillStyle=g;ctx.fill();mid();strokeL([[`rgba(255,240,200,${al})`,2]]);}
+      else if(sk==='fire'){flameJet(x,y,c,sn,L,w*1.3,al);}
       else if(sk==='sakura'){tri();ctx.fillStyle=`rgba(255,170,215,${al*0.8})`;ctx.fill();mid();strokeL([[`rgba(255,240,248,${al})`,2]]);}
       else{tri();ctx.fillStyle=`rgba(255,240,170,${al*0.9})`;ctx.fill();mid();strokeL([[`rgba(255,255,255,${al})`,2]]);}
       continue;}
@@ -857,9 +864,7 @@ function drawSlashList(list,x,y,sk,wide){
     else if(sk==='bolt'){crescent(x,y,R,r,a0,a1,dir);ctx.fillStyle=`rgba(255,240,120,${al*0.12})`;ctx.fill();
       boltArc(x,y,R*0.93,a0,a1,10);strokeL([[`rgba(120,170,255,${al*0.6})`,8],[`rgba(255,242,122,${al})`,3],[`rgba(255,255,255,${al})`,1]]);
       boltArc(x,y,R*0.7,a0,a1,7);strokeL([[`rgba(255,242,122,${al*0.55})`,1.5]]);}
-    else if(sk==='fire'){const g=ctx.createRadialGradient(x,y,r,x,y,R);g.addColorStop(0,`rgba(255,50,10,${al*0.15})`);g.addColorStop(0.6,`rgba(255,110,30,${al*0.8})`);g.addColorStop(1,`rgba(255,220,120,${al*0.95})`);
-      ctx.beginPath();ctx.arc(x,y,R+3,lo,hi);strokeL([[`rgba(255,110,30,${al*0.28})`,12]]);
-      crescent(x,y,R,r,a0,a1,dir);ctx.fillStyle=g;ctx.fill();flameTongues(x,y,R,a0,a1,al,s.t);outer();strokeL([[`rgba(255,245,210,${al})`,2]]);}
+    else if(sk==='fire'){flameBand(x,y,R,R-r,a0,a1,al,1);}
     else if(sk==='sakura'){crescent(x,y,R,r,a0,a1,dir);ctx.fillStyle=`rgba(255,165,210,${al*0.7})`;ctx.fill();outer();strokeL([[`rgba(255,240,248,${al})`,2]]);}
     else{crescent(x,y,R,r,a0,a1,dir);ctx.fillStyle=`rgba(210,250,255,${al*0.75})`;ctx.fill();outer();strokeL([[`rgba(255,255,255,${al})`,2]]);}
   }
@@ -872,7 +877,7 @@ function drawWaveList(list,sk){
     if(sk==='ghost'){for(let j=2;j>=1;j--){arc(-c*16*j,-sn*16*j);strokeL([[`rgba(${j%2?'215,80,255':'90,150,255'},${al*(0.55-0.18*j)})`,5]]);}arc(0,0);strokeL([[`rgba(125,95,255,${al})`,9],[`rgba(235,240,255,${al})`,2]]);}
     else if(sk==='ink'){arc(0,0);strokeL([[`rgba(240,240,250,${al*0.8})`,12],[`rgba(10,10,16,${al})`,8]]);}
     else if(sk==='bolt'){boltArc(cx,cy,R,w.a-0.95,w.a+0.95,7);strokeL([[`rgba(120,170,255,${al*0.6})`,9],[`rgba(255,242,122,${al})`,3.5],[`rgba(255,255,255,${al})`,1]]);}
-    else if(sk==='fire'){arc(0,0);strokeL([[`rgba(255,90,25,${al*0.85})`,10],[`rgba(255,220,140,${al})`,3]]);}
+    else if(sk==='fire'){flameBand(cx,cy,R+5,12,w.a-0.95,w.a+0.95,al,0.6);}
     else if(sk==='sakura'){arc(0,0);strokeL([[`rgba(255,165,210,${al*0.9})`,9],[`rgba(255,245,250,${al})`,2]]);}
     else{arc(0,0);strokeL([[`rgba(160,250,255,${al})`,9],[`rgba(255,255,255,${al})`,2]]);}
   }
@@ -1168,4 +1173,4 @@ document.addEventListener('visibilitychange',()=>{last=performance.now();joy.id=
 window.__g=()=>({ult,META,pv,shopUI,shopBtnR,U,owned,pickOpts,state,P,enemies,bullets,wave,score,combo,flashT,flashes,kills,inp,keys});
 requestAnimationFrame(frame);
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{})})}
-</script></
+</script></body></html>
