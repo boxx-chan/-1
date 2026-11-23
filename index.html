@@ -101,7 +101,7 @@ function vib(p){try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}}
 let state='title',P,enemies,bullets,parts,slashes,texts,markers,lines;
 let wave,waveQueue,waveT,spawnT,score,combo,comboT,maxCombo,kills,flashes;
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1125.10';
+const VERSION='1125.11';
 let hitSrc='',runT=0,endless=false,clearBonus=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
 let ult=null,mines=[];const ultMax=()=>U.ultFast?75:100,ultN=()=>U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#8a6cff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
@@ -975,7 +975,7 @@ function updShop(dt){
   for(const w of pv.wv){w.t+=dt;w.x+=w.vx*dt;w.y+=w.vy*dt;}pv.wv=pv.wv.filter(w=>w.t<w.life);
   if(pv.t>=pv.wait){pv.t=0;pv.step=pv.step%3+1;const st=pv.step,sv=parts;parts=pv.pt;
     if(st===3){pv.sl.push({a:0,range:THRUST_L,t:0,dur:0.22,step:3,thrust:true});if(pv.sel==='fire')pv.sl.push({aura:true,t:0,dur:0.6});skinFx(pv.sel,0,0,0,true,THRUST_L,0);pv.wait=1.0;}
-    else{const a=st===1?-0.2:0.2;pv.sl.push({a,range:108,arc:2.7,t:0,dur:0.15,step:st,dir:st===2?-1:1});skinFx(pv.sel,0,0,a,false,108,2.7);
+    else{const a=st===1?-0.2:0.2;pv.sl.push({a,range:108,arc:2.7,t:0,dur:0.15,step:st,dir:st===2?-1:1});skinFx(pv.sel,0,0,a,false,108,2.7);if(pv.sel==='fire')pv.sl.push(fireTrail(0,0,a,108,2.7,st===2?-1:1));
       if(st===2)pv.wv.push({x:Math.cos(a)*30,y:Math.sin(a)*30,a,vx:Math.cos(a)*620,vy:Math.sin(a)*620,t:0,life:0.45});pv.wait=0.5;}
     pv.pt=parts;parts=sv;SFX.swing(st,pv.sel);}
 }
