@@ -108,7 +108,7 @@ let rush=false,rushT=0,rChain=0,rChainT=0,rMax=0,rushSpawnT=0,rushElite={},rushB
 let hc=0,hcQueue=[],hcSpawnT=0,hcCap=2,hcSpd=1,hcNew=false,hcEarn=0,hcSelUI={back:null,tiles:[]},hcBtns=[];
 const RUSH_LEN=60,RCHAIN_KEEP=2.5,rMul=()=>1+0.25*Math.min(rChain,12);
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1127.7';
+const VERSION='1127.8';
 let hitSrc='',runT=0,endless=false,clearBonus=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
 let ult=null,mines=[];const ultMax=()=>U.ultFast?75:100,ultN=()=>rush?4:U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#8a6cff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
@@ -252,7 +252,7 @@ function swingCore(){
   let hit=0;
   if(fin){
     const L=THRUST_L*(U.chain?1.4:1),w=U.chain?28:14,ex=p.x+Math.cos(a)*L,ey=p.y+Math.sin(a)*L;
-    slashes.push({a,range:L,t:0,dur:0.22,step,thrust:true});if(META.eq==='fire'||META.eq==='sakura')slashes.push({aura:true,t:0,dur:META.eq==='sakura'?0.75:0.6});skinFx(META.eq,p.x,p.y,a,true,L,0);
+    slashes.push({a,range:L,t:0,dur:0.22,step,thrust:true});if(META.eq==='fire'||META.eq==='sakura')slashes.push({aura:true,t:0,dur:META.eq==='sakura'?0.75:0.6});if(META.eq==='sakura')auraPetals(p.x,p.y);skinFx(META.eq,p.x,p.y,a,true,L,0);
     const tl=[];for(const e of enemies){if(e.dead||e.spawnT>0)continue;if(segDist(e.x,e.y,p.x,p.y,ex,ey)<e.r+w){tl.push(e);}}
     tl.sort((a,b)=>Math.hypot(a.x-p.x,a.y-p.y)-Math.hypot(b.x-p.x,b.y-p.y));
     tl.forEach((e,i)=>{hitEnemy(e,3*U.thrust*(U.chain?1+0.5*i:1),Math.atan2(e.y-p.y,e.x-p.x),620,false,true);hit++;});addUlt(2*hit);
@@ -928,12 +928,9 @@ function fireAura(x,y,pr){const e=1-(1-pr)*(1-pr),R=26+42*e,al=(1-pr)*0.75,n=14;
 function sakuraAura(x,y,pr){const e=1-(1-pr)*(1-pr),R=24+46*e,al=(1-pr)*0.8,n=10;
   const g=ctx.createRadialGradient(x,y,R*0.3,x,y,R+10);g.addColorStop(0,'rgba(255,150,200,0)');g.addColorStop(0.7,`rgba(255,150,205,${al*0.38})`);g.addColorStop(1,'rgba(255,200,230,0)');
   ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,R+10,0,TAU);ctx.fill();
-  for(let i=0;i<n;i++){const h=((i*73)%10)/10,d=h*0.3,q=Math.max(0,Math.min(1,(pr-d)/(1-d)));if(q<=0)continue;
-    const qe=1-(1-q)*(1-q),t=i/n*TAU+h*0.6+qe*(0.9+h*0.6),rr=18+(36+22*h)*qe,px=x+Math.cos(t)*rr,py=y+Math.sin(t)*rr+14*q*q,
-      fa=Math.min(1,q*5)*(1-q*q),w=(5+2.5*h)*Math.min(1,0.4+q*3);
-    ctx.save();ctx.translate(px,py);ctx.rotate(t+q*4*(i%2?1:-1));ctx.globalAlpha=fa*0.95;ctx.fillStyle=i%3?'#ffb3d6':'#ffe0ef';
-    ctx.beginPath();ctx.ellipse(0,0,w,w*0.55,0,0,TAU);ctx.fill();ctx.restore();}
-  ctx.globalAlpha=1;}
+}
+function auraPetals(x,y){const C=['#ffb3d6','#ffc8e2','#ff8fc4','#ffe6f2'];
+  for(let i=0;i<14;i++){const a=i/14*TAU+rnd(-0.2,0.2),r0=rnd(18,30),v=rnd(90,170);parts.push({x:x+Math.cos(a)*r0,y:y+Math.sin(a)*r0,vx:Math.cos(a)*v+rnd(10,40),vy:Math.sin(a)*v-rnd(30,70),t:0,life:rnd(1.0,1.5),col:C[Math.random()*4|0],w:rnd(5,7.5),k:'p',rot:rnd(0,TAU),vr:rnd(-8,8),fr:3,g:85});}}
 function petalBurst(x,y,n,spd){const C=['#ffb3d6','#ffc8e2','#ff8fc4','#ffe6f2'];
   for(let i=0;i<n;i++){const a=Math.random()*TAU,v=rnd(spd*0.25,spd);parts.push({x,y,vx:Math.cos(a)*v+rnd(10,50),vy:Math.sin(a)*v-rnd(20,70),t:0,life:rnd(0.9,1.5),col:C[Math.random()*4|0],w:rnd(5,8),k:'p',rot:rnd(0,TAU),vr:rnd(-8,8),fr:3,g:45});}}
 function strokeL(layers){for(const [c,w] of layers){ctx.strokeStyle=c;ctx.lineWidth=w;ctx.stroke();}}
@@ -1065,7 +1062,7 @@ function updShop(dt){
   for(const s of pv.sl)s.t+=dt;pv.sl=pv.sl.filter(s=>s.t<s.dur);
   for(const w of pv.wv){w.t+=dt;w.x+=w.vx*dt;w.y+=w.vy*dt;}pv.wv=pv.wv.filter(w=>w.t<w.life);
   if(pv.t>=pv.wait){pv.t=0;pv.step=pv.step%3+1;const st=pv.step,sv=parts;parts=pv.pt;
-    if(st===3){pv.sl.push({a:0,range:THRUST_L,t:0,dur:0.22,step:3,thrust:true});if(pv.sel==='fire'||pv.sel==='sakura')pv.sl.push({aura:true,t:0,dur:pv.sel==='sakura'?0.75:0.6});skinFx(pv.sel,0,0,0,true,THRUST_L,0);pv.wait=1.0;}
+    if(st===3){pv.sl.push({a:0,range:THRUST_L,t:0,dur:0.22,step:3,thrust:true});if(pv.sel==='fire'||pv.sel==='sakura')pv.sl.push({aura:true,t:0,dur:pv.sel==='sakura'?0.75:0.6});if(pv.sel==='sakura')auraPetals(0,0);skinFx(pv.sel,0,0,0,true,THRUST_L,0);pv.wait=1.0;}
     else{const a=st===1?-0.2:0.2;pv.sl.push({a,range:108,arc:2.7,t:0,dur:0.15,step:st,dir:st===2?-1:1});skinFx(pv.sel,0,0,a,false,108,2.7);if(pv.sel==='fire'){pv.sl.push(fireTrail(0,0,a,108,2.7,st===2?-1:1));}
       if(st===2)pv.wv.push({x:Math.cos(a)*30,y:Math.sin(a)*30,a,vx:Math.cos(a)*620,vy:Math.sin(a)*620,t:0,life:0.45});pv.wait=0.5;}
     pv.pt=parts;parts=sv;SFX.swing(st,pv.sel);}
