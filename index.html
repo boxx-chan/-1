@@ -14,7 +14,7 @@ canvas{position:fixed;left:0;top:0;display:block;touch-action:none}
 #nickBox input{width:100%;box-sizing:border-box;font-size:18px;padding:10px;border-radius:8px;border:1px solid #3a4a66;background:#070a14;color:#fff;margin:12px 0;text-align:center;user-select:text;-webkit-user-select:text}
 #nickBox button{font-size:16px;font-weight:800;padding:10px 18px;border-radius:8px;border:1.5px solid #5ff4ff;background:rgba(90,240,255,0.2);color:#fff;margin:0 4px}
 #nickBox button.c{border-color:#556;background:transparent}
-</style></head><body><canvas id="c"></canvas><div id="nickBox"><div class="card"><div style="font-weight:900;font-size:17px">랭킹 닉네임</div><div style="font-size:13px;opacity:.7;margin-top:6px">1~12자, 다른 사람에게 보여요</div><input id="nickIn" maxlength="12" autocomplete="off"><div><button class="c" id="nickNo">취소</button><button id="nickOk">확인</button></div></div></div><script>
+</style></head><body><canvas id="c"></canvas><div id="nickBox"><div class="card"><div style="font-weight:900;font-size:17px">랭킹 닉네임</div><div style="font-size:13px;opacity:.7;margin-top:6px">1~12자 · 랭킹에 표시돼요 · 취소하면 기록이 안 올라가요</div><input id="nickIn" maxlength="12" autocomplete="off"><div><button class="c" id="nickNo">취소</button><button id="nickOk">확인</button></div></div></div><script>
 'use strict';
 const cvs=document.getElementById('c'),ctx=cvs.getContext('2d');
 let W=0,H=0,DPR=1,S=1;
@@ -102,7 +102,7 @@ function vib(p){try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}}
 let state='title',P,enemies,bullets,parts,slashes,texts,markers,lines;
 let wave,waveQueue,waveT,spawnT,score,combo,comboT,maxCombo,kills,flashes;
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1124.2';
+const VERSION='1124.3';
 let hitSrc='',runT=0,endless=false,clearBonus=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
 let ult=null,mines=[];const ultMax=()=>U.ultFast?75:100,ultN=()=>U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#8a6cff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
@@ -123,7 +123,7 @@ function loadRank(){if(!rankOn()||rankLoading)return;rankLoading=true;rankErr=''
    .then(x=>x.ok?x.json():x.text().then(t=>Promise.reject(x.status+' '+t.slice(0,60)))).then(d=>{const seen=new Set(),out=[];for(const r of d){if(seen.has(r.nickname))continue;seen.add(r.nickname);out.push(r);if(out.length>=30)break;}rankList=out;rankLoading=false;})
    .catch(er=>{rankErr='불러오기 실패: '+(typeof er==='string'?er:'인터넷 연결');rankLoading=false;});}
 function openRank(){state='rank';rankList=null;rankScroll=0;loadRank();}
-let rankScroll=0,nickCb=null;
+let rankScroll=0,nickCb=null,nickAsked=false;
 function askNick(cb){nickCb=cb;const b=document.getElementById('nickBox'),i=document.getElementById('nickIn');i.value=nick;b.style.display='flex';setTimeout(()=>{try{i.focus()}catch(e){}},50);}
 function closeNick(ok){const b=document.getElementById('nickBox'),v=cleanNick(document.getElementById('nickIn').value);if(ok&&!v)return;b.style.display='none';
   if(ok){nick=v;try{localStorage.setItem('flash_nick',nick)}catch(e){}if(nickCb)nickCb();}nickCb=null;}
@@ -163,7 +163,7 @@ function menuTap(x,y){
   if(state==='shop'){shopTap(x,y);return;}
   if(state==='help'){helpTap(x,y);return;}
   if(state==='rank'){if(x===undefined||inR(x,y,rankUI.back)){state='title';return;}if(inR(x,y,rankUI.nick))askNick(()=>{});return;}
-  if(state==='title'){if(inR(x,y,shopBtnR)){openShop();return;}if(inR(x,y,rankBtnR)){openRank();return;}if(inR(x,y,helpBtnR)){state='help';helpPage=0;return;}if(x!==undefined&&!inR(x,y,startBtnR))return;reset();state='play';goFS();}
+  if(state==='title'){if(inR(x,y,shopBtnR)){openShop();return;}if(inR(x,y,rankBtnR)){openRank();return;}if(inR(x,y,helpBtnR)){state='help';helpPage=0;return;}if(x!==undefined&&!inR(x,y,startBtnR))return;if(rankOn()&&!nick&&!nickAsked){nickAsked=true;askNick(()=>{});return;}reset();state='play';goFS();}
   else if(state==='over'&&overT>1.0){if(x!==undefined&&overRankBtn&&inR(x,y,overRankBtn)){askNick(()=>{if(pendRec)postRec(pendRec);});return;}reset();state='play';}
   else if(state==='clear'&&overT>1.0&&x!==undefined){const rs=clearRects();if(inR(x,y,rs[0])){endless=true;state='play';last=performance.now();banner('무한 모드');}
     else if(inR(x,y,rs[1])){lastEarn=wave*20+kills;META.coins+=lastEarn;saveMeta();if(score>best){best=score;try{localStorage.setItem('flash_best',best)}catch(e){}}reset();state='title';}}
