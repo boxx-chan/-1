@@ -108,7 +108,7 @@ let rush=false,rushT=0,rChain=0,rChainT=0,rMax=0,rushSpawnT=0,rushElite={},rushB
 let hc=0,hcQueue=[],hcSpawnT=0,hcCap=2,hcSpd=1,hcNew=false,hcEarn=0,hcSelUI={back:null,tiles:[]},hcBtns=[];
 const RUSH_LEN=60,RCHAIN_KEEP=2.5,rMul=()=>1+0.25*Math.min(rChain,12);
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1127.5';
+const VERSION='1127.6';
 let hitSrc='',runT=0,endless=false,clearBonus=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
 let ult=null,mines=[];const ultMax=()=>U.ultFast?75:100,ultN=()=>rush?4:U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#8a6cff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
@@ -1099,6 +1099,7 @@ function drawShop(){
   ctx.fillStyle=eq?'rgba(255,255,255,0.06)':own?'rgba(90,240,255,0.25)':can?'rgba(255,224,102,0.28)':'rgba(255,255,255,0.06)';ctx.fill();
   ctx.strokeStyle=eq?'rgba(255,255,255,0.2)':own?'#8ff':can?'#ffe066':'rgba(255,255,255,0.2)';ctx.lineWidth=2;ctx.stroke();
   txt(eq?'장착중':own?'장착하기':'구매  ◆ '+k.price.toLocaleString(),act.x+act.w/2,act.y+act.h/2,17,eq?'rgba(255,255,255,0.5)':own?'#cff':can?'#ffe066':'rgba(255,255,255,0.45)',800);
+  if(pv.sel==='sakura')txt('✿ 특수효과 적용 (처치 시 꽃잎)',px0+pw/2,py0+ph-16,13,'#ffb3d6',800);
   if(pv.msgT>0){ctx.globalAlpha=Math.min(1,pv.msgT*3);txt(pv.msg,px0+pw/2,py0+20,14,'#fff',800);ctx.globalAlpha=1;}
   const gx0=W*0.45,gx1=W-14,gy0=top,gy1=H-14,gap=10,cw=(gx1-gx0-gap*2)/3,ch=(gy1-gy0-gap)/2;shopUI.cards=[];
   SKINS.forEach((sk,i)=>{const cx=gx0+(i%3)*(cw+gap),cy=gy0+Math.floor(i/3)*(ch+gap),r={x:cx,y:cy,w:cw,h:ch};shopUI.cards.push(r);
