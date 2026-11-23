@@ -9,7 +9,12 @@
 <style>
 html,body{margin:0;height:100%;background:#070a14;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
 canvas{position:fixed;left:0;top:0;display:block;touch-action:none}
-</style></head><body><canvas id="c"></canvas><script>
+#nickBox{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(5,7,15,0.8);z-index:10;touch-action:auto}
+#nickBox .card{background:#101626;border:1.5px solid #5ff4ff;border-radius:14px;padding:18px 20px;width:min(320px,86vw);font-family:system-ui,sans-serif;color:#fff;text-align:center}
+#nickBox input{width:100%;box-sizing:border-box;font-size:18px;padding:10px;border-radius:8px;border:1px solid #3a4a66;background:#070a14;color:#fff;margin:12px 0;text-align:center;user-select:text;-webkit-user-select:text}
+#nickBox button{font-size:16px;font-weight:800;padding:10px 18px;border-radius:8px;border:1.5px solid #5ff4ff;background:rgba(90,240,255,0.2);color:#fff;margin:0 4px}
+#nickBox button.c{border-color:#556;background:transparent}
+</style></head><body><canvas id="c"></canvas><div id="nickBox"><div class="card"><div style="font-weight:900;font-size:17px">랭킹 닉네임</div><div style="font-size:13px;opacity:.7;margin-top:6px">1~12자, 다른 사람에게 보여요</div><input id="nickIn" maxlength="12" autocomplete="off"><div><button class="c" id="nickNo">취소</button><button id="nickOk">확인</button></div></div></div><script>
 'use strict';
 const cvs=document.getElementById('c'),ctx=cvs.getContext('2d');
 let W=0,H=0,DPR=1,S=1;
@@ -97,12 +102,33 @@ function vib(p){try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}}
 let state='title',P,enemies,bullets,parts,slashes,texts,markers,lines;
 let wave,waveQueue,waveT,spawnT,score,combo,comboT,maxCombo,kills,flashes;
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1123.15';
+const VERSION='1124.0';
 let hitSrc='',runT=0,endless=false,clearBonus=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
 let ult=null,mines=[];const ultMax=()=>U.ultFast?75:100,ultN=()=>U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#8a6cff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
   {id:'bolt',name:'번개',price:2500,col:'#fff07a'},{id:'fire',name:'화염',price:4000,col:'#ff8a3d'},{id:'sakura',name:'벚꽃',price:6000,col:'#ffb3d6'}];
 let META={coins:0,own:{flash:1},eq:'flash'},lastEarn=0;
+const RANK={url:'',key:''};
+let nick='';try{nick=localStorage.getItem('flash_nick')||'';}catch(e){}
+let rankList=null,rankErr='',rankLoading=false,pendRec=null,recMsg='',clearTimeRec=null,rankUI={back:null,nick:null},overRankBtn=null;
+const rankOn=()=>!!(RANK.url&&RANK.key);
+function cleanNick(v){return String(v||'').replace(/[\u0000-\u001f\u007f<>]/g,'').trim().slice(0,12);}
+function rankHdr(){return{'apikey':RANK.key,'Authorization':'Bearer '+RANK.key,'Content-Type':'application/json'};}
+function postRec(r){if(!rankOn()||!nick){pendRec=r;recMsg=rankOn()?'':'';return;}pendRec=null;recMsg='랭킹 등록 중...';
+  fetch(RANK.url+'/rest/v1/scores',{method:'POST',headers:Object.assign(rankHdr(),{'Prefer':'return=minimal'}),body:JSON.stringify(Object.assign({nickname:nick},r))})
+   .then(x=>{recMsg=x.ok?'랭킹 등록 완료 ('+nick+')':'랭킹 등록 실패';rankList=null;}).catch(()=>{recMsg='랭킹 등록 실패 (인터넷 확인)';});}
+function makeRec(){const cl=clearTimeRec!==null;return{wave:Math.max(1,Math.min(999,wave)),cleared:cl,clear_time:cl?Math.max(60,Math.round(clearTimeRec)):null,score:Math.max(0,Math.round(score)),kills};}
+function loadRank(){if(!rankOn()||rankLoading)return;rankLoading=true;rankErr='';
+  fetch(RANK.url+'/rest/v1/scores?select=nickname,wave,cleared,clear_time,score&order=cleared.desc,clear_time.asc.nullslast,wave.desc,score.desc&limit=300',{headers:rankHdr()})
+   .then(x=>x.ok?x.json():Promise.reject()).then(d=>{const seen=new Set(),out=[];for(const r of d){if(seen.has(r.nickname))continue;seen.add(r.nickname);out.push(r);if(out.length>=30)break;}rankList=out;rankLoading=false;})
+   .catch(()=>{rankErr='불러오기 실패 (인터넷 확인)';rankLoading=false;});}
+function openRank(){state='rank';rankList=null;rankScroll=0;loadRank();}
+let rankScroll=0,nickCb=null;
+function askNick(cb){nickCb=cb;const b=document.getElementById('nickBox'),i=document.getElementById('nickIn');i.value=nick;b.style.display='flex';setTimeout(()=>{try{i.focus()}catch(e){}},50);}
+function closeNick(ok){const b=document.getElementById('nickBox'),v=cleanNick(document.getElementById('nickIn').value);if(ok&&!v)return;b.style.display='none';
+  if(ok){nick=v;try{localStorage.setItem('flash_nick',nick)}catch(e){}if(nickCb)nickCb();}nickCb=null;}
+addEventListener('load',()=>{document.getElementById('nickOk').onclick=()=>closeNick(true);document.getElementById('nickNo').onclick=()=>closeNick(false);
+  document.getElementById('nickIn').addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Enter')closeNick(true);if(e.key==='Escape')closeNick(false);});});
 try{const m=JSON.parse(localStorage.getItem('flash_meta')||'null');if(m&&typeof m==='object'){META.coins=Math.max(0,+m.coins||0);META.own=Object.assign({flash:1},m.own||{});if(SKINS.some(k=>k.id===m.eq)&&META.own[m.eq])META.eq=m.eq;META.cleared=m.cleared||0;META.bestClear=m.bestClear||0;}}catch(e){}
 function saveMeta(){try{localStorage.setItem('flash_meta',JSON.stringify(META))}catch(e){}}
 const skinById=id=>SKINS.find(k=>k.id===id)||SKINS[0];
@@ -114,7 +140,7 @@ function reset(){
   U={slash:1,thrust:1,strike:1,range:1,powDur:0,powMul:0,dashRed:0,comboAdd:0,wave:false,chain:false,shock:false,vamp:false,waveBig:false,ultFast:false,ultMore:false,ultFin:false,bigDmg:false};owned={};applyU();pickNext=false;waves2=[];
   ult=null;P={ult:0,hurtLock:0,chain:0,chainT:0,charge:1,flashCD:0,grace:0,pow:0,chainT:0,x:AW/2,y:AH/2,vx:0,vy:0,r:15,hp:5,maxHp:5,face:0,dashT:0,dashCD:0,dx:1,dy:0,inv:0,just:0,justUsed:true,atkCD:0,comboStep:0,comboWin:0,trail:[]};
   mines=[];enemies=[];bullets=[];parts=[];slashes=[];texts=[];markers=[];lines=[];
-  runT=0;endless=false;bonusPick=0;wave=0;waveQueue=[];waveT=1.2;spawnT=0;score=0;combo=0;comboT=0;maxCombo=0;kills=0;flashes=0;
+  runT=0;endless=false;clearTimeRec=null;bonusPick=0;wave=0;waveQueue=[];waveT=1.2;spawnT=0;score=0;combo=0;comboT=0;maxCombo=0;kills=0;flashes=0;
   hitstop=0;trauma=0;ts=1;flashT=0;hurtFlash=0;overT=0;camX=P.x;camY=P.y;bannerT=0;strikeFlash=0;
 }
 reset();
@@ -136,8 +162,9 @@ function menuTap(x,y){
   if(state==='pick'){if(pickT<0.35)return;const i=pickHit(x,y);if(i>=0)choose(i);return;}
   if(state==='shop'){shopTap(x,y);return;}
   if(state==='help'){helpTap(x,y);return;}
-  if(state==='title'){if(inR(x,y,shopBtnR)){openShop();return;}if(inR(x,y,helpBtnR)){state='help';helpPage=0;return;}if(x!==undefined&&!inR(x,y,startBtnR))return;reset();state='play';goFS();}
-  else if(state==='over'&&overT>1.0){reset();state='play';}
+  if(state==='rank'){if(x===undefined||inR(x,y,rankUI.back)){state='title';return;}if(inR(x,y,rankUI.nick))askNick(()=>{});return;}
+  if(state==='title'){if(inR(x,y,shopBtnR)){openShop();return;}if(inR(x,y,rankBtnR)){openRank();return;}if(inR(x,y,helpBtnR)){state='help';helpPage=0;return;}if(x!==undefined&&!inR(x,y,startBtnR))return;reset();state='play';goFS();}
+  else if(state==='over'&&overT>1.0){if(x!==undefined&&overRankBtn&&inR(x,y,overRankBtn)){askNick(()=>{if(pendRec)postRec(pendRec);});return;}reset();state='play';}
   else if(state==='clear'&&overT>1.0&&x!==undefined){const rs=clearRects();if(inR(x,y,rs[0])){endless=true;state='play';last=performance.now();banner('무한 모드');}
     else if(inR(x,y,rs[1])){lastEarn=wave*20+kills;META.coins+=lastEarn;saveMeta();if(score>best){best=score;try{localStorage.setItem('flash_best',best)}catch(e){}}reset();state='title';}}
 }
@@ -346,7 +373,7 @@ function hurt(sx,sy){
   const p=P;p.hp--;p.inv=1.1;p.hurtLock=1.1;combo=0;hurtFlash=1;trauma=Math.min(1,trauma+0.6);hitstop=Math.max(hitstop,0.1);
   const a=Math.atan2(p.y-sy,p.x-sx);p.vx+=Math.cos(a)*380;p.vy+=Math.sin(a)*380;
   SFX.hurt();vib(160);burst(p.x,p.y,16,'#f46',300,0.5,2);
-  if(p.hp<=0){state='over';overT=0;flashT=0;lastEarn=wave*20+kills;META.coins+=lastEarn;saveMeta();if(score>best){best=score;try{localStorage.setItem('flash_best',best)}catch(e){}}}
+  if(p.hp<=0){state='over';overT=0;flashT=0;recMsg='';postRec(makeRec());lastEarn=wave*20+kills;META.coins+=lastEarn;saveMeta();if(score>best){best=score;try{localStorage.setItem('flash_best',best)}catch(e){}}}
 }
 function enemyHits(sx,sy){
   if(tryJust())return;
@@ -518,7 +545,7 @@ function hitBoss(e,dmg,a,kb,strike,pierce){
 function killBoss(e,vul){
   killEnemy(e,vul);burst(e.x,e.y,60,'#ff4a5a',700,0.8,3);ring(e.x,e.y,e.r,e.r*8,'#fff',0.6,8);hitstop=0.3;trauma=1;strikeFlash=1;vib([60,40,120]);
   P.hp=P.maxHp;bonusPick++;META.coins+=100;saveMeta();addText(P.x,P.y-50,'체력 회복 · 강화 +1 · 코인 +100','#ffe066',18,1.8);banner('보스 처치!');
-  if(e.k===3&&!endless){clearBonus=500;META.coins+=500;META.cleared=1;if(!META.bestClear||runT<META.bestClear)META.bestClear=runT;saveMeta();state='clear';overT=0;flashT=0;ult=null;ts=1;}
+  if(e.k===3&&!endless){clearBonus=500;META.coins+=500;META.cleared=1;if(!META.bestClear||runT<META.bestClear)META.bestClear=runT;saveMeta();state='clear';overT=0;flashT=0;ult=null;ts=1;clearTimeRec=runT;recMsg='';postRec(makeRec());}
 }
 function updateBullets(dt){
   const p=P;
@@ -897,7 +924,7 @@ function drawHUD(){
   if(bannerT>0&&state==='play'){const a=Math.min(1,bannerT*2.5);ctx.globalAlpha=a;txt(bannerText,W/2,H*0.32,Math.round(H*0.09),bannerText==='CLEAR'?'#9fe':'#fff',900);ctx.globalAlpha=1;}
 }
 const inR=(x,y,r)=>r&&x>=r.x&&x<=r.x+r.w&&y>=r.y&&y<=r.y+r.h;
-let shopBtnR=null,startBtnR=null,helpBtnR=null,helpPage=0,helpUI={back:null,tabs:[],next:null},shopUI={back:null,act:null,cards:[]};
+let rankBtnR=null,shopBtnR=null,startBtnR=null,helpBtnR=null,helpPage=0,helpUI={back:null,tabs:[],next:null},shopUI={back:null,act:null,cards:[]};
 const pv={sl:[],pt:[],wv:[],t:0,wait:0.3,step:0,sel:'flash',msg:'',msgT:0};
 function openShop(){state='shop';pv.sl=[];pv.pt=[];pv.wv=[];pv.t=0;pv.wait=0.3;pv.step=0;pv.sel=META.eq;pv.msgT=0;}
 function updShop(dt){
@@ -1025,6 +1052,29 @@ function drawTitle(){
   txt('게임 방법',hb.x+hb.w/2,hb.y+hb.h/2,14,'#8ff',800);
   const sb={x:W-150,y:34,w:136,h:40};shopBtnR=sb;rrect(sb.x,sb.y,sb.w,sb.h,10);ctx.fillStyle='rgba(255,224,102,0.12)';ctx.fill();ctx.strokeStyle='rgba(255,224,102,0.6)';ctx.lineWidth=1.5;ctx.stroke();
   txt('상점  ◆ '+META.coins.toLocaleString(),sb.x+sb.w/2,sb.y+sb.h/2,14,'#ffe066',800);
+  const rb={x:W-150,y:84,w:136,h:40};rankBtnR=rb;rrect(rb.x,rb.y,rb.w,rb.h,10);ctx.fillStyle='rgba(200,140,255,0.12)';ctx.fill();ctx.strokeStyle='rgba(200,140,255,0.6)';ctx.lineWidth=1.5;ctx.stroke();
+  txt('랭킹',rb.x+rb.w/2,rb.y+rb.h/2,14,'#d9b8ff',800);
+}
+function drawRank(){
+  drawBg();ctx.fillStyle='rgba(5,7,15,0.7)';ctx.fillRect(0,0,W,H);
+  const bk={x:14,y:14,w:96,h:38};rankUI.back=bk;rrect(bk.x,bk.y,bk.w,bk.h,10);ctx.fillStyle='rgba(255,255,255,0.06)';ctx.fill();ctx.strokeStyle='rgba(255,255,255,0.3)';ctx.lineWidth=1.5;ctx.stroke();txt('← 뒤로',bk.x+bk.w/2,bk.y+bk.h/2,14,'#fff',800);
+  txt('온라인 랭킹',W/2,33,20,'#d9b8ff',900);
+  const nb={x:W-200,y:14,w:186,h:38};rankUI.nick=nb;rrect(nb.x,nb.y,nb.w,nb.h,10);ctx.fillStyle='rgba(200,140,255,0.12)';ctx.fill();ctx.strokeStyle='rgba(200,140,255,0.6)';ctx.lineWidth=1.5;ctx.stroke();
+  txt(nick?'닉네임: '+nick:'닉네임 정하기',nb.x+nb.w/2,nb.y+nb.h/2,13,'#fff',800);
+  if(!rankOn()){txt('랭킹 서버 준비 중',W/2,H/2,18,'rgba(255,255,255,0.7)',800);return;}
+  if(rankErr){txt(rankErr,W/2,H/2,16,'#ff8da6',800);return;}
+  if(!rankList){txt('불러오는 중...',W/2,H/2,16,'rgba(255,255,255,0.7)',700);return;}
+  if(!rankList.length){txt('아직 기록이 없어요. 첫 번째가 되어보세요!',W/2,H/2,16,'rgba(255,255,255,0.7)',700);return;}
+  const top=66,rh=Math.max(24,Math.min(30,(H-top-10)/11)),n=Math.floor((H-top-10)/rh)-1,cx=[W*0.12,W*0.2,W*0.58,W*0.86];
+  const half=Math.ceil(rankList.length/2),two=rankList.length>n;
+  for(let col=0;col<(two?2:1);col++){const ox=two?(col?W*0.5:0):0,sx=two?0.5:1,X=k=>ox+cx[k]*sx+(two&&k===0?8:0),hc='rgba(255,255,255,0.5)';txt('순위',X(0),top+rh/2,12,hc,700);txt('닉네임',X(1),top+rh/2,12,hc,700,'left');txt('기록',X(2),top+rh/2,12,hc,700);txt('점수',X(3),top+rh/2,12,hc,700);}
+  rankList.forEach((r,i)=>{let col=0,row=i;if(two){if(i>=half){col=1;row=i-half;}}if(row>=n)return;const ox=two?(col?W*0.5:0):0,sx=two?0.5:1,y=top+rh*(row+1.5),me=r.nickname===nick;
+    const X=k=>ox+cx[k]*sx+(two&&k===0?8:0),fs=two?13:15;
+    if(me){ctx.fillStyle='rgba(200,140,255,0.12)';ctx.fillRect(ox+8,y-rh/2+2,W*sx-16,rh-4);}
+    const c=i===0?'#ffe066':i===1?'#e0e8f0':i===2?'#e8a878':'#fff';
+    txt(String(i+1),X(0),y,fs,c,900);txt(r.nickname,X(1),y,fs,me?'#e6ccff':'#fff',800,'left');
+    txt(r.cleared?'클리어 '+fmtT(r.clear_time||0):'웨이브 '+r.wave,X(2),y,fs,r.cleared?'#5ff4ff':'rgba(255,255,255,0.8)',700);
+    txt(Number(r.score).toLocaleString(),X(3),y,fs,'rgba(255,230,140,0.9)',700);});
 }
 const fmtT=t=>Math.floor(t/60)+':'+String(Math.floor(t%60)).padStart(2,'0');
 function clearRects(){const w=Math.min(230,W*0.3),h=44,g=16,y=H*0.78;return[{x:W/2-w-g/2,y,w,h},{x:W/2+g/2,y,w,h}];}
@@ -1036,7 +1086,7 @@ function drawClear(){
   txt('시간 '+fmtT(runT)+(META.bestClear?'   ·   최고 '+fmtT(META.bestClear):''),W/2,H*0.42,fs*1.2,'#fff',800);
   txt(`점수 ${score.toLocaleString()}   ·   처치 ${kills}   ·   최대 콤보 ${maxCombo}   ·   섬광 ${flashes}회`,W/2,H*0.52,fs,'rgba(200,240,255,0.85)',600);
   txt('클리어 보너스 +500 코인 (보유 ◆ '+META.coins.toLocaleString()+')',W/2,H*0.62,fs,'#ffe066',800);
-  txt('처음 화면으로 가면 웨이브·처치 코인도 받아요',W/2,H*0.69,Math.round(fs*0.8),'rgba(255,255,255,0.5)',600);
+  txt(rankOn()&&recMsg?recMsg:'처음 화면으로 가면 웨이브·처치 코인도 받아요',W/2,H*0.69,Math.round(fs*0.8),rankOn()&&recMsg?'#d9b8ff':'rgba(255,255,255,0.5)',600);
   if(overT>1){const rs=clearRects(),lb=['무한 모드로 계속','처음 화면'];rs.forEach((r,i)=>{rrect(r.x,r.y,r.w,r.h,10);ctx.fillStyle=i?'rgba(255,255,255,0.08)':'rgba(90,240,255,0.22)';ctx.fill();ctx.strokeStyle=i?'rgba(255,255,255,0.3)':'#5ff4ff';ctx.lineWidth=2;ctx.stroke();txt(lb[i],r.x+r.w/2,r.y+r.h/2,fs,'#fff',800);});}
 }
 function drawOver(){
@@ -1049,13 +1099,16 @@ function drawOver(){
   txt(`WAVE ${wave}   ·   처치 ${kills}   ·   최대 콤보 ${maxCombo}   ·   섬광 ${flashes}회`,W/2,H*0.6,fs,'rgba(200,240,255,0.85)',600);
   const ow=TRACKS.filter(c=>owned[c.id]).map(c=>c.name+' Lv'+owned[c.id]).join(' · ');if(ow)txt(ow,W/2,H*0.68,Math.round(fs*0.85),'rgba(255,230,140,0.8)',600);
   txt('+'+lastEarn.toLocaleString()+' 코인   (보유 ◆ '+META.coins.toLocaleString()+')',W/2,H*0.74,Math.round(fs*0.95),'#ffe066',800);
-  if(overT>1&&Math.floor(time*2)%2===0)txt('터치해서 다시',W/2,H*0.86,Math.round(fs*1.15),'#fff',800);
+  overRankBtn=null;if(rankOn()){if(pendRec&&!nick&&overT>1){const b={x:W/2-110,y:H*0.835-18,w:220,h:36};overRankBtn=b;rrect(b.x,b.y,b.w,b.h,10);ctx.fillStyle='rgba(200,140,255,0.2)';ctx.fill();ctx.strokeStyle='#d9b8ff';ctx.lineWidth=1.5;ctx.stroke();txt('닉네임 정하고 랭킹 등록',W/2,b.y+b.h/2,Math.round(fs*0.95),'#fff',800);}
+    else if(recMsg)txt(recMsg,W/2,H*0.825,Math.round(fs*0.85),'#d9b8ff',700);}
+  if(overT>1&&Math.floor(time*2)%2===0)txt('터치해서 다시',W/2,H*0.94,Math.round(fs*1.15),'#fff',800);
 }
 function render(){
   ctx.setTransform(DPR,0,0,DPR,0,0);
   if(state==='title'){drawTitle();}
   else if(state==='shop'){drawShop();}
   else if(state==='help'){drawHelp();}
+  else if(state==='rank'){drawRank();}
   else{
     ctx.fillStyle='#05070f';ctx.fillRect(0,0,W,H);
     const sh=trauma*trauma*18,ox=(Math.random()*2-1)*sh,oy=(Math.random()*2-1)*sh;
