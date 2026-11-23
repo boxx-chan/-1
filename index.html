@@ -97,7 +97,7 @@ function vib(p){try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}}
 let state='title',P,enemies,bullets,parts,slashes,texts,markers,lines;
 let wave,waveQueue,waveT,spawnT,score,combo,comboT,maxCombo,kills,flashes;
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1123.14';
+const VERSION='1123.15';
 let hitSrc='',runT=0,endless=false,clearBonus=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
 let ult=null,mines=[];const ultMax=()=>U.ultFast?75:100,ultN=()=>U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#8a6cff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
@@ -112,7 +112,7 @@ let bonusPick=0,U,owned,pickOpts=[],pickT=0,pickNext=false;
 function applyU(){DASH_CD=0.95-U.dashRed;COMBO_WIN=1.2+U.comboAdd;POW_DUR=3+U.powDur;POW_MUL=2+U.powMul;}
 function reset(){
   U={slash:1,thrust:1,strike:1,range:1,powDur:0,powMul:0,dashRed:0,comboAdd:0,wave:false,chain:false,shock:false,vamp:false,waveBig:false,ultFast:false,ultMore:false,ultFin:false,bigDmg:false};owned={};applyU();pickNext=false;waves2=[];
-  ult=null;P={ult:0,chain:0,chainT:0,charge:1,flashCD:0,grace:0,pow:0,chainT:0,x:AW/2,y:AH/2,vx:0,vy:0,r:15,hp:5,maxHp:5,face:0,dashT:0,dashCD:0,dx:1,dy:0,inv:0,just:0,justUsed:true,atkCD:0,comboStep:0,comboWin:0,trail:[]};
+  ult=null;P={ult:0,hurtLock:0,chain:0,chainT:0,charge:1,flashCD:0,grace:0,pow:0,chainT:0,x:AW/2,y:AH/2,vx:0,vy:0,r:15,hp:5,maxHp:5,face:0,dashT:0,dashCD:0,dx:1,dy:0,inv:0,just:0,justUsed:true,atkCD:0,comboStep:0,comboWin:0,trail:[]};
   mines=[];enemies=[];bullets=[];parts=[];slashes=[];texts=[];markers=[];lines=[];
   runT=0;endless=false;bonusPick=0;wave=0;waveQueue=[];waveT=1.2;spawnT=0;score=0;combo=0;comboT=0;maxCombo=0;kills=0;flashes=0;
   hitstop=0;trauma=0;ts=1;flashT=0;hurtFlash=0;overT=0;camX=P.x;camY=P.y;bannerT=0;strikeFlash=0;
@@ -272,7 +272,7 @@ function killEnemy(e,strike){
   hitstop=Math.max(hitstop,e.type==='brute'?0.16:0.07);trauma=Math.min(1,trauma+(e.type==='brute'?0.5:0.22));
 }
 function tryJust(){
-  const p=P;if(p.just<=0||p.justUsed)return false;
+  const p=P;if(p.just<=0||p.justUsed||p.hurtLock>0)return false;
   for(const e of enemies){if(e.dead||e.spawnT>0)continue;const d=Math.hypot(e.x-p.x,e.y-p.y);
     if((e.type==='grunt'||e.type==='shield')&&((e.state==='act'&&d<e.r+p.r+34)||(e.state==='wind'&&e.t<0.22&&d<140)))return triggerFlash(e.x,e.y);
     if(e.type==='brute'&&((e.state==='wind'&&e.t<0.28)||e.state==='act')&&d<e.slamR+p.r+10)return triggerFlash(e.x,e.y);
@@ -343,7 +343,7 @@ function updateUlt(rdt){
   if(ult.t<=0){if(ult.i>=ultN()){ult=null;P.grace=GRACE;P.inv=0;P.atkCD=0.2;P.comboWin=0;return;}ultDash();if(!ult)return;ult.i++;ult.t=ult.i>=ultN()?0.25:0.12;}
 }
 function hurt(sx,sy){
-  const p=P;p.hp--;p.inv=1.1;combo=0;hurtFlash=1;trauma=Math.min(1,trauma+0.6);hitstop=Math.max(hitstop,0.1);
+  const p=P;p.hp--;p.inv=1.1;p.hurtLock=1.1;combo=0;hurtFlash=1;trauma=Math.min(1,trauma+0.6);hitstop=Math.max(hitstop,0.1);
   const a=Math.atan2(p.y-sy,p.x-sx);p.vx+=Math.cos(a)*380;p.vy+=Math.sin(a)*380;
   SFX.hurt();vib(160);burst(p.x,p.y,16,'#f46',300,0.5,2);
   if(p.hp<=0){state='over';overT=0;flashT=0;lastEarn=wave*20+kills;META.coins+=lastEarn;saveMeta();if(score>best){best=score;try{localStorage.setItem('flash_best',best)}catch(e){}}}
@@ -355,7 +355,7 @@ function enemyHits(sx,sy){
 }
 function updatePlayer(dt){
   const p=P,mx=inp.jx,my=inp.jy,mm=Math.hypot(mx,my);
-  p.dashCD-=realDt;p.atkCD-=dt;if(p.pow>0)p.pow-=dt;p.comboWin-=dt;p.inv-=dt;p.just-=dt;
+  p.dashCD-=realDt;p.atkCD-=dt;if(p.pow>0)p.pow-=dt;p.comboWin-=dt;p.inv-=dt;p.just-=dt;if(p.hurtLock>0)p.hurtLock-=dt;
   if(mm>0.1&&p.atkCD<=0.04&&p.dashT<=0)p.face=Math.atan2(my,mx);
   if(flashT>0&&inp.dash>0&&p.ult>=ultMax()&&!ult){startUlt();return;}
   if(flashT>0)inp.dash=0;
