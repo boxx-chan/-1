@@ -101,7 +101,7 @@ function vib(p){try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}}
 let state='title',P,enemies,bullets,parts,slashes,texts,markers,lines;
 let wave,waveQueue,waveT,spawnT,score,combo,comboT,maxCombo,kills,flashes;
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1125.13';
+const VERSION='1125.14';
 let hitSrc='',runT=0,endless=false,clearBonus=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
 let ult=null,mines=[];const ultMax=()=>U.ultFast?75:100,ultN=()=>U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#8a6cff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
@@ -247,7 +247,7 @@ function swing(){
   }
   const range=108*U.range,arc=2.7,dmg=U.slash,kb=280;
   if(step===2&&U.wave)waves2.push({x:p.x+Math.cos(a)*30,y:p.y+Math.sin(a)*30,a,vx:Math.cos(a)*620,vy:Math.sin(a)*620,t:0,life:U.waveBig?0.65:0.45,hits:new Set(),dmg:U.slash,sc:U.waveBig?1.5:1});
-  slashes.push({a,range,arc,t:0,dur:0.15,step,dir:step===2?-1:1});skinFx(META.eq,p.x,p.y,a,false,range,arc);if(META.eq==='fire')slashes.push(fireTrail(p.x,p.y,a,range,arc,step===2?-1:1));
+  slashes.push({a,range,arc,t:0,dur:0.15,step,dir:step===2?-1:1});skinFx(META.eq,p.x,p.y,a,false,range,arc);if(META.eq==='fire'){slashes.push(fireTrail(p.x,p.y,a,range,arc,step===2?-1:1));slashes.push({rw:true,x:p.x,y:p.y,a,range,t:0,dur:0.35});}
   for(const e of enemies){if(e.dead||e.spawnT>0)continue;const dx=e.x-p.x,dy=e.y-p.y,d=Math.hypot(dx,dy);
     if(d>range+e.r)continue;if(d>e.r+p.r&&Math.abs(angDiff(a,Math.atan2(dy,dx)))>arc/2+0.15)continue;
     hitEnemy(e,dmg,Math.atan2(dy,dx),kb,false);hit++;}
@@ -842,6 +842,11 @@ function drawFireTrail(s,pr){const x=s.x,y=s.y,R=s.range,a0=s.a-s.arc/2,a1=s.a+s
       for(let i=0;i<=n;i++){const u=i/n,t=a0+(a1-a0)*u,tp=Math.sin(Math.PI*u),ext=(i%2?rnd(8,26):rnd(0,6))*tp*k*(1-q*0.5),rr=R+ext*0.4;ctx.lineTo(x+Math.cos(t)*rr,y+Math.sin(t)*rr-ext);}
       for(let i=n;i>=0;i--){const u=i/n,t=a0+(a1-a0)*u,tp=Math.sin(Math.PI*u),rr=R-th*k*tp;ctx.lineTo(x+Math.cos(t)*rr,y+Math.sin(t)*rr);}
       ctx.closePath();ctx.fillStyle=`rgba(${cr},${cg},${cb},${al*ca*0.9})`;ctx.fill();}}}
+function redWave(s,pr){const e=1-(1-pr)*(1-pr),c=Math.cos(s.a),sn=Math.sin(s.a),R=s.range*0.75,d=s.range*0.85+110*e,cx=s.x+c*(d-R),cy=s.y+sn*(d-R),h=0.8,al=1-pr*pr*pr,
+    ix=cx-c*R*0.05,iy=cy-sn*R*0.05,Ri=R*0.78;
+  ctx.beginPath();ctx.arc(cx,cy,R,s.a-h,s.a+h);ctx.arc(ix,iy,Ri,s.a+h*1.05,s.a-h*1.05,true);ctx.closePath();
+  const g=ctx.createRadialGradient(ix,iy,Ri*0.9,cx,cy,R);g.addColorStop(0,`rgba(120,0,10,${al*0.5})`);g.addColorStop(1,`rgba(200,0,20,${al*0.95})`);
+  ctx.fillStyle=g;ctx.fill();ctx.beginPath();ctx.arc(cx,cy,R,s.a-h,s.a+h);strokeL([[`rgba(255,30,40,${al*0.45})`,6],[`rgba(255,70,60,${al})`,1.8]]);}
 function fireAura(x,y,pr){const e=1-(1-pr)*(1-pr),R=26+42*e,al=(1-pr)*0.75,n=14;
   const g=ctx.createRadialGradient(x,y,R*0.4,x,y,R+6);g.addColorStop(0,'rgba(255,90,20,0)');g.addColorStop(0.75,`rgba(255,110,30,${al*0.45})`);g.addColorStop(1,'rgba(255,200,110,0)');
   ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,R+6,0,TAU);ctx.fill();
@@ -854,6 +859,7 @@ function drawSlashList(list,x,y,sk,wide){
     const pr=s.t/s.dur,al=1-pr*pr;
     if(s.aura){fireAura(x,y,pr);continue;}
     if(s.ft){drawFireTrail(s,pr);continue;}
+    if(s.rw){redWave(s,pr);continue;}
     if(s.thrust){const k=Math.min(1,pr*3),c=Math.cos(s.a),sn=Math.sin(s.a),L=s.range*k,w=(wide?24:12)*(1-pr*0.5),ex=x+c*L,ey=y+sn*L;
       const tri=()=>{ctx.beginPath();ctx.moveTo(x-sn*w,y+c*w);ctx.lineTo(ex,ey);ctx.lineTo(x+sn*w,y-c*w);ctx.closePath();};
       const mid=()=>{ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(ex,ey);};
@@ -972,7 +978,7 @@ function updShop(dt){
   for(const w of pv.wv){w.t+=dt;w.x+=w.vx*dt;w.y+=w.vy*dt;}pv.wv=pv.wv.filter(w=>w.t<w.life);
   if(pv.t>=pv.wait){pv.t=0;pv.step=pv.step%3+1;const st=pv.step,sv=parts;parts=pv.pt;
     if(st===3){pv.sl.push({a:0,range:THRUST_L,t:0,dur:0.22,step:3,thrust:true});if(pv.sel==='fire')pv.sl.push({aura:true,t:0,dur:0.6});skinFx(pv.sel,0,0,0,true,THRUST_L,0);pv.wait=1.0;}
-    else{const a=st===1?-0.2:0.2;pv.sl.push({a,range:108,arc:2.7,t:0,dur:0.15,step:st,dir:st===2?-1:1});skinFx(pv.sel,0,0,a,false,108,2.7);if(pv.sel==='fire')pv.sl.push(fireTrail(0,0,a,108,2.7,st===2?-1:1));
+    else{const a=st===1?-0.2:0.2;pv.sl.push({a,range:108,arc:2.7,t:0,dur:0.15,step:st,dir:st===2?-1:1});skinFx(pv.sel,0,0,a,false,108,2.7);if(pv.sel==='fire'){pv.sl.push(fireTrail(0,0,a,108,2.7,st===2?-1:1));pv.sl.push({rw:true,x:0,y:0,a,range:108,t:0,dur:0.35});}
       if(st===2)pv.wv.push({x:Math.cos(a)*30,y:Math.sin(a)*30,a,vx:Math.cos(a)*620,vy:Math.sin(a)*620,t:0,life:0.45});pv.wait=0.5;}
     pv.pt=parts;parts=sv;SFX.swing(st,pv.sel);}
 }
