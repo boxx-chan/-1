@@ -102,18 +102,18 @@ function vib(p){try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}}
 let state='title',P,enemies,bullets,parts,slashes,texts,markers,lines;
 let wave,waveQueue,waveT,spawnT,score,combo,comboT,maxCombo,kills,flashes;
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1124.0';
+const VERSION='1124.1';
 let hitSrc='',runT=0,endless=false,clearBonus=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
 let ult=null,mines=[];const ultMax=()=>U.ultFast?75:100,ultN=()=>U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#8a6cff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
   {id:'bolt',name:'번개',price:2500,col:'#fff07a'},{id:'fire',name:'화염',price:4000,col:'#ff8a3d'},{id:'sakura',name:'벚꽃',price:6000,col:'#ffb3d6'}];
 let META={coins:0,own:{flash:1},eq:'flash'},lastEarn=0;
-const RANK={url:'',key:''};
+const RANK={url:'https://zepcjksuvhpafhwxaumq.supabase.co',key:'sb_publishable_N3F5KSKFTc4HX0qC3nxuWA_-B9LOLbX'};
 let nick='';try{nick=localStorage.getItem('flash_nick')||'';}catch(e){}
 let rankList=null,rankErr='',rankLoading=false,pendRec=null,recMsg='',clearTimeRec=null,rankUI={back:null,nick:null},overRankBtn=null;
 const rankOn=()=>!!(RANK.url&&RANK.key);
 function cleanNick(v){return String(v||'').replace(/[\u0000-\u001f\u007f<>]/g,'').trim().slice(0,12);}
-function rankHdr(){return{'apikey':RANK.key,'Authorization':'Bearer '+RANK.key,'Content-Type':'application/json'};}
+function rankHdr(){const h={'apikey':RANK.key,'Content-Type':'application/json'};if(!RANK.key.startsWith('sb_'))h.Authorization='Bearer '+RANK.key;return h;}
 function postRec(r){if(!rankOn()||!nick){pendRec=r;recMsg=rankOn()?'':'';return;}pendRec=null;recMsg='랭킹 등록 중...';
   fetch(RANK.url+'/rest/v1/scores',{method:'POST',headers:Object.assign(rankHdr(),{'Prefer':'return=minimal'}),body:JSON.stringify(Object.assign({nickname:nick},r))})
    .then(x=>{recMsg=x.ok?'랭킹 등록 완료 ('+nick+')':'랭킹 등록 실패';rankList=null;}).catch(()=>{recMsg='랭킹 등록 실패 (인터넷 확인)';});}
