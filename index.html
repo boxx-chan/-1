@@ -102,7 +102,7 @@ function vib(p){try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}}
 let state='title',P,enemies,bullets,parts,slashes,texts,markers,lines;
 let wave,waveQueue,waveT,spawnT,score,combo,comboT,maxCombo,kills,flashes;
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1124.1';
+const VERSION='1124.2';
 let hitSrc='',runT=0,endless=false,clearBonus=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
 let ult=null,mines=[];const ultMax=()=>U.ultFast?75:100,ultN=()=>U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#8a6cff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
@@ -116,12 +116,12 @@ function cleanNick(v){return String(v||'').replace(/[\u0000-\u001f\u007f<>]/g,''
 function rankHdr(){const h={'apikey':RANK.key,'Content-Type':'application/json'};if(!RANK.key.startsWith('sb_'))h.Authorization='Bearer '+RANK.key;return h;}
 function postRec(r){if(!rankOn()||!nick){pendRec=r;recMsg=rankOn()?'':'';return;}pendRec=null;recMsg='랭킹 등록 중...';
   fetch(RANK.url+'/rest/v1/scores',{method:'POST',headers:Object.assign(rankHdr(),{'Prefer':'return=minimal'}),body:JSON.stringify(Object.assign({nickname:nick},r))})
-   .then(x=>{recMsg=x.ok?'랭킹 등록 완료 ('+nick+')':'랭킹 등록 실패';rankList=null;}).catch(()=>{recMsg='랭킹 등록 실패 (인터넷 확인)';});}
+   .then(x=>{recMsg=x.ok?'랭킹 등록 완료 ('+nick+')':'랭킹 등록 실패 ('+x.status+')';rankList=null;}).catch(()=>{recMsg='랭킹 등록 실패 (인터넷 확인)';});}
 function makeRec(){const cl=clearTimeRec!==null;return{wave:Math.max(1,Math.min(999,wave)),cleared:cl,clear_time:cl?Math.max(60,Math.round(clearTimeRec)):null,score:Math.max(0,Math.round(score)),kills};}
 function loadRank(){if(!rankOn()||rankLoading)return;rankLoading=true;rankErr='';
   fetch(RANK.url+'/rest/v1/scores?select=nickname,wave,cleared,clear_time,score&order=cleared.desc,clear_time.asc.nullslast,wave.desc,score.desc&limit=300',{headers:rankHdr()})
-   .then(x=>x.ok?x.json():Promise.reject()).then(d=>{const seen=new Set(),out=[];for(const r of d){if(seen.has(r.nickname))continue;seen.add(r.nickname);out.push(r);if(out.length>=30)break;}rankList=out;rankLoading=false;})
-   .catch(()=>{rankErr='불러오기 실패 (인터넷 확인)';rankLoading=false;});}
+   .then(x=>x.ok?x.json():x.text().then(t=>Promise.reject(x.status+' '+t.slice(0,60)))).then(d=>{const seen=new Set(),out=[];for(const r of d){if(seen.has(r.nickname))continue;seen.add(r.nickname);out.push(r);if(out.length>=30)break;}rankList=out;rankLoading=false;})
+   .catch(er=>{rankErr='불러오기 실패: '+(typeof er==='string'?er:'인터넷 연결');rankLoading=false;});}
 function openRank(){state='rank';rankList=null;rankScroll=0;loadRank();}
 let rankScroll=0,nickCb=null;
 function askNick(cb){nickCb=cb;const b=document.getElementById('nickBox'),i=document.getElementById('nickIn');i.value=nick;b.style.display='flex';setTimeout(()=>{try{i.focus()}catch(e){}},50);}
@@ -1062,7 +1062,7 @@ function drawRank(){
   const nb={x:W-200,y:14,w:186,h:38};rankUI.nick=nb;rrect(nb.x,nb.y,nb.w,nb.h,10);ctx.fillStyle='rgba(200,140,255,0.12)';ctx.fill();ctx.strokeStyle='rgba(200,140,255,0.6)';ctx.lineWidth=1.5;ctx.stroke();
   txt(nick?'닉네임: '+nick:'닉네임 정하기',nb.x+nb.w/2,nb.y+nb.h/2,13,'#fff',800);
   if(!rankOn()){txt('랭킹 서버 준비 중',W/2,H/2,18,'rgba(255,255,255,0.7)',800);return;}
-  if(rankErr){txt(rankErr,W/2,H/2,16,'#ff8da6',800);return;}
+  if(rankErr){txt(rankErr,W/2,H/2,Math.min(16,W/rankErr.length*1.6),'#ff8da6',800);return;}
   if(!rankList){txt('불러오는 중...',W/2,H/2,16,'rgba(255,255,255,0.7)',700);return;}
   if(!rankList.length){txt('아직 기록이 없어요. 첫 번째가 되어보세요!',W/2,H/2,16,'rgba(255,255,255,0.7)',700);return;}
   const top=66,rh=Math.max(24,Math.min(30,(H-top-10)/11)),n=Math.floor((H-top-10)/rh)-1,cx=[W*0.12,W*0.2,W*0.58,W*0.86];
