@@ -104,7 +104,7 @@ let rush=false,rushT=0,rChain=0,rChainT=0,rMax=0,rushSpawnT=0,rushElite={},rushB
 let hc=0,hcQueue=[],hcSpawnT=0,hcCap=2,hcSpd=1,hcNew=false,hcEarn=0,hcSelUI={back:null,tiles:[]},hcBtns=[];
 const RUSH_LEN=60,RCHAIN_KEEP=2.5,rMul=()=>1+0.25*Math.min(rChain,12);
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1127.1';
+const VERSION='1127.2';
 let hitSrc='',runT=0,endless=false,clearBonus=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
 let ult=null,mines=[];const ultMax=()=>U.ultFast?75:100,ultN=()=>rush?4:U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#8a6cff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
@@ -385,7 +385,7 @@ const BOSS_HP=[150,330,520],DMG_W=0.07,DMG_E=0.12;
 function dmgMul(){const w=Math.max(1,wave);return w<=15?1+DMG_W*(w-1):(1+DMG_W*14)*(1+DMG_E*(w-15));}
 function heal(v){if(rush)return;const p=P,h=Math.min(p.maxHp-p.hp,Math.round(v));if(h<=0)return;p.hp+=h;addText(p.x,p.y-36,'+'+h,'#7fffa8',17,1);}
 function endRun(){state='over';overT=0;flashT=0;ult=null;ts=1;recMsg='';if(hc){lastEarn=0;return;}postRec(makeRec());
-  if(rush){lastEarn=Math.min(300,Math.floor(score/500));if(score>rushBest){rushBest=score;try{localStorage.setItem('flash_rbest',rushBest)}catch(e){}}}
+  if(rush){lastEarn=0;if(score>rushBest){rushBest=score;try{localStorage.setItem('flash_rbest',rushBest)}catch(e){}}}
   else{lastEarn=wave*20+kills;if(score>best){best=score;try{localStorage.setItem('flash_best',best)}catch(e){}}}
   META.coins+=lastEarn;saveMeta();}
 function rushFlash(p){rChain=rChainT>0?rChain+1:1;rChainT=RCHAIN_KEEP;if(rChain>rMax)rMax=rChain;const pts=Math.round(300*rMul());score+=pts;
@@ -430,7 +430,7 @@ function updateHC(dt){hcSpawnT-=dt;
   markers=markers.filter(m=>!m.done);
   if(!hcQueue.length&&!markers.length&&!enemies.some(e=>!e.dead))hcClear();}
 function hcClear(){state='hcclear';overT=0;flashT=0;ult=null;ts=1;const n=hc;META.hcBest=META.hcBest||{};hcNew=!META.hcBest[n]||runT<META.hcBest[n];if(hcNew)META.hcBest[n]=runT;
-  hcEarn=0;if(n>(META.hc||0)){META.hc=n;hcEarn=n*200;META.coins+=hcEarn;}saveMeta();SFX.wave();banner(n+'단계 클리어!');}
+  hcEarn=0;if(n>(META.hc||0)){META.hc=n;}saveMeta();SFX.wave();banner(n+'단계 클리어!');}
 function hurt(sx,sy,dmg){
   const p=P;if(hc){p.hp=0;}const dd=Math.max(1,Math.round((dmg||15)*dmgMul()));p.hp=Math.max(0,p.hp-dd);addText(p.x,p.y-40,'-'+dd,'#ff5d86',20,0.9);p.inv=1.1;p.hurtLock=1.1;combo=0;waveHurt=true;rChain=0;rChainT=0;hurtFlash=1;trauma=Math.min(1,trauma+0.6);hitstop=Math.max(hitstop,0.1);
   const a=Math.atan2(p.y-sy,p.x-sx);p.vx+=Math.cos(a)*380;p.vy+=Math.sin(a)*380;
@@ -1241,7 +1241,7 @@ function drawOver(){
   const fs=Math.round(clamp(H*0.04,12,17));
   txt(rush?`처치 ${kills}   ·   최대 연쇄 ${rMax}   ·   섬광 ${flashes}회   ·   ${fmtT(Math.round(RUSH_LEN-rushT))} 생존`:`WAVE ${wave}   ·   처치 ${kills}   ·   최대 콤보 ${maxCombo}   ·   섬광 ${flashes}회`,W/2,H*0.6,fs,'rgba(200,240,255,0.85)',600);
   const ow=TRACKS.filter(c=>owned[c.id]).map(c=>c.name+' Lv'+owned[c.id]).join(' · ');if(ow)txt(ow,W/2,H*0.68,Math.round(fs*0.85),'rgba(255,230,140,0.8)',600);
-  txt('+'+lastEarn.toLocaleString()+' 코인   (보유 ◆ '+META.coins.toLocaleString()+')',W/2,H*0.74,Math.round(fs*0.95),'#ffe066',800);
+  if(!rush)txt('+'+lastEarn.toLocaleString()+' 코인   (보유 ◆ '+META.coins.toLocaleString()+')',W/2,H*0.74,Math.round(fs*0.95),'#ffe066',800);
   overRankBtn=null;if(rankOn()){if(pendRec&&!nick&&overT>1){const b={x:W/2-110,y:H*0.835-18,w:220,h:36};overRankBtn=b;rrect(b.x,b.y,b.w,b.h,10);ctx.fillStyle='rgba(200,140,255,0.2)';ctx.fill();ctx.strokeStyle='#d9b8ff';ctx.lineWidth=1.5;ctx.stroke();txt('닉네임 정하고 랭킹 등록',W/2,b.y+b.h/2,Math.round(fs*0.95),'#fff',800);}
     else if(recMsg)txt(recMsg,W/2,H*0.825,Math.round(fs*0.85),'#d9b8ff',700);}
   if(overT>1&&Math.floor(time*2)%2===0)txt('터치해서 다시',W/2,H*0.94,Math.round(fs*1.15),'#fff',800);
