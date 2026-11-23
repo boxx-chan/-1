@@ -101,7 +101,7 @@ function vib(p){try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}}
 let state='title',P,enemies,bullets,parts,slashes,texts,markers,lines;
 let wave,waveQueue,waveT,spawnT,score,combo,comboT,maxCombo,kills,flashes;
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1125.1';
+const VERSION='1125.2';
 let hitSrc='',runT=0,endless=false,clearBonus=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
 let ult=null,mines=[];const ultMax=()=>U.ultFast?75:100,ultN=()=>U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#8a6cff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
@@ -369,7 +369,7 @@ function updateUlt(rdt){
   ult.t-=rdt;P.inv=Math.max(P.inv,0.5);
   if(ult.t<=0){if(ult.i>=ultN()){ult=null;P.grace=GRACE;P.inv=0;P.atkCD=0.2;P.comboWin=0;return;}ultDash();if(!ult)return;ult.i++;ult.t=ult.i>=ultN()?0.25:0.12;}
 }
-const BOSS_HP=[220,480,760],DMG_W=0.07,DMG_E=0.12;
+const BOSS_HP=[150,330,520],DMG_W=0.07,DMG_E=0.12;
 function dmgMul(){const w=Math.max(1,wave);return w<=15?1+DMG_W*(w-1):(1+DMG_W*14)*(1+DMG_E*(w-15));}
 function heal(v){const p=P,h=Math.min(p.maxHp-p.hp,Math.round(v));if(h<=0)return;p.hp+=h;addText(p.x,p.y-36,'+'+h,'#7fffa8',17,1);}
 function hurt(sx,sy,dmg){
@@ -539,7 +539,7 @@ function bossAI(e,dt,d,ux,uy){
 function hitBoss(e,dmg,a,kb,strike,pierce){
   const vul=P.pow>0&&!strike;if(vul)dmg*=POW_MUL;if(strike&&U.bigDmg&&hitSrc!=='ult')dmg*=1.5;
   const stun=e.state==='stun';
-  if(!stun){const gd=(hitSrc==='ult'?0.5:hitSrc==='shock'||hitSrc==='bomb'?1:strike?3:pierce?4:1)*(P.pow>0?1.5:1);e.guard-=gd;e.lastHit=0;dmg=0;
+  if(!stun){const gd=(hitSrc==='ult'?2:hitSrc==='shock'||hitSrc==='bomb'?1:strike?3:pierce?4:1)*(P.pow>0?1.5:1);e.guard-=gd;e.lastHit=0;dmg=0;
     if(e.guard>0){addText(e.x+rnd(-14,14),e.y-e.r-4,'-'+(Math.round(gd*10)/10),'#9fd8ff',pierce?20:14,0.6);sparks(e.x,e.y,a,4,'#9fd8ff',380);SFX.hit(false);}}else dmg*=2;
   e.hp-=dmg;e.hitF=0.08;e.kvx+=Math.cos(a)*kb*0.03;e.kvy+=Math.sin(a)*kb*0.03;
   if(!strike&&hitSrc!=='bomb'&&P.charge<MAX_CHARGE){const c0=Math.floor(P.charge);P.charge=Math.min(MAX_CHARGE,P.charge+(pierce?0.5:0.25));if(Math.floor(P.charge)>c0){addText(P.x,P.y-36,'섬광 '+Math.floor(P.charge),'#8ff',14,0.8);SFX.tink();}}
