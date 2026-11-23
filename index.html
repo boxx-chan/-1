@@ -101,7 +101,7 @@ function vib(p){try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}}
 let state='title',P,enemies,bullets,parts,slashes,texts,markers,lines;
 let wave,waveQueue,waveT,spawnT,score,combo,comboT,maxCombo,kills,flashes;
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1125.3';
+const VERSION='1125.4';
 let hitSrc='',runT=0,endless=false,clearBonus=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
 let ult=null,mines=[];const ultMax=()=>U.ultFast?75:100,ultN=()=>U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#8a6cff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
@@ -305,7 +305,7 @@ function tryJust(){
     if(e.type==='brute'&&((e.state==='wind'&&e.t<0.28)||e.state==='act')&&d<e.slamR+p.r+10)return triggerFlash(e.x,e.y);
     if(e.type==='bomber'&&e.state==='wind'&&e.t<0.24&&d<e.slamR+p.r+10)return triggerFlash(e.x,e.y);
     if(e.type==='shadow'&&((e.state==='wind'&&e.t<0.22&&d<140)||(e.state==='act'&&d<100)))return triggerFlash(e.x,e.y);
-    if(e.type==='boss'){if(e.pat==='dash'&&((e.state==='wind'&&e.t<0.22&&d<320)||(e.state==='act'&&d<e.r+p.r+40)))return triggerFlash(e.x,e.y);
+    if(e.type==='boss'){if(e.pat==='dash'&&((e.state==='wind'&&e.t<0.22&&d<320)||(e.state==='act'&&d<120&&e.ax*(p.x-e.x)+e.ay*(p.y-e.y)>0)))return triggerFlash(e.x,e.y);
       if(e.pat==='slam'&&((e.state==='wind'&&e.t<0.3)||e.state==='act')&&d<e.slamR+p.r+10)return triggerFlash(e.x,e.y);
       if(e.pat==='spin'&&e.state==='act'&&!e.hitDone&&d<230+p.r&&Math.abs(angDiff(e.ca,Math.atan2(p.y-e.y,p.x-e.x)))<0.8)return triggerFlash(e.x,e.y);
       if(e.pat==='bslash'&&((e.state==='wind'&&e.t<0.22&&d<170)||(e.state==='act'&&d<140)))return triggerFlash(e.x,e.y);}}
