@@ -102,15 +102,15 @@ let state='title',P,enemies,bullets,parts,slashes,texts,markers,lines;
 let wave,waveQueue,waveT,spawnT,score,combo,comboT,maxCombo,kills,flashes,swingHit=false,waveHurt=false;const COMBO_T=1.5;
 let rush=false,rushT=0,rChain=0,rChainT=0,rMax=0,rushSpawnT=0,rushElite={},rushBest=0;try{rushBest=+localStorage.getItem('flash_rbest')||0}catch(e){}
 let hc=0,hcQueue=[],hcSpawnT=0,hcCap=2,hcSpd=1,hcNew=false,hcEarn=0,hcSelUI={back:null,tiles:[]},hcBtns=[];
-const RUSH_LEN=180,RCHAIN_KEEP=2.5,rMul=()=>1+0.25*Math.min(rChain,12);
+const RUSH_LEN=60,RCHAIN_KEEP=2.5,rMul=()=>1+0.25*Math.min(rChain,12);
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1127.0';
+const VERSION='1127.1';
 let hitSrc='',runT=0,endless=false,clearBonus=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
 let ult=null,mines=[];const ultMax=()=>U.ultFast?75:100,ultN=()=>rush?4:U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#8a6cff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
   {id:'bolt',name:'번개',price:2500,col:'#fff07a'},{id:'fire',name:'화염',price:4000,col:'#ff8a3d'},{id:'sakura',name:'벚꽃',price:6000,col:'#ffb3d6'}];
 let META={coins:0,own:{flash:1},eq:'flash'},lastEarn=0;
-const SEASON=3;const RANK={url:'https://zepcjksuvhpafhwxaumq.supabase.co',key:'sb_publishable_N3F5KSKFTc4HX0qC3nxuWA_-B9LOLbX'};
+const SEASON=4;const RANK={url:'https://zepcjksuvhpafhwxaumq.supabase.co',key:'sb_publishable_N3F5KSKFTc4HX0qC3nxuWA_-B9LOLbX'};
 let nick='';try{nick=localStorage.getItem('flash_nick')||'';}catch(e){}
 let rankList=null,rankErr='',rankLoading=false,pendRec=null,recMsg='',clearTimeRec=null,rankUI={back:null,nick:null,tabs:[]},overRankBtn=null;
 const rankOn=()=>!!(RANK.url&&RANK.key);
@@ -122,7 +122,7 @@ function postRec(r){if(!rankOn()||!nick){pendRec=r;recMsg=rankOn()?'':'';return;
 function makeRec(){const cl=clearTimeRec!==null;return{season:SEASON,wave:Math.max(1,Math.min(999,wave)),cleared:cl,clear_time:cl?Math.max(60,Math.round(clearTimeRec)):null,score:Math.max(0,Math.round(score)),kills,mode:rush?'rush':'main'};}
 function loadRank(){if(!rankOn()||rankLoading)return;rankLoading=true;rankErr='';
   const tab=rankTab,q=tab===0?'&mode=eq.main&cleared=eq.true&order=clear_time.asc,score.desc':tab===1?'&mode=eq.main&order=score.desc':'&mode=eq.rush&order=score.desc';
-  fetch(RANK.url+'/rest/v1/scores?select=nickname,wave,cleared,clear_time,score,kills&season='+(tab===0?'in.(2,'+SEASON+')':'eq.'+SEASON)+q+'&limit=300',{headers:rankHdr(),cache:'no-store'})
+  fetch(RANK.url+'/rest/v1/scores?select=nickname,wave,cleared,clear_time,score,kills&season='+(tab===0?'in.(2,3,'+SEASON+')':'eq.'+SEASON)+q+'&limit=300',{headers:rankHdr(),cache:'no-store'})
    .then(x=>x.ok?x.json():x.text().then(t=>Promise.reject(x.status+' '+t.slice(0,60)))).then(d=>{const seen=new Set(),out=[];for(const r of d){if(seen.has(r.nickname))continue;seen.add(r.nickname);out.push(r);if(out.length>=30)break;}if(tab===rankTab)rankList=out;rankLoading=false;if(tab!==rankTab)loadRank();})
    .catch(er=>{rankErr='불러오기 실패: '+(typeof er==='string'?er:'인터넷 연결');rankLoading=false;});}
 function openRank(){state='rank';rankList=null;rankScroll=0;loadRank();}
@@ -171,7 +171,7 @@ function menuTap(x,y){
   if(state==='over'&&hc&&overT>0.8){if(x!==undefined&&hcBtns[1]&&inR(x,y,hcBtns[1])){state='hcsel';return;}hcStart(hc);return;}
   if(state==='help'){helpTap(x,y);return;}
   if(state==='rank'){if(x===undefined||inR(x,y,rankUI.back)){state='title';return;}if(inR(x,y,rankUI.nick)){askNick(()=>{});return;}for(let i=0;i<rankUI.tabs.length;i++)if(inR(x,y,rankUI.tabs[i])&&rankTab!==i){rankTab=i;rankList=null;rankErr='';loadRank();}return;}
-  if(state==='title'){if(inR(x,y,shopBtnR)){openShop();return;}if(hcBtnR&&inR(x,y,hcBtnR)){state='hcsel';return;}if(inR(x,y,rankBtnR)){openRank();return;}if(inR(x,y,helpBtnR)){state='help';helpPage=0;return;}const isRush=x!==undefined&&rushBtnR&&inR(x,y,rushBtnR);if(x!==undefined&&!inR(x,y,startBtnR)&&!isRush)return;if(rankOn()&&!nick&&!nickAsked){nickAsked=true;askNick(()=>{});return;}rush=!!isRush;hc=0;reset();state='play';goFS();if(rush)banner('섬광 러시 · 3분');}
+  if(state==='title'){if(inR(x,y,shopBtnR)){openShop();return;}if(hcBtnR&&inR(x,y,hcBtnR)){state='hcsel';return;}if(inR(x,y,rankBtnR)){openRank();return;}if(inR(x,y,helpBtnR)){state='help';helpPage=0;return;}const isRush=x!==undefined&&rushBtnR&&inR(x,y,rushBtnR);if(x!==undefined&&!inR(x,y,startBtnR)&&!isRush)return;if(rankOn()&&!nick&&!nickAsked){nickAsked=true;askNick(()=>{});return;}rush=!!isRush;hc=0;reset();state='play';goFS();if(rush)banner('섬광 러시 · 1분');}
   else if(state==='over'&&overT>1.0){if(x!==undefined&&overRankBtn&&inR(x,y,overRankBtn)){askNick(()=>{if(pendRec)postRec(pendRec);});return;}reset();state='play';}
   else if(state==='clear'&&overT>1.0&&x!==undefined){const rs=clearRects();if(inR(x,y,rs[0])){endless=true;state='play';last=performance.now();banner('무한 모드');}
     else if(inR(x,y,rs[1])){lastEarn=wave*20+kills;META.coins+=lastEarn;saveMeta();if(score>best){best=score;try{localStorage.setItem('flash_best',best)}catch(e){}}reset();state='title';}}
@@ -229,7 +229,7 @@ function banner(s){bannerText=s;bannerT=1.4;}
 
 function addCombo(){swingHit=true;}
 function bumpCombo(n){combo+=n;comboT=COMBO_T;if(combo>maxCombo)maxCombo=combo;}
-const mult=()=>rush?rMul():1+Math.min(combo,100)/50;
+const mult=()=>rush?rMul():1;
 const BOSS_PAR=[30,40,40];
 
 /* ---------- player ---------- */
@@ -302,7 +302,7 @@ const fmtD=d=>d%1?d.toFixed(1):String(d);
 function killEnemy(e,strike){
   e.dead=true;kills++;
   if(U.vamp&&kills%25===0)heal(10);
-  const pts=e.type==='boss'?e.pts:Math.round(e.pts*mult()*(strike?2:1));score+=pts;
+  const pts=e.type==='boss'?e.pts:Math.round(e.pts*mult()*(strike?(rush?2:3):1));score+=pts;
   addText(e.x,e.y-e.r-22,'+'+pts,strike?'#7ff':'#9fe',13,0.9);
   burst(e.x,e.y,e.type==='brute'?40:20,e.col,e.type==='brute'?520:380,0.6,3);
   burst(e.x,e.y,8,'#fff',260,0.3,2);
@@ -333,12 +333,12 @@ function triggerFlash(sx,sy){
   addText(p.x,p.y-40,'섬광!','#8ff',24,0.9);
   SFX.flash();vib([15,25,15]);
   ring(p.x,p.y,10,140,'#9ff',0.5,4);ring(sx,sy,5,60,'#fff',0.35,2);
-  hitstop=Math.max(hitstop,0.06);if(rush)rushFlash(p);else{bumpCombo(3);score+=Math.round(500*mult());}
+  hitstop=Math.max(hitstop,0.06);if(rush)rushFlash(p);else{bumpCombo(3);score+=500;}
   return true;
 }
 function flashStrike(){
   const p=P;
-  p.chain=p.chainT>0?Math.min(3,p.chain+1):1;const cm=CHAIN_MUL[p.chain-1];if(p.chain>1&&!rush){const cb=p.chain===2?500:1000;score+=cb;addText(p.x,p.y-60,'연속 섬광 +'+cb,'#8ff',16,0.9);}
+  p.chain=p.chainT>0?Math.min(3,p.chain+1):1;const cm=CHAIN_MUL[p.chain-1];if(false){const cb=p.chain===2?500:1000;score+=cb;addText(p.x,p.y-60,'연속 섬광 +'+cb,'#8ff',16,0.9);}
   const aim=inp.aimA;const t=aim!==null?nearestEnemy(p.x,p.y,430,aim,0.6):nearestEnemy(p.x,p.y,430,p.face,Math.PI);
   let a,len;if(t){a=Math.atan2(t.y-p.y,t.x-p.x);len=Math.hypot(t.x-p.x,t.y-p.y)+t.r+55;}else{a=aim!==null?aim:p.face;len=aim!==null?300:260;}
   const sx=p.x,sy=p.y;
@@ -397,9 +397,9 @@ function rushMarker(type){let x,y,tries=0;do{x=rnd(60,AW-60);y=rnd(60,AH-60);tri
 function updateRush(dt){const rd=realDt||dt;rushT-=rd;P.charge=MAX_CHARGE;
   if(flashT<=0&&!ult&&rChainT>0){rChainT-=rd;if(rChainT<=0)rChain=0;}
   const el=RUSH_LEN-rushT;
-  for(const at of [60,120])if(el>=at&&!rushElite[at]){rushElite[at]=1;banner('정예 무리');for(let i=0;i<2;i++)rushMarker('brute');for(let i=0;i<3;i++)rushMarker('shadow');}
-  const cap=Math.min(18,8+2*Math.floor(el/30));rushSpawnT-=rd;
-  if(enemies.filter(e=>!e.dead).length+markers.length<cap&&rushSpawnT<=0){rushSpawnT=0.25;rushMarker(rushType());}
+  for(const at of [20,40])if(el>=at&&!rushElite[at]){rushElite[at]=1;banner('정예 무리');for(let i=0;i<2;i++)rushMarker('brute');for(let i=0;i<3;i++)rushMarker('shadow');}
+  const cap=Math.min(30,16+4*Math.floor(el/15));rushSpawnT-=rd;
+  if(enemies.filter(e=>!e.dead).length+markers.length<cap&&rushSpawnT<=0){rushSpawnT=0.1;rushMarker(rushType());}
   for(const m of markers){m.t+=dt;if(m.t>=m.dur){m.done=true;enemies.push(makeEnemy(m.type,m.x,m.y));ring(m.x,m.y,4,50,ET[m.type].col,0.3,3);}}
   markers=markers.filter(m=>!m.done);
   if(rushT<=0){rushT=0;banner('시간 종료');endRun();}}
@@ -645,7 +645,7 @@ function updateWaves(dt){
   markers=markers.filter(m=>!m.done);
   if(!waveQueue.length&&!enemies.length&&!markers.length){
     waveT=0.6;pickNext=true;banner('CLEAR');heal(10);
-    {const wb=wave*200*(waveHurt?1:2);score+=wb;if(!waveHurt&&wave>0)addText(P.x,P.y-70,'노피격 보너스 +'+wb,'#ffe066',16,1.2);waveHurt=false;}
+    {score+=wave*200;waveHurt=false;}
   }
 }
 function updateWavesProj(dt){
@@ -1035,7 +1035,6 @@ function drawHUD(){
       txt('x'+rMul().toFixed(2),W-70,52,13,'rgba(255,255,255,0.6)',700,'right');ctx.fillStyle='rgba(140,255,255,0.5)';ctx.fillRect(W-170,62,100*Math.min(1,rChainT/RCHAIN_KEEP),3);}}
   else txt('WAVE '+Math.max(1,wave),W/2,46,12,'rgba(160,220,255,0.7)',700);
   if(!rush&&combo>=2){const pulse=1+Math.max(0,comboT-(COMBO_T-0.3))*1.5;txt(combo+' COMBO',W-70,28,Math.round(22*pulse),combo>=20?'#ffe066':'#8ff',900,'right');
-    txt('x'+mult().toFixed(1),W-70,52,13,'rgba(255,255,255,0.6)',700,'right');
     ctx.fillStyle='rgba(140,255,255,0.5)';ctx.fillRect(W-170,62,100*Math.min(1,comboT/COMBO_T),3);}
   if(flashT>0){const w=Math.min(260,W*0.3),fy=enemies.some(e=>e.type==='boss')?44:0;ctx.fillStyle='rgba(0,0,0,0.4)';ctx.fillRect(W/2-w/2,70+fy,w,6);ctx.fillStyle='#9ff';ctx.fillRect(W/2-w/2,70+fy,w*(flashT/FLASH_DUR),6);
     txt('섬광 — 공격 버튼!',W/2,92+fy,16,'#cff',800);}
