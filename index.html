@@ -103,7 +103,7 @@ let wave,waveQueue,waveT,spawnT,score,combo,comboT,maxCombo,kills,flashes,swingH
 let rush=false,rushT=0,rChain=0,rChainT=0,rMax=0,rushSpawnT=0,rushElite={},rushBest=0;try{rushBest=+localStorage.getItem('flash_rbest')||0}catch(e){}
 const RUSH_LEN=180,RCHAIN_KEEP=2.5,rMul=()=>1+0.25*Math.min(rChain,12);
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1126.1';
+const VERSION='1126.2';
 let hitSrc='',runT=0,endless=false,clearBonus=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
 let ult=null,mines=[];const ultMax=()=>U.ultFast?75:100,ultN=()=>U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#8a6cff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
@@ -387,8 +387,8 @@ function rushFlash(p){rChain=rChainT>0?rChain+1:1;rChainT=RCHAIN_KEEP;if(rChain>
   if(rChain>=2)addText(p.x,p.y-64,rChain+' 연쇄  x'+rMul().toFixed(2).replace(/0$/,''),rChain>=12?'#ffe066':rChain>=5?'#ff9a6a':'#8ff',16+Math.min(rChain,12),0.9);
   if(rChain>=5){const R=rChain>=10?200:140;ring(p.x,p.y,10,R,rChain>=10?'#ff9a6a':'#ffe066',0.45,7);ring(p.x,p.y,6,R*0.6,'#fff',0.3,3);trauma=Math.min(1,trauma+0.35);SFX.slam();vib([20,20,40]);
     const hs=hitSrc;hitSrc='shock';for(const e of enemies){if(!e.dead&&e.spawnT<=0&&Math.hypot(e.x-p.x,e.y-p.y)<R+e.r)hitEnemy(e,5,Math.atan2(e.y-p.y,e.x-p.x),520,false);}hitSrc=hs;rushSpawnT=0;}}
-const RUSH_W=[['grunt',30],['shield',14],['shadow',18],['bomber',14],['brute',8],['shooter',10]];
-function rushType(){const W2=RUSH_W.map(([t,w])=>[t,rChain>=5?(t==='shooter'?3:t==='grunt'?40:w):w]);let r=Math.random()*W2.reduce((a,b)=>a+b[1],0);for(const [t,w] of W2){r-=w;if(r<=0)return t;}return 'grunt';}
+const RUSH_W=[['grunt',24],['shield',10],['shadow',14],['bomber',10],['brute',6],['shooter',36]];
+function rushType(){const W2=RUSH_W.map(([t,w])=>[t,w]);let r=Math.random()*W2.reduce((a,b)=>a+b[1],0);for(const [t,w] of W2){r-=w;if(r<=0)return t;}return 'grunt';}
 function rushMarker(type){let x,y,tries=0;do{x=rnd(60,AW-60);y=rnd(60,AH-60);tries++;}while(Math.hypot(x-P.x,y-P.y)<260&&tries<30);markers.push({x,y,type,t:0,dur:0.7});}
 function updateRush(dt){const rd=realDt||dt;rushT-=rd;P.charge=MAX_CHARGE;
   if(flashT<=0&&rChainT>0){rChainT-=rd;if(rChainT<=0)rChain=0;}
