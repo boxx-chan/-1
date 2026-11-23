@@ -101,7 +101,7 @@ function vib(p){try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}}
 let state='title',P,enemies,bullets,parts,slashes,texts,markers,lines;
 let wave,waveQueue,waveT,spawnT,score,combo,comboT,maxCombo,kills,flashes;
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1125.12';
+const VERSION='1125.13';
 let hitSrc='',runT=0,endless=false,clearBonus=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
 let ult=null,mines=[];const ultMax=()=>U.ultFast?75:100,ultN=()=>U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#8a6cff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
@@ -236,7 +236,7 @@ function swing(){
   let hit=0;
   if(fin){
     const L=THRUST_L*(U.chain?1.4:1),w=U.chain?28:14,ex=p.x+Math.cos(a)*L,ey=p.y+Math.sin(a)*L;
-    slashes.push({a,range:L,t:0,dur:0.22,step,thrust:true});if(META.eq==='fire'){slashes.push({aura:true,t:0,dur:0.6});slashes.push(fireTrail(p.x,p.y,a,L,0,1,true));}skinFx(META.eq,p.x,p.y,a,true,L,0);
+    slashes.push({a,range:L,t:0,dur:0.22,step,thrust:true});if(META.eq==='fire')slashes.push({aura:true,t:0,dur:0.6});skinFx(META.eq,p.x,p.y,a,true,L,0);
     const tl=[];for(const e of enemies){if(e.dead||e.spawnT>0)continue;if(segDist(e.x,e.y,p.x,p.y,ex,ey)<e.r+w){tl.push(e);}}
     tl.sort((a,b)=>Math.hypot(a.x-p.x,a.y-p.y)-Math.hypot(b.x-p.x,b.y-p.y));
     tl.forEach((e,i)=>{hitEnemy(e,3*U.thrust*(U.chain?1+0.5*i:1),Math.atan2(e.y-p.y,e.x-p.x),620,false,true);hit++;});addUlt(2*hit);
@@ -830,13 +830,13 @@ function flameJet(x,y,c,sn,Lt,w,al){const n=10;
       px=x+c*Lt*u*(L?0.97:1)-sn*ww*side,py=y+sn*Lt*u*(L?0.97:1)+c*ww*side-(i%2?rnd(0,6):0)*k;ctx.lineTo(px,py);}}
     ctx.closePath();ctx.fillStyle=`rgba(${cr},${cg},${cb},${al*ca})`;ctx.fill();}}
 let FT_MODE=4;
-function fireTrail(x,y,a,range,arc,dir,th){const pts=[];for(let i=0;i<(th?14:18);i++){const u=Math.random(),t=th?a:a-arc/2+arc*u;pts.push({t,u,rr:th?range*rnd(0.12,1):range*rnd(0.8,1.02),h:rnd(18,36),ph:rnd(0,TAU),dl:rnd(0,th?0.18:0.12)});}
+function fireTrail(x,y,a,range,arc,dir,th){const pts=[];for(let i=0;i<14;i++){const u=Math.random(),t=th?a:a-arc/2+arc*u;pts.push({t,u,rr:th?range*rnd(0.12,1):range*rnd(0.8,1.02),h:rnd(14,30),ph:rnd(0,TAU),dl:rnd(0,th?0.18:0.12)});}
   return{ft:true,th:!!th,x,y,a,range,arc,dir,t:0,dur:FT_MODE===2||FT_MODE===4?0.6:0.55,pts};}
 function drawFireTrail(s,pr){const x=s.x,y=s.y,R=s.range,a0=s.a-s.arc/2,a1=s.a+s.arc/2,ap=Math.max(0,(s.t-0.1)/(s.dur-0.1));if(s.t<0.1&&FT_MODE!==2&&FT_MODE!==4)return;
-  if(FT_MODE===4){if(!s.th&&s.t>=0.1&&ap<1){const q=ap,al=Math.pow(1-q,0.8)*0.45;ctx.save();ctx.translate(0,-q*22);flameBand(x,y,R*(1-0.04*q),(R*0.45)*(1-q*0.6),a0,a1,al,1-q*0.4);ctx.restore();}FT_MODE=2;drawFireTrail(s,pr);FT_MODE=4;return;}
+  if(FT_MODE===4){if(!s.th&&s.t>=0.1&&ap<1){const q=ap,al=Math.pow(1-q,0.8)*0.6;ctx.save();ctx.translate(0,-q*22);flameBand(x,y,R*(1-0.04*q),(R*0.45)*(1-q*0.6),a0,a1,al,1-q*0.4);ctx.restore();}FT_MODE=2;drawFireTrail(s,pr);FT_MODE=4;return;}
   if(FT_MODE===1){for(let j=0;j<2;j++){const q=Math.min(1,ap+j*0.25),al=Math.pow(1-q,0.7)*0.75;if(al<=0)continue;ctx.save();ctx.translate(0,-q*28-j*8);flameBand(x,y,R*(1-0.05*q),(R*0.5)*(1-q*0.6),a0,a1,al,1-q*0.4);ctx.restore();}}
-  else if(FT_MODE===2){for(const p of s.pts){const q=(s.t-p.dl)/(s.dur-p.dl);if(q<=0||q>=1)continue;const c=Math.cos(p.t),sn=Math.sin(p.t),bx=x+c*p.rr,by=y+sn*p.rr-q*30,h=p.h*(1-q*0.6)*(0.8+0.3*Math.sin(s.t*40+p.ph)),w=7.5*(1-q*0.5),al=Math.pow(1-q,0.6);
-      for(let L=0;L<2;L++){const k=L?0.55:1,[cr,cg,cb]=FL_COL[L+1];ctx.beginPath();ctx.moveTo(bx-w*k,by);ctx.quadraticCurveTo(bx-w*k*0.6+rnd(-2,2),by-h*k*0.5,bx+rnd(-2,2),by-h*k);ctx.quadraticCurveTo(bx+w*k*0.6+rnd(-2,2),by-h*k*0.5,bx+w*k,by);ctx.closePath();ctx.fillStyle=`rgba(${cr},${cg},${cb},${al*(L?0.95:0.75)})`;ctx.fill();}}}
+  else if(FT_MODE===2){for(const p of s.pts){const q=(s.t-p.dl)/(s.dur-p.dl);if(q<=0||q>=1)continue;const c=Math.cos(p.t),sn=Math.sin(p.t),bx=x+c*p.rr,by=y+sn*p.rr-q*30,h=p.h*(1-q*0.6)*(0.8+0.3*Math.sin(s.t*40+p.ph)),w=6*(1-q*0.5),al=(1-q);
+      for(let L=0;L<2;L++){const k=L?0.55:1,[cr,cg,cb]=FL_COL[L+1];ctx.beginPath();ctx.moveTo(bx-w*k,by);ctx.quadraticCurveTo(bx-w*k*0.6+rnd(-2,2),by-h*k*0.5,bx+rnd(-2,2),by-h*k);ctx.quadraticCurveTo(bx+w*k*0.6+rnd(-2,2),by-h*k*0.5,bx+w*k,by);ctx.closePath();ctx.fillStyle=`rgba(${cr},${cg},${cb},${al*(L?0.8:0.55)})`;ctx.fill();}}}
   else{const q=ap,th=R*0.5*(1-q*0.75),al=Math.pow(1-q,0.7),n=16;
     for(let L=0;L<3;L++){const k=1-L*0.3,cr=L===2?255:Math.round(255-q*120),cg=Math.round(FL_COL[L][1]*(1-q*0.7)),cb=Math.round(FL_COL[L][2]*(1-q*0.6)),ca=FL_COL[L][3]*(L===2?1-q:1);ctx.beginPath();
       for(let i=0;i<=n;i++){const u=i/n,t=a0+(a1-a0)*u,tp=Math.sin(Math.PI*u),ext=(i%2?rnd(8,26):rnd(0,6))*tp*k*(1-q*0.5),rr=R+ext*0.4;ctx.lineTo(x+Math.cos(t)*rr,y+Math.sin(t)*rr-ext);}
@@ -971,7 +971,7 @@ function updShop(dt){
   for(const s of pv.sl)s.t+=dt;pv.sl=pv.sl.filter(s=>s.t<s.dur);
   for(const w of pv.wv){w.t+=dt;w.x+=w.vx*dt;w.y+=w.vy*dt;}pv.wv=pv.wv.filter(w=>w.t<w.life);
   if(pv.t>=pv.wait){pv.t=0;pv.step=pv.step%3+1;const st=pv.step,sv=parts;parts=pv.pt;
-    if(st===3){pv.sl.push({a:0,range:THRUST_L,t:0,dur:0.22,step:3,thrust:true});if(pv.sel==='fire'){pv.sl.push({aura:true,t:0,dur:0.6});pv.sl.push(fireTrail(0,0,0,THRUST_L,0,1,true));}skinFx(pv.sel,0,0,0,true,THRUST_L,0);pv.wait=1.0;}
+    if(st===3){pv.sl.push({a:0,range:THRUST_L,t:0,dur:0.22,step:3,thrust:true});if(pv.sel==='fire')pv.sl.push({aura:true,t:0,dur:0.6});skinFx(pv.sel,0,0,0,true,THRUST_L,0);pv.wait=1.0;}
     else{const a=st===1?-0.2:0.2;pv.sl.push({a,range:108,arc:2.7,t:0,dur:0.15,step:st,dir:st===2?-1:1});skinFx(pv.sel,0,0,a,false,108,2.7);if(pv.sel==='fire')pv.sl.push(fireTrail(0,0,a,108,2.7,st===2?-1:1));
       if(st===2)pv.wv.push({x:Math.cos(a)*30,y:Math.sin(a)*30,a,vx:Math.cos(a)*620,vy:Math.sin(a)*620,t:0,life:0.45});pv.wait=0.5;}
     pv.pt=parts;parts=sv;SFX.swing(st,pv.sel);}
