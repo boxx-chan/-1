@@ -108,8 +108,8 @@ let rush=false,rushT=0,rChain=0,rChainT=0,rMax=0,rushSpawnT=0,rushElite={},rushB
 let hc=0,hcQueue=[],hcSpawnT=0,hcCap=2,hcSpd=1,hcNew=false,hcEarn=0,hcSelUI={back:null,tiles:[]},hcBtns=[];
 const RUSH_LEN=60,RCHAIN_KEEP=2.5,rMul=()=>1+0.25*Math.min(rChain,12);
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1127.22';
-const WCOIN=60;let overBtns=null,quitRun=false;let hitSrc='',runT=0,endless=false,clearBonus=0,clrW=0,clrK=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
+const VERSION='1127.23';
+const WCOIN=60,RCOIN_N=3,RCOIN_MAX=600;const today=()=>{const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();};const rcLeft=()=>{const r=META.rd||{};return r.d===today()?Math.max(0,RCOIN_N-(r.n||0)):RCOIN_N;};let overBtns=null,quitRun=false,rcUsed=false;let hitSrc='',runT=0,endless=false,clearBonus=0,clrW=0,clrK=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
 let ult=null,mines=[];const ultMax=()=>U.ultFast?75:100,ultN=()=>rush?4:U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#8a6cff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
   {id:'bolt',name:'번개',price:2500,col:'#fff07a'},{id:'fire',name:'화염',price:4000,col:'#ff8a3d'},{id:'sakura',name:'벚꽃',price:8000,col:'#ffb3d6'}];
@@ -136,7 +136,7 @@ function closeNick(ok){const b=document.getElementById('nickBox'),v=cleanNick(do
   if(ok){nick=v;try{localStorage.setItem('flash_nick',nick)}catch(e){}if(nickCb)nickCb();}nickCb=null;}
 addEventListener('load',()=>{document.getElementById('nickOk').onclick=()=>closeNick(true);document.getElementById('nickNo').onclick=()=>closeNick(false);
   document.getElementById('nickIn').addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Enter')closeNick(true);if(e.key==='Escape')closeNick(false);});});
-try{const m=JSON.parse(localStorage.getItem('flash_meta')||'null');if(m&&typeof m==='object'){META.coins=Math.max(0,+m.coins||0);META.own=Object.assign({flash:1},m.own||{});if(SKINS.some(k=>k.id===m.eq)&&META.own[m.eq])META.eq=m.eq;META.cleared=m.cleared||0;META.bestClear=m.bestClear||0;META.hc=Math.min(10,Math.max(0,+m.hc||0));META.hcBest=(m.hcBest&&typeof m.hcBest==='object')?m.hcBest:{};META.ownT=Object.assign({},m.ownT||{});if(!m.tv)delete META.ownT.flash;if(SKINS.some(k=>k.id===m.eqT)&&META.ownT[m.eqT])META.eqT=m.eqT;}}catch(e){}
+try{const m=JSON.parse(localStorage.getItem('flash_meta')||'null');if(m&&typeof m==='object'){META.coins=Math.max(0,+m.coins||0);META.own=Object.assign({flash:1},m.own||{});if(SKINS.some(k=>k.id===m.eq)&&META.own[m.eq])META.eq=m.eq;META.cleared=m.cleared||0;META.bestClear=m.bestClear||0;META.hc=Math.min(10,Math.max(0,+m.hc||0));META.hcBest=(m.hcBest&&typeof m.hcBest==='object')?m.hcBest:{};META.ownT=Object.assign({},m.ownT||{});META.rd=(m.rd&&typeof m.rd==='object')?m.rd:{};if(!m.tv)delete META.ownT.flash;if(SKINS.some(k=>k.id===m.eqT)&&META.ownT[m.eqT])META.eqT=m.eqT;}}catch(e){}
 const TPRICES={flash:5000,ghost:10000,ink:10000,bolt:13000,fire:13000,sakura:13000};const tPrice=id=>TPRICES[id]||10000;
 (async()=>{try{const q=new URLSearchParams(location.search).get('dev');if(!q||!crypto.subtle)return;
   const h=[...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(q)))].map(b=>b.toString(16).padStart(2,'0')).join('');
@@ -396,7 +396,7 @@ const BOSS_HP=[150,330,520],DMG_W=0.07,DMG_E=0.12;
 function dmgMul(){const w=Math.max(1,wave);return w<=15?1+DMG_W*(w-1):(1+DMG_W*14)*(1+DMG_E*(w-15));}
 function heal(v){if(rush)return;const p=P,h=Math.min(p.maxHp-p.hp,Math.round(v));if(h<=0)return;p.hp+=h;addText(p.x,p.y-36,'+'+h,'#7fffa8',17,1);}
 function endRun(){state='over';overT=0;flashT=0;ult=null;ts=1;recMsg='';if(hc){lastEarn=0;return;}postRec(makeRec());
-  if(rush){lastEarn=0;if(score>rushBest){rushBest=score;try{localStorage.setItem('flash_rbest',rushBest)}catch(e){}}}
+  if(rush){lastEarn=0;rcUsed=false;if(rcLeft()>0){lastEarn=Math.min(RCOIN_MAX,Math.round(kills*2.5));if(lastEarn>0){const t=today();if(!META.rd||META.rd.d!==t)META.rd={d:t,n:0};META.rd.n++;rcUsed=true;}}if(score>rushBest){rushBest=score;try{localStorage.setItem('flash_rbest',rushBest)}catch(e){}}}
   else{lastEarn=endless?clrW*WCOIN+clrK+Math.floor(((wave-clrW)*WCOIN+(kills-clrK))/2):wave*WCOIN+kills;if(score>best){best=score;try{localStorage.setItem('flash_best',best)}catch(e){}}}
   META.coins+=lastEarn;saveMeta();}
 function rushFlash(p){rChain=rChainT>0?rChain+1:1;rChainT=RCHAIN_KEEP;if(rChain>rMax)rMax=rChain;const pts=Math.round(300*rMul());score+=pts;
@@ -1226,15 +1226,15 @@ function drawTitle(){
   txt('섬광',W/2,cy,Math.round(H*0.17),'#5ff4ff',900);
   txt(META.cleared?'클리어 ✓  최고 '+fmtT(META.bestClear):'목표: 웨이브 15 보스 처치',W/2,cy+H*0.17,Math.round(H*0.032),META.cleared?'#ffe066':'rgba(255,224,102,0.8)',800);
   txt('FLASH COUNTER',W/2,cy+H*0.12,Math.round(H*0.035),'rgba(200,240,255,0.6)',700);
-  const fs=Math.round(clamp(H*0.036,12,17));let y=H*0.475;
-  {const NOTE=['웨이브 15 이후 적 체력 증가량 절반으로 감소','한 대 피해 상한: 최대 체력의 35% (최소 3대는 버팀)','체력 강화 회복량 30 → 최대 체력의 30%','웨이브 15 이후 적이 더 많이, 더 빠르게 등장','일시정지 → 나가기도 랭킹에 기록돼요','닉네임을 바꾸면 랭킹 기록이 새 이름으로 따로 쌓여요'];
-    const bw=Math.min(W-40,fs*26),bh=fs*1.5*NOTE.length+fs*2.2,bx=W/2-bw/2;rrect(bx,y-fs*0.6,bw,bh,10);ctx.fillStyle='rgba(255,224,102,0.07)';ctx.fill();ctx.strokeStyle='rgba(255,224,102,0.35)';ctx.lineWidth=1;ctx.stroke();
+  const fs=Math.round(clamp(H*0.036,12,17));let y=H*0.485;
+  {const NOTE=['웨이브 15 이후: 적 체력 증가 절반 · 적 수와 등장 속도 증가','한 대 피해 상한: 최대 체력의 35% (최소 3대는 버팀)','체력 강화 회복량 30 → 최대 체력의 30%','일시정지 → 나가기도 랭킹에 기록돼요','닉네임을 바꾸면 랭킹 기록이 새 이름으로 따로 쌓여요','섬광 러시 코인: 처치×2.5 (판당 최대 600) · 하루 3번','웨이브 코인 20 → 60 (15웨이브 클리어 시 약 2,000)'];
+    const bw=Math.min(W-40,fs*26),bh=fs*1.28*NOTE.length+fs*2.1,bx=W/2-bw/2;rrect(bx,y-fs*0.6,bw,bh,10);ctx.fillStyle='rgba(255,224,102,0.07)';ctx.fill();ctx.strokeStyle='rgba(255,224,102,0.35)';ctx.lineWidth=1;ctx.stroke();
     txt('업데이트 공지',W/2,y+fs*0.3,fs,'#ffe066',900);y+=fs*1.7;
-    for(const l of NOTE){txt('· '+l,bx+fs,y,Math.round(fs*0.88),'rgba(255,255,255,0.85)',600,'left');y+=fs*1.5;}y=y-fs*0.4;}
+    for(const l of NOTE){txt('· '+l,bx+fs,y,Math.round(fs*0.82),'rgba(255,255,255,0.85)',600,'left');y+=fs*1.28;}y=y-fs*0.4;}
   {const bw=Math.max(170,fs*10),bh=Math.max(44,fs*2.6),g=14,bx=W/2-bw-g/2,by=Math.min(H-bh-8,y+fs*1.4);startBtnR={x:bx,y:by,w:bw,h:bh};rushBtnR={x:W/2+g/2,y:by,w:bw,h:bh};const pu=0.5+0.5*Math.sin(time*4);
     rrect(bx,by,bw,bh,12);ctx.fillStyle=`rgba(90,240,255,${0.18+0.12*pu})`;ctx.fill();ctx.strokeStyle='#5ff4ff';ctx.lineWidth=2;ctx.stroke();txt('시작',bx+bw/2,by+bh/2,Math.round(fs*1.25),'#fff',900);
     const rb2=rushBtnR;rrect(rb2.x,rb2.y,bw,bh,12);ctx.fillStyle=`rgba(255,154,106,${0.14+0.1*pu})`;ctx.fill();ctx.strokeStyle='#ff9a6a';ctx.lineWidth=2;ctx.stroke();
-    txt('섬광 러시',rb2.x+bw/2,by+bh/2-(rushBest?7:0),Math.round(fs*1.15),'#fff',900);if(rushBest)txt('최고 '+rushBest.toLocaleString(),rb2.x+bw/2,by+bh/2+12,11,'rgba(255,220,200,0.75)',700);}
+    txt('섬광 러시',rb2.x+bw/2,by+bh/2-7,Math.round(fs*1.15),'#fff',900);txt((rushBest?'최고 '+rushBest.toLocaleString()+' · ':'')+'코인 보상 '+rcLeft()+'/'+RCOIN_N,rb2.x+bw/2,by+bh/2+12,11,'rgba(255,224,150,0.85)',700);}
   if(best)txt('최고 '+best.toLocaleString(),W-16,20,13,'rgba(255,255,255,0.5)',600,'right');
   txt('v'+VERSION,16,20,11,'rgba(255,255,255,0.3)',600,'left');
   const hb={x:14,y:34,w:136,h:40};helpBtnR=hb;rrect(hb.x,hb.y,hb.w,hb.h,10);ctx.fillStyle='rgba(90,240,255,0.1)';ctx.fill();ctx.strokeStyle='rgba(90,240,255,0.6)';ctx.lineWidth=1.5;ctx.stroke();
@@ -1312,6 +1312,7 @@ function drawOver(){
   txt(rush?`처치 ${kills}   ·   최대 연쇄 ${rMax}   ·   섬광 ${flashes}회   ·   ${fmtT(Math.round(RUSH_LEN-rushT))} 생존`:`WAVE ${wave}   ·   처치 ${kills}   ·   최대 콤보 ${maxCombo}   ·   섬광 ${flashes}회`,W/2,H*0.6,fs,'rgba(200,240,255,0.85)',600);
   const ow=TRACKS.filter(c=>owned[c.id]).map(c=>c.name+' Lv'+owned[c.id]).join(' · ');if(ow)txt(ow,W/2,H*0.655,Math.round(fs*0.85),'rgba(255,230,140,0.8)',600);
   if(!rush)txt('+'+lastEarn.toLocaleString()+' 코인   (보유 ◆ '+META.coins.toLocaleString()+')',W/2,H*0.715,Math.round(fs*0.95),'#ffe066',800);
+  else txt(rcUsed?'+'+lastEarn.toLocaleString()+' 코인   ·   오늘 코인 보상 '+rcLeft()+'/'+RCOIN_N+' 남음':'오늘 코인 보상 소진 (자정에 초기화)',W/2,H*0.715,Math.round(fs*0.95),rcUsed?'#ffe066':'rgba(255,224,102,0.55)',800);
   overRankBtn=null;if(rankOn()){if(pendRec&&!nick&&overT>1){const b={x:W/2-110,y:H*0.81-17,w:220,h:32};overRankBtn=b;rrect(b.x,b.y,b.w,b.h,10);ctx.fillStyle='rgba(200,140,255,0.2)';ctx.fill();ctx.strokeStyle='#d9b8ff';ctx.lineWidth=1.5;ctx.stroke();txt('닉네임 정하고 랭킹 등록',W/2,b.y+b.h/2,Math.round(fs*0.95),'#fff',800);}
     else if(recMsg)txt(recMsg,W/2,H*0.81,Math.round(fs*0.85),'#d9b8ff',700);}
   overBtns=null;if(overT>1){const bw=Math.min(200,W*0.3),bh=Math.max(38,Math.min(46,H*0.1)),g=14,by=H-bh-10;overBtns=[{x:W/2-bw-g/2,y:by,w:bw,h:bh},{x:W/2+g/2,y:by,w:bw,h:bh}];
