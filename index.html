@@ -108,7 +108,7 @@ let rush=false,rushT=0,rChain=0,rChainT=0,rMax=0,rushSpawnT=0,rushElite={},rushB
 let hc=0,hcQueue=[],hcSpawnT=0,hcCap=2,hcSpd=1,hcNew=false,hcEarn=0,hcSelUI={back:null,tiles:[]},hcBtns=[];
 const RUSH_LEN=60,RCHAIN_KEEP=2.5,rMul=()=>1+0.25*Math.min(rChain,12);
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1127.23';
+const VERSION='1127.24';
 const WCOIN=60,RCOIN_N=3,RCOIN_MAX=600;const today=()=>{const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();};const rcLeft=()=>{const r=META.rd||{};return r.d===today()?Math.max(0,RCOIN_N-(r.n||0)):RCOIN_N;};let overBtns=null,quitRun=false,rcUsed=false;let hitSrc='',runT=0,endless=false,clearBonus=0,clrW=0,clrK=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
 let ult=null,mines=[];const ultMax=()=>U.ultFast?75:100,ultN=()=>rush?4:U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#8a6cff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
@@ -752,7 +752,7 @@ function wrapText(str,x,y,maxW,lh,size,col){
 function drawPick(){
   ctx.fillStyle='rgba(5,7,15,0.82)';ctx.fillRect(0,0,W,H);
   txt('강화 선택',W/2,H*0.12,Math.round(clamp(H*0.06,18,30)),'#fff',900);
-  txt(`WAVE ${wave} 클리어 · 다음 웨이브 적 체력 x${(1+Math.max(0,wave-1)*0.25).toFixed(2)}`,W/2,H*0.2,Math.round(clamp(H*0.032,11,15)),'rgba(200,230,255,0.7)',600);
+  txt(`WAVE ${wave} 클리어 · 다음 웨이브 적 체력 x${(wave+1<=15?1+Math.max(0,wave-1)*0.25:4.25+(wave-14)*0.12).toFixed(2)}`,W/2,H*0.2,Math.round(clamp(H*0.032,11,15)),'rgba(200,230,255,0.7)',600);
   const rs=cardRects(),a=Math.min(1,pickT/0.35);
   rs.forEach((r,i)=>{const c=pickOpts[i],col=CARD_COL[c.k],lv=owned[c.id]||0;ctx.globalAlpha=a;
     const yy=r.y+(1-a)*20;
@@ -1086,7 +1086,7 @@ function drawHUD(){
   else if(rush){const lo=rushT<=10;txt('섬광 러시  '+fmtT(Math.ceil(rushT)),W/2,46,lo?14:12,lo?'#ff8da6':'rgba(160,220,255,0.8)',800);
     if(rChain>=1){const pulse=1+Math.max(0,rChainT-(RCHAIN_KEEP-0.3))*1.5;txt(rChain+' 연쇄',W-70,28,Math.round(22*pulse),rChain>=12?'#ffe066':rChain>=5?'#ff9a6a':'#8ff',900,'right');
       txt('x'+rMul().toFixed(2),W-70,52,13,'rgba(255,255,255,0.6)',700,'right');ctx.fillStyle='rgba(140,255,255,0.5)';ctx.fillRect(W-170,62,100*Math.min(1,rChainT/RCHAIN_KEEP),3);}}
-  else txt('WAVE '+Math.max(1,wave),W/2,46,12,'rgba(160,220,255,0.7)',700);
+  else txt('WAVE '+Math.max(1,wave)+'  ·  '+(clearTimeRec!==null?'클리어 '+fmtT(Math.round(clearTimeRec)):fmtT(Math.floor(runT))),W/2,46,12,'rgba(160,220,255,0.7)',700);
   if(!rush&&combo>=2){const pulse=1+Math.max(0,comboT-(COMBO_T-0.3))*1.5;txt(combo+' COMBO',W-70,28,Math.round(22*pulse),combo>=20?'#ffe066':'#8ff',900,'right');
     ctx.fillStyle='rgba(140,255,255,0.5)';ctx.fillRect(W-170,62,100*Math.min(1,comboT/COMBO_T),3);}
   if(flashT>0){const w=Math.min(260,W*0.3),fy=enemies.some(e=>e.type==='boss')?44:0;ctx.fillStyle='rgba(0,0,0,0.4)';ctx.fillRect(W/2-w/2,70+fy,w,6);ctx.fillStyle='#9ff';ctx.fillRect(W/2-w/2,70+fy,w*(flashT/FLASH_DUR),6);
