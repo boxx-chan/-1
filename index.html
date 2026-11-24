@@ -18,7 +18,7 @@ canvas{position:fixed;left:0;top:0;display:block;touch-action:none}
 #nickBox input{width:100%;box-sizing:border-box;font-size:18px;padding:10px;border-radius:8px;border:1px solid #3a4a66;background:#070a14;color:#fff;margin:12px 0;text-align:center;user-select:text;-webkit-user-select:text}
 #nickBox button{font-size:16px;font-weight:800;padding:10px 18px;border-radius:8px;border:1.5px solid #5ff4ff;background:rgba(90,240,255,0.2);color:#fff;margin:0 4px}
 #nickBox button.c{border-color:#556;background:transparent}
-</style></head><body><canvas id="c"></canvas><div id="nickBox"><div class="card"><div style="font-weight:900;font-size:17px">랭킹 닉네임</div><div style="font-size:13px;opacity:.7;margin-top:6px">1~12자 · 랭킹에 표시돼요 · 취소하면 기록이 안 올라가요</div><input id="nickIn" maxlength="12" autocomplete="off"><div><button class="c" id="nickNo">취소</button><button id="nickOk">확인</button></div></div></div><script>
+</style></head><body><canvas id="c"></canvas><div id="nickBox"><div class="card"><div style="font-weight:900;font-size:17px">랭킹 닉네임</div><div style="font-size:13px;opacity:.7;margin-top:6px">1~12자 · 랭킹에 표시돼요 · 취소하면 기록이 안 올라가요</div><input id="nickIn" maxlength="12" autocomplete="off"><div id="nickErr" style="font-size:13px;color:#ff8da6;min-height:16px;margin-top:4px"></div><div><button class="c" id="nickNo">취소</button><button id="nickOk">확인</button></div></div></div><script>
 'use strict';
 const cvs=document.getElementById('c'),ctx=cvs.getContext('2d');
 let W=0,H=0,DPR=1,S=1;
@@ -108,7 +108,7 @@ let rush=false,rushT=0,rChain=0,rChainT=0,rMax=0,rushSpawnT=0,rushElite={},rushB
 let hc=0,hcQueue=[],hcSpawnT=0,hcCap=2,hcSpd=1,hcNew=false,hcEarn=0,hcSelUI={back:null,tiles:[]},hcBtns=[];
 const RUSH_LEN=60,RCHAIN_KEEP=2.5,rMul=()=>1+0.25*Math.min(rChain,12);
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1127.27';
+const VERSION='1127.28';
 const WCOIN=60,RCOIN_N=3,RCOIN_MAX=600;const today=()=>{const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();};const rcLeft=()=>{const r=META.rd||{};return r.d===today()?Math.max(0,RCOIN_N-(r.n||0)):RCOIN_N;};let overBtns=null,quitRun=false,rcUsed=false;let hitSrc='',runT=0,endless=false,clearBonus=0,clrW=0,clrK=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
 let ult=null,mines=[];const ultMax=()=>U.ultFast?75:100,ultN=()=>rush?4:U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#8a6cff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
@@ -118,17 +118,17 @@ const SEASON=4;const RANK={url:'https://zepcjksuvhpafhwxaumq.supabase.co',key:'s
 let nick='';try{nick=localStorage.getItem('flash_nick')||'';}catch(e){}
 let ptok='',pid='',pidOk=true;try{ptok=localStorage.getItem('flash_tok')||'';if(!ptok){const a=new Uint8Array(18);crypto.getRandomValues(a);ptok=[...a].map(b=>b.toString(16).padStart(2,'0')).join('');localStorage.setItem('flash_tok',ptok);}}catch(e){}
 (async()=>{try{if(ptok&&crypto.subtle)pid=[...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(ptok)))].map(b=>b.toString(16).padStart(2,'0')).join('');}catch(e){}})();
-function renameRemote(){if(!rankOn()||!ptok||!nick)return;recMsg='';fetch(RANK.url+'/rest/v1/rpc/rename_player',{method:'POST',headers:rankHdr(),body:JSON.stringify({p_tok:ptok,p_nick:nick})}).then(x=>{renMsg=x.ok?'이름 변경 반영 완료':'이름 변경 실패 ('+x.status+')';renUntil=time+4;rankList=null;if(state==='rank')loadRank();}).catch(()=>{renMsg='이름 변경 실패 (인터넷 확인)';renUntil=time+4;});}
+function renameRemote(){if(!rankOn()||!ptok||!nick)return;recMsg='';fetch(RANK.url+'/rest/v1/rpc/rename_player',{method:'POST',headers:rankHdr(),body:JSON.stringify({p_tok:ptok,p_nick:nick})}).then(async x=>{const t=x.ok?'':await x.text();renMsg=x.ok?'이름 변경 반영 완료':t.includes('nick_taken')?'이미 다른 사람이 쓰는 닉네임이에요':'이름 변경 실패 ('+x.status+')';renUntil=time+4;rankList=null;if(state==='rank')loadRank();}).catch(()=>{renMsg='이름 변경 실패 (인터넷 확인)';renUntil=time+4;});}
 let renMsg='',renUntil=0;
 let rankList=null,rankErr='',rankLoading=false,pendRec=null,recMsg='',clearTimeRec=null,rankUI={back:null,nick:null,tabs:[]},overRankBtn=null;
 const rankOn=()=>!!(RANK.url&&RANK.key);
 function cleanNick(v){return String(v||'').replace(/[\u0000-\u001f\u007f<>]/g,'').trim().slice(0,12);}
 function rankHdr(){const h={'apikey':RANK.key,'Content-Type':'application/json'};if(!RANK.key.startsWith('sb_'))h.Authorization='Bearer '+RANK.key;return h;}
-function postRec(r){if(!rankOn()||!nick){pendRec=r;recMsg=rankOn()?'':'';return;}pendRec=null;recMsg='랭킹 등록 중...';
+function postRec(r){nickTaken=false;if(!rankOn()||!nick){pendRec=r;recMsg=rankOn()?'':'';return;}pendRec=null;recMsg='랭킹 등록 중...';
   const send=b=>fetch(RANK.url+'/rest/v1/scores',{method:'POST',headers:Object.assign(rankHdr(),{'Prefer':'return=minimal'}),body:JSON.stringify(b)});
   const body=Object.assign({nickname:nick},r);if(pid&&pidOk)body.pid=pid;
-  send(body).then(x=>{if(!x.ok&&body.pid&&x.status===400){delete body.pid;return send(body);}return x;})
-   .then(x=>{recMsg=x.ok?'랭킹 등록 완료 ('+nick+')':'랭킹 등록 실패 ('+x.status+')';rankList=null;}).catch(()=>{recMsg='랭킹 등록 실패 (인터넷 확인)';});}
+  send(body).then(async x=>{if(!x.ok&&body.pid&&x.status===400){const t=await x.clone().text();if(!t.includes('nick_taken')){delete body.pid;return send(body);}}return x;})
+   .then(async x=>{const t=x.ok?'':await x.text();if(t.includes('nick_taken')){pendRec=r;nickTaken=true;recMsg='닉네임이 이미 사용 중이에요 · 바꾸고 다시 등록';}else recMsg=x.ok?'랭킹 등록 완료 ('+nick+')':'랭킹 등록 실패 ('+x.status+')';rankList=null;}).catch(()=>{recMsg='랭킹 등록 실패 (인터넷 확인)';});}
 function makeRec(){const cl=clearTimeRec!==null;return{season:SEASON,wave:Math.max(1,Math.min(999,wave)),cleared:cl,clear_time:cl?Math.max(60,Math.round(clearTimeRec)):null,score:Math.max(0,Math.round(score)),kills,mode:rush?'rush':'main'};}
 function loadRank(){if(!rankOn()||rankLoading)return;rankLoading=true;rankErr='';
   const tab=rankTab,q=tab===0?'&mode=eq.main&cleared=eq.true&order=clear_time.asc,score.desc':tab===1?'&mode=eq.main&order=score.desc':'&mode=eq.rush&order=score.desc';
@@ -139,7 +139,13 @@ function loadRank(){if(!rankOn()||rankLoading)return;rankLoading=true;rankErr=''
 function openRank(){state='rank';rankList=null;rankScroll=0;loadRank();}
 let rankScroll=0,nickCb=null,nickAsked=false,rankTab=0;
 function askNick(cb){nickCb=cb;const b=document.getElementById('nickBox'),i=document.getElementById('nickIn');i.value=nick;b.style.display='flex';setTimeout(()=>{try{i.focus()}catch(e){}},50);}
-function closeNick(ok){const b=document.getElementById('nickBox'),v=cleanNick(document.getElementById('nickIn').value);if(ok&&!v)return;b.style.display='none';
+let nickBusy=false,nickTaken=false;
+function closeNick(ok){const b=document.getElementById('nickBox'),v=cleanNick(document.getElementById('nickIn').value),er=document.getElementById('nickErr');if(ok&&!v)return;
+  if(ok&&rankOn()&&ptok&&v!==nick){if(nickBusy)return;nickBusy=true;er.textContent='확인 중...';
+    fetch(RANK.url+'/rest/v1/rpc/nick_free',{method:'POST',headers:rankHdr(),body:JSON.stringify({p_nick:v,p_tok:ptok})}).then(x=>x.ok?x.json():true).catch(()=>true).then(free=>{nickBusy=false;
+      if(free===false){er.textContent='이미 다른 사람이 쓰는 닉네임이에요';return;}er.textContent='';finishNick(v);});return;}
+  er.textContent='';finishNick(ok?v:null);}
+function finishNick(v){const b=document.getElementById('nickBox'),ok=v!==null;b.style.display='none';
   if(ok){const ch=nick&&nick!==v;nick=v;try{localStorage.setItem('flash_nick',nick)}catch(e){}if(ch)renameRemote();if(nickCb)nickCb();}nickCb=null;}
 addEventListener('load',()=>{document.getElementById('nickOk').onclick=()=>closeNick(true);document.getElementById('nickNo').onclick=()=>closeNick(false);
   document.getElementById('nickIn').addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Enter')closeNick(true);if(e.key==='Escape')closeNick(false);});});
@@ -907,8 +913,25 @@ function drawDashTrail(tr,sk,r){if(!tr.length||sk==='none')return;
     ctx.globalCompositeOperation='source-over';}
   else{tr.forEach(q=>{const a=ag(q);ctx.globalAlpha=a*0.35;ctx.fillStyle='#5ff';ctx.beginPath();ctx.arc(q.x,q.y,r*(0.7+a*0.3),0,TAU);ctx.fill();});}
   ctx.globalAlpha=1;}
+const CAPES={green:{fill:'#37b24d',dark:'#1b5e2a',edge:'#b2f2bb',fold:'rgba(0,40,10,0.45)'},black:{fill:'#24242e',dark:'#0a0a0f',edge:'#ff3b4a',fold:'rgba(255,60,80,0.35)'}};
+let cape=null;
+function updCape(p,dt){const N=11,L=5.2;
+  const mv=Math.hypot(p.vx,p.vy),fa=mv>40?Math.atan2(p.vy,p.vx):p.face,ax=p.x-Math.cos(fa)*p.r*0.55,ay=p.y-Math.sin(fa)*p.r*0.55;
+  if(!cape||Math.hypot(cape[0].x-ax,cape[0].y-ay)>90){cape=[];for(let i=0;i<N;i++)cape.push({x:ax-Math.cos(fa)*L*i,y:ay-Math.sin(fa)*L*i,px:ax-Math.cos(fa)*L*i,py:ay-Math.sin(fa)*L*i});}
+  if(dt<=0)return;const k=Math.min(1,dt*60);
+  cape[0].x=ax;cape[0].y=ay;cape[0].px=ax;cape[0].py=ay;
+  const wx=-p.vx*0.0009*k,wy=-p.vy*0.0009*k,sw=Math.sin(time*5)*0.05*k;
+  for(let i=1;i<N;i++){const q=cape[i],vx=(q.x-q.px)*0.86,vy=(q.y-q.py)*0.86;q.px=q.x;q.py=q.y;q.x+=vx+wx*i*0.6+sw*(-Math.sin(fa))*i;q.y+=vy+wy*i*0.6+0.06*k+sw*Math.cos(fa)*i;}
+  for(let it=0;it<3;it++)for(let i=1;i<N;i++){const a=cape[i-1],b=cape[i],dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy)||1,f=(d-L)/d;b.x-=dx*f;b.y-=dy*f;}}
+function drawCape(p,id){const C=CAPES[id];if(!C||!cape)return;const N=cape.length,lft=[],rgt=[];
+  for(let i=0;i<N;i++){const a=cape[Math.max(0,i-1)],b=cape[Math.min(N-1,i+1)],dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy)||1,nx=-dy/d,ny=dx/d,u=i/(N-1),w=p.r*(0.6+0.6*Math.sin(Math.min(1,u*1.2)*Math.PI*0.5))*(u>0.88?1-(u-0.88)*2.5:1);
+    lft.push([cape[i].x+nx*w,cape[i].y+ny*w]);rgt.push([cape[i].x-nx*w,cape[i].y-ny*w]);}
+  const path=()=>{ctx.beginPath();ctx.moveTo(...lft[0]);for(const q of lft)ctx.lineTo(...q);for(let i=N-1;i>=0;i--)ctx.lineTo(...rgt[i]);ctx.closePath();};
+  path();const t=cape[N-1],g=ctx.createLinearGradient(cape[0].x,cape[0].y,t.x,t.y);g.addColorStop(0,C.dark);g.addColorStop(0.35,C.fill);g.addColorStop(1,C.dark);ctx.fillStyle=g;ctx.fill();
+  ctx.strokeStyle=C.edge;ctx.lineWidth=1.6;ctx.lineJoin='round';ctx.stroke();
+  ctx.strokeStyle=C.fold;ctx.lineWidth=1.2;for(const f of [0.33,0.67]){ctx.beginPath();for(let i=2;i<N-1;i++){const x=lft[i][0]*f+rgt[i][0]*(1-f),y=lft[i][1]*f+rgt[i][1]*(1-f);i>2?ctx.lineTo(x,y):ctx.moveTo(x,y);}ctx.stroke();}}
 function drawPlayer(){
-  const p=P;
+  const p=P;if(META.cape&&CAPES[META.cape]){updCape(p,realDt*(ult?1:ts));drawCape(p,META.cape);}
   if(p.inv>0&&p.dashT<=0&&flashT<=0&&hurtFlash>0&&Math.floor(time*20)%2)ctx.globalAlpha=0.35;
   if(p.grace>0&&flashT<=0&&state==='play'&&Math.floor(time*16)%2)ctx.globalAlpha=0.3;
   const fl=flashT>0;
@@ -1335,7 +1358,7 @@ function drawOver(){
   const ow=TRACKS.filter(c=>owned[c.id]).map(c=>c.name+' Lv'+owned[c.id]).join(' · ');if(ow)txt(ow,W/2,H*0.655,Math.round(fs*0.85),'rgba(255,230,140,0.8)',600);
   if(!rush)txt('+'+lastEarn.toLocaleString()+' 코인   (보유 ◆ '+META.coins.toLocaleString()+')',W/2,H*0.715,Math.round(fs*0.95),'#ffe066',800);
   else txt(rcUsed?'+'+lastEarn.toLocaleString()+' 코인   ·   오늘 코인 보상 '+rcLeft()+'/'+RCOIN_N+' 남음':'오늘 코인 보상 소진 (자정에 초기화)',W/2,H*0.715,Math.round(fs*0.95),rcUsed?'#ffe066':'rgba(255,224,102,0.55)',800);
-  overRankBtn=null;if(rankOn()){if(pendRec&&!nick&&overT>1){const b={x:W/2-110,y:H*0.81-17,w:220,h:32};overRankBtn=b;rrect(b.x,b.y,b.w,b.h,10);ctx.fillStyle='rgba(200,140,255,0.2)';ctx.fill();ctx.strokeStyle='#d9b8ff';ctx.lineWidth=1.5;ctx.stroke();txt('닉네임 정하고 랭킹 등록',W/2,b.y+b.h/2,Math.round(fs*0.95),'#fff',800);}
+  overRankBtn=null;if(rankOn()){if(pendRec&&(!nick||nickTaken)&&overT>1){const b={x:W/2-110,y:H*0.81-17,w:220,h:32};overRankBtn=b;rrect(b.x,b.y,b.w,b.h,10);ctx.fillStyle='rgba(200,140,255,0.2)';ctx.fill();ctx.strokeStyle='#d9b8ff';ctx.lineWidth=1.5;ctx.stroke();txt(nickTaken?'닉네임 바꾸고 다시 등록':'닉네임 정하고 랭킹 등록',W/2,b.y+b.h/2,Math.round(fs*0.95),'#fff',800);}
     else if(recMsg)txt(recMsg,W/2,H*0.81,Math.round(fs*0.85),'#d9b8ff',700);}
   overBtns=null;if(overT>1){const bw=Math.min(200,W*0.3),bh=Math.max(38,Math.min(46,H*0.1)),g=14,by=H-bh-10;overBtns=[{x:W/2-bw-g/2,y:by,w:bw,h:bh},{x:W/2+g/2,y:by,w:bw,h:bh}];
     overBtns.forEach((r,i)=>{rrect(r.x,r.y,r.w,r.h,10);ctx.fillStyle=i?'rgba(255,255,255,0.08)':'rgba(90,240,255,0.22)';ctx.fill();ctx.strokeStyle=i?'rgba(255,255,255,0.35)':'#5ff4ff';ctx.lineWidth=2;ctx.stroke();txt(i?'메뉴로':'다시 하기',r.x+r.w/2,r.y+r.h/2,Math.round(fs*1.1),'#fff',800);});}
