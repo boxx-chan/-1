@@ -108,8 +108,8 @@ let rush=false,rushT=0,rChain=0,rChainT=0,rMax=0,rushSpawnT=0,rushElite={},rushB
 let hc=0,hcQueue=[],hcSpawnT=0,hcCap=2,hcSpd=1,hcNew=false,hcEarn=0,hcSelUI={back:null,tiles:[]},hcBtns=[];
 const RUSH_LEN=60,RCHAIN_KEEP=2.5,rMul=()=>1+0.25*Math.min(rChain,12);
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1127.9';
-let hitSrc='',runT=0,endless=false,clearBonus=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
+const VERSION='1127.10';
+let hitSrc='',runT=0,endless=false,clearBonus=0,clrW=0,clrK=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
 let ult=null,mines=[];const ultMax=()=>U.ultFast?75:100,ultN=()=>rush?4:U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#8a6cff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
   {id:'bolt',name:'번개',price:2500,col:'#fff07a'},{id:'fire',name:'화염',price:4000,col:'#ff8a3d'},{id:'sakura',name:'벚꽃',price:8000,col:'#ffb3d6'}];
@@ -391,7 +391,7 @@ function dmgMul(){const w=Math.max(1,wave);return w<=15?1+DMG_W*(w-1):(1+DMG_W*1
 function heal(v){if(rush)return;const p=P,h=Math.min(p.maxHp-p.hp,Math.round(v));if(h<=0)return;p.hp+=h;addText(p.x,p.y-36,'+'+h,'#7fffa8',17,1);}
 function endRun(){state='over';overT=0;flashT=0;ult=null;ts=1;recMsg='';if(hc){lastEarn=0;return;}postRec(makeRec());
   if(rush){lastEarn=0;if(score>rushBest){rushBest=score;try{localStorage.setItem('flash_rbest',rushBest)}catch(e){}}}
-  else{lastEarn=wave*20+kills;if(score>best){best=score;try{localStorage.setItem('flash_best',best)}catch(e){}}}
+  else{lastEarn=endless?clrW*20+clrK+Math.floor(((wave-clrW)*20+(kills-clrK))/2):wave*20+kills;if(score>best){best=score;try{localStorage.setItem('flash_best',best)}catch(e){}}}
   META.coins+=lastEarn;saveMeta();}
 function rushFlash(p){rChain=rChainT>0?rChain+1:1;rChainT=RCHAIN_KEEP;if(rChain>rMax)rMax=rChain;const pts=Math.round(300*rMul());score+=pts;
   if(rChain>=2)addText(p.x,p.y-64,rChain+' 연쇄  x'+rMul().toFixed(2).replace(/0$/,''),rChain>=12?'#ffe066':rChain>=5?'#ff9a6a':'#8ff',16+Math.min(rChain,12),0.9);
@@ -617,8 +617,8 @@ function hitBoss(e,dmg,a,kb,strike,pierce){
 function killBoss(e,vul){
   {const bt=Math.max(1,runT-(e.bornT||runT)),sb=Math.round(e.k*15000*Math.min(2,BOSS_PAR[Math.min(e.k,3)-1]/bt));score+=sb;addText(P.x,P.y-80,'보스 속도 보너스 +'+sb+' ('+Math.round(bt)+'초)','#ff9a6a',18,2.2);}
   killEnemy(e,vul);burst(e.x,e.y,60,'#ff4a5a',700,0.8,3);ring(e.x,e.y,e.r,e.r*8,'#fff',0.6,8);hitstop=0.3;trauma=1;strikeFlash=1;vib([60,40,120]);
-  heal(P.maxHp*0.5);bonusPick++;META.coins+=100;saveMeta();addText(P.x,P.y-50,'체력 50% 회복 · 강화 +1 · 코인 +100','#ffe066',18,1.8);banner('보스 처치!');
-  if(e.k===3&&!endless){clearBonus=500;META.coins+=500;META.cleared=1;if(!META.bestClear||runT<META.bestClear)META.bestClear=runT;saveMeta();state='clear';overT=0;flashT=0;ult=null;ts=1;clearTimeRec=runT;recMsg='';postRec(makeRec());}
+  heal(P.maxHp*0.5);bonusPick++;const bc=endless?50:100;META.coins+=bc;saveMeta();addText(P.x,P.y-50,'체력 50% 회복 · 강화 +1 · 코인 +'+bc,'#ffe066',18,1.8);banner('보스 처치!');
+  if(e.k===3&&!endless){clrW=wave;clrK=kills;clearBonus=500;META.coins+=500;META.cleared=1;if(!META.bestClear||runT<META.bestClear)META.bestClear=runT;saveMeta();state='clear';overT=0;flashT=0;ult=null;ts=1;clearTimeRec=runT;recMsg='';postRec(makeRec());}
 }
 function updateBullets(dt){
   const p=P;
