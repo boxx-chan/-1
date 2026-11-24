@@ -108,7 +108,7 @@ let rush=false,rushT=0,rChain=0,rChainT=0,rMax=0,rushSpawnT=0,rushElite={},rushB
 let hc=0,hcQueue=[],hcSpawnT=0,hcCap=2,hcSpd=1,hcNew=false,hcEarn=0,hcSelUI={back:null,tiles:[]},hcBtns=[];
 const RUSH_LEN=60,RCHAIN_KEEP=2.5,rMul=()=>1+0.25*Math.min(rChain,12);
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1127.14';
+const VERSION='1127.15';
 let hitSrc='',runT=0,endless=false,clearBonus=0,clrW=0,clrK=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
 let ult=null,mines=[];const ultMax=()=>U.ultFast?75:100,ultN=()=>rush?4:U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#8a6cff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
@@ -151,7 +151,7 @@ let bonusPick=0,U,owned,pickOpts=[],pickT=0,pickNext=false;
 function applyU(){DASH_CD=rush?0.48:0.95-U.dashRed;COMBO_WIN=1.2+U.comboAdd;POW_DUR=3+U.powDur;POW_MUL=2+U.powMul;}
 function reset(){
   U={slash:1,thrust:1,strike:1,range:1,powDur:0,powMul:0,dashRed:0,comboAdd:0,wave:false,chain:false,shock:false,vamp:false,waveBig:false,ultFast:false,ultMore:false,ultFin:false,bigDmg:false};owned={};applyU();pickNext=false;waves2=[];
-  ult=null;P={ult:0,hurtLock:0,chain:0,chainT:0,charge:1,flashCD:0,grace:0,pow:0,chainT:0,x:AW/2,y:AH/2,vx:0,vy:0,r:15,hp:100,maxHp:100,face:0,dashT:0,dashCD:0,dx:1,dy:0,inv:0,just:0,justUsed:true,atkCD:0,comboStep:0,comboWin:0,trail:[]};
+  ult=null;P={ult:0,hurtLock:0,chain:0,chainT:0,charge:1,flashCD:0,grace:0,pow:0,chainT:0,x:AW/2,y:AH/2,vx:0,vy:0,r:15,hp:100,maxHp:100,face:0,dashT:0,dashCD:0,dx:1,dy:0,inv:0,just:0,justUsed:true,atkCD:0,comboStep:0,comboWin:0,trail:[],wtr:[],wtT:0};
   mines=[];enemies=[];bullets=[];parts=[];slashes=[];texts=[];markers=[];lines=[];
   runT=0;endless=false;clearTimeRec=null;bonusPick=0;wave=0;waveQueue=[];waveT=1.2;spawnT=0;score=0;combo=0;comboT=0;waveHurt=false;swingHit=false;maxCombo=0;kills=0;flashes=0;
   hitstop=0;trauma=0;ts=1;flashT=0;hurtFlash=0;overT=0;camX=P.x;camY=P.y;bannerT=0;strikeFlash=0;
@@ -474,6 +474,8 @@ function updatePlayer(dt){
   if(p.just>0&&!p.justUsed)tryJust();
   p.x=clamp(p.x+p.vx*dt,p.r,AW-p.r);p.y=clamp(p.y+p.vy*dt,p.r,AH-p.r);
   for(const tr of p.trail)tr.t+=dt;p.trail=p.trail.filter(tr=>tr.t<TRL);
+  for(const q of p.wtr)q.t+=dt;p.wtr=p.wtr.filter(q=>q.t<0.28);
+  if(META.eqT!=='none'&&p.dashT<=0&&Math.hypot(p.vx,p.vy)>90){p.wtT-=dt;if(p.wtT<=0){p.wtT=0.045;const a=Math.atan2(p.vy,p.vx);p.wtr.push({x:p.x-Math.cos(a)*p.r*0.6,y:p.y-Math.sin(a)*p.r*0.6,t:0});if(Math.random()<0.3)emitDash(META.eqT,p.x-Math.cos(a)*p.r,p.y-Math.sin(a)*p.r,a);}}
 }
 
 /* ---------- enemies ---------- */
@@ -871,6 +873,9 @@ function emitDash(sk,x,y,a){const bx=-Math.cos(a),by=-Math.sin(a),px=-by,py=bx;
   else if(sk==='sakura'){if(Math.random()<0.8){const C=['#ffb3d6','#ffc8e2','#ff8fc4','#ffe6f2'],o=rnd(-12,12);parts.push({x:x+px*o,y:y+py*o,vx:bx*rnd(20,60)+rnd(-25,25),vy:by*rnd(20,60)-rnd(10,40),t:0,life:rnd(0.8,1.2),col:C[Math.random()*4|0],w:rnd(4,6.5),k:'p',rot:rnd(0,TAU),vr:rnd(-8,8),fr:3,g:80});}}
   else if(sk==='ghost'){if(Math.random()<0.4)parts.push({x:x+rnd(-6,6),y:y+rnd(-6,6),vx:0,vy:0,t:0,life:rnd(0.25,0.45),col:Math.random()<0.5?'#ffffff':'#bfe6ff',w:rnd(0.8,1.4),k:'d'});}
 }
+const WT_COL={flash:'#5ff4ff',ghost:'#9a6cff',ink:'#d8d8e2',bolt:'#fff07a',fire:'#ff7a30',sakura:'#ff9ccc'};
+function drawWalkTrail(tr,sk,r){if(!tr.length||sk==='none')return;ctx.fillStyle=WT_COL[sk]||'#5ff';
+  for(const q of tr){const a=1-q.t/0.28;ctx.globalAlpha=a*0.26;ctx.beginPath();ctx.arc(q.x,q.y,r*(0.3+0.4*a),0,TAU);ctx.fill();}ctx.globalAlpha=1;}
 function drawDashTrail(tr,sk,r){if(!tr.length||sk==='none')return;
   const n=tr.length,ag=q=>1-q.t/TRL;
   if(sk==='ghost'){ctx.globalCompositeOperation='lighter';
@@ -1323,7 +1328,7 @@ function render(){
     ctx.save();ctx.translate(W/2+ox,H/2+oy);ctx.scale(S,S);ctx.translate(-camX,-camY);
     drawArena();drawMarkers();drawTelegraphs();
     for(const b of bullets){ctx.fillStyle='rgba(255,170,40,0.25)';ctx.beginPath();ctx.arc(b.x,b.y,b.r*2.2,0,TAU);ctx.fill();ctx.fillStyle='#ffd27a';ctx.beginPath();ctx.arc(b.x,b.y,b.r,0,TAU);ctx.fill();}
-    drawDashTrail(P.trail,META.eqT,P.r);drawEnemies();drawPlayer();drawComboGauge();drawFlashReady();drawAim();drawSlashes();drawSwordWaves();drawLines();drawParts();drawTexts();
+    drawWalkTrail(P.wtr,META.eqT,P.r);drawDashTrail(P.trail,META.eqT,P.r);drawEnemies();drawPlayer();drawComboGauge();drawFlashReady();drawAim();drawSlashes();drawSwordWaves();drawLines();drawParts();drawTexts();
     ctx.restore();
     if(flashT>0){const g=ctx.createRadialGradient(W/2,H/2,H*0.3,W/2,H/2,W*0.7);g.addColorStop(0,'rgba(40,120,160,0.05)');g.addColorStop(1,'rgba(40,200,255,0.28)');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);}
     if(strikeFlash>0){ctx.fillStyle=`rgba(220,255,255,${strikeFlash*0.35})`;ctx.fillRect(0,0,W,H);}
