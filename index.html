@@ -108,8 +108,8 @@ let rush=false,rushT=0,rChain=0,rChainT=0,rMax=0,rushSpawnT=0,rushElite={},rushB
 let hc=0,hcQueue=[],hcSpawnT=0,hcCap=2,hcSpd=1,hcNew=false,hcEarn=0,hcSelUI={back:null,tiles:[]},hcBtns=[];
 const RUSH_LEN=60,RCHAIN_KEEP=2.5,rMul=()=>1+0.25*Math.min(rChain,12);
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1127.19';
-let hitSrc='',runT=0,endless=false,clearBonus=0,clrW=0,clrK=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
+const VERSION='1127.20';
+let overBtns=null,quitRun=false;let hitSrc='',runT=0,endless=false,clearBonus=0,clrW=0,clrK=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
 let ult=null,mines=[];const ultMax=()=>U.ultFast?75:100,ultN=()=>rush?4:U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#8a6cff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
   {id:'bolt',name:'번개',price:2500,col:'#fff07a'},{id:'fire',name:'화염',price:4000,col:'#ff8a3d'},{id:'sakura',name:'벚꽃',price:8000,col:'#ffb3d6'}];
@@ -149,7 +149,7 @@ const CHAIN_MUL=[1,1.5,2],CHAIN_KEEP=2,MAX_CHARGE=3,GRACE=0.25,FLASH_CD=3,THRUST
 let DASH_CD=0.95,COMBO_WIN=1.2,POW_DUR=3,POW_MUL=2;
 let bonusPick=0,U,owned,pickOpts=[],pickT=0,pickNext=false;
 function applyU(){DASH_CD=rush?0.48:0.95-U.dashRed;COMBO_WIN=1.2+U.comboAdd;POW_DUR=3+U.powDur;POW_MUL=2+U.powMul;}
-function reset(){
+function reset(){quitRun=false;
   U={slash:1,thrust:1,strike:1,range:1,powDur:0,powMul:0,dashRed:0,comboAdd:0,wave:false,chain:false,shock:false,vamp:false,waveBig:false,ultFast:false,ultMore:false,ultFin:false,bigDmg:false};owned={};applyU();pickNext=false;waves2=[];
   ult=null;P={ult:0,hurtLock:0,chain:0,chainT:0,charge:1,flashCD:0,grace:0,pow:0,chainT:0,x:AW/2,y:AH/2,vx:0,vy:0,r:15,hp:100,maxHp:100,face:0,dashT:0,dashCD:0,dx:1,dy:0,inv:0,just:0,justUsed:true,atkCD:0,comboStep:0,comboWin:0,trail:[],wtr:[],wtT:0};
   mines=[];enemies=[];bullets=[];parts=[];slashes=[];texts=[];markers=[];lines=[];
@@ -173,7 +173,7 @@ function goFS(){
     if(p&&p.then)p.then(()=>{try{screen.orientation.lock('landscape').catch(()=>{})}catch(e){}}).catch(()=>{});}catch(e){}
 }
 function menuTap(x,y){
-  if(state==='pause'){const i=pauseHit(x,y);if(i===0)resumeGame();else if(i===1){reset();state='play';}else if(i===2){reset();state='title';}return;}
+  if(state==='pause'){const i=pauseHit(x,y);if(i===0)resumeGame();else if(i===1){reset();state='play';}else if(i===2){quitRun=true;if(hc){P.hp=0;}endRun();}return;}
   if(state==='pick'){if(pickT<0.35)return;const i=pickHit(x,y);if(i>=0)choose(i);return;}
   if(state==='shop'){shopTap(x,y);return;}
   if(state==='hcsel'){if(x===undefined||inR(x,y,hcSelUI.back)){state='title';return;}for(let i=0;i<hcSelUI.tiles.length;i++){const t=hcSelUI.tiles[i];if(inR(x,y,t)&&i+1<=(META.hc||0)+1){hcStart(i+1);return;}}return;}
@@ -182,7 +182,7 @@ function menuTap(x,y){
   if(state==='help'){helpTap(x,y);return;}
   if(state==='rank'){if(x===undefined||inR(x,y,rankUI.back)){state='title';return;}if(inR(x,y,rankUI.nick)){askNick(()=>{});return;}for(let i=0;i<rankUI.tabs.length;i++)if(inR(x,y,rankUI.tabs[i])&&rankTab!==i){rankTab=i;rankList=null;rankErr='';loadRank();}return;}
   if(state==='title'){if(inR(x,y,shopBtnR)){openShop();return;}if(hcBtnR&&inR(x,y,hcBtnR)){state='hcsel';return;}if(inR(x,y,rankBtnR)){openRank();return;}if(inR(x,y,helpBtnR)){state='help';helpPage=0;return;}const isRush=x!==undefined&&rushBtnR&&inR(x,y,rushBtnR);if(x!==undefined&&!inR(x,y,startBtnR)&&!isRush)return;if(rankOn()&&!nick&&!nickAsked){nickAsked=true;askNick(()=>{});return;}rush=!!isRush;hc=0;reset();state='play';goFS();if(rush)banner('섬광 러시 · 1분');}
-  else if(state==='over'&&overT>1.0){if(x!==undefined&&overRankBtn&&inR(x,y,overRankBtn)){askNick(()=>{if(pendRec)postRec(pendRec);});return;}reset();state='play';}
+  else if(state==='over'&&overT>1.0){if(x!==undefined&&overRankBtn&&inR(x,y,overRankBtn)){askNick(()=>{if(pendRec)postRec(pendRec);});return;}if(x!==undefined){if(overBtns&&inR(x,y,overBtns[1])){reset();state='title';return;}if(!overBtns||!inR(x,y,overBtns[0]))return;}reset();state='play';}
   else if(state==='clear'&&overT>1.0&&x!==undefined){const rs=clearRects();if(inR(x,y,rs[0])){endless=true;state='play';last=performance.now();banner('무한 모드');}
     else if(inR(x,y,rs[1])){lastEarn=wave*20+kills;META.coins+=lastEarn;saveMeta();if(score>best){best=score;try{localStorage.setItem('flash_best',best)}catch(e){}}reset();state='title';}}
 }
@@ -779,7 +779,7 @@ function drawPause(){
   txt('일시정지',W/2,H*0.17,Math.round(clamp(H*0.08,22,38)),'#fff',900);
   const ow=TRACKS.filter(c=>owned[c.id]).map(c=>c.name+' Lv'+owned[c.id]).join(' · ');
   txt(`WAVE ${Math.max(1,wave)} · ${score.toLocaleString()}점`+(ow?'  ·  '+ow:''),W/2,H*0.27,Math.round(clamp(H*0.035,11,15)),'rgba(200,230,255,0.75)',600);
-  const labels=['계속하기','다시 시작','처음 화면'],rs=pauseRects();
+  const labels=['계속하기','다시 시작','나가기'],rs=pauseRects();
   rs.forEach((r,i)=>{ctx.fillStyle=i===0?'rgba(90,240,255,0.22)':'rgba(255,255,255,0.07)';ctx.fillRect(r.x,r.y,r.w,r.h);ctx.strokeStyle=i===0?'#7ff4ff':'rgba(255,255,255,0.3)';ctx.lineWidth=2;ctx.strokeRect(r.x+1,r.y+1,r.w-2,r.h-2);
     txt(labels[i],r.x+r.w/2,r.y+r.h/2,Math.round(r.h*0.36),'#fff',800);});
 }
@@ -1226,10 +1226,11 @@ function drawTitle(){
   txt('섬광',W/2,cy,Math.round(H*0.17),'#5ff4ff',900);
   txt(META.cleared?'클리어 ✓  최고 '+fmtT(META.bestClear):'목표: 웨이브 15 보스 처치',W/2,cy+H*0.17,Math.round(H*0.032),META.cleared?'#ffe066':'rgba(255,224,102,0.8)',800);
   txt('FLASH COUNTER',W/2,cy+H*0.12,Math.round(H*0.035),'rgba(200,240,255,0.6)',700);
-  const lines2=[['왼쪽 드래그','이동'],['공격 탭 / 드래그','가까운 적 / 조준한 방향으로 공격'],['콤보 (1.2초 안에)','1·2단 베기 → 3단 찌르기: 방패 파괴'],['회피','대시 (쿨 약 1초) · 무적 없음, 공격 직전에 써야 피함'],['공격 직전 회피','섬광 → 관통 일격 + 공격력 2배 (일반 공격으로 충전)']];
-  const fs=Math.round(clamp(H*0.036,12,17));let y=H*0.5;
-  for(const [a,b] of lines2){txt(a,W/2-10,y,fs,'#8ff',800,'right');txt(b,W/2+10,y,fs,'rgba(255,255,255,0.85)',500,'left');y+=fs*1.65;}
-  txt('빨간 선/원 = 곧 공격이 온다는 신호',W/2,y+4,Math.round(fs*0.85),'rgba(255,120,130,0.85)',600);
+  const fs=Math.round(clamp(H*0.036,12,17));let y=H*0.505;
+  {const NOTE=['웨이브 15 이후 적 체력 증가량 절반으로 감소','한 대 피해 상한: 최대 체력의 35% (최소 3대는 버팀)','체력 강화 회복량 30 → 최대 체력의 30%','웨이브 15 이후 적이 더 많이, 더 빠르게 등장','일시정지 → 나가기도 랭킹에 기록돼요'];
+    const bw=Math.min(W-40,fs*26),bh=fs*1.5*NOTE.length+fs*2.2,bx=W/2-bw/2;rrect(bx,y-fs*0.6,bw,bh,10);ctx.fillStyle='rgba(255,224,102,0.07)';ctx.fill();ctx.strokeStyle='rgba(255,224,102,0.35)';ctx.lineWidth=1;ctx.stroke();
+    txt('업데이트 공지',W/2,y+fs*0.3,fs,'#ffe066',900);y+=fs*1.7;
+    for(const l of NOTE){txt('· '+l,bx+fs,y,Math.round(fs*0.88),'rgba(255,255,255,0.85)',600,'left');y+=fs*1.5;}y=y-fs*0.4;}
   {const bw=Math.max(170,fs*10),bh=Math.max(44,fs*2.6),g=14,bx=W/2-bw-g/2,by=Math.min(H-bh-8,y+fs*1.4);startBtnR={x:bx,y:by,w:bw,h:bh};rushBtnR={x:W/2+g/2,y:by,w:bw,h:bh};const pu=0.5+0.5*Math.sin(time*4);
     rrect(bx,by,bw,bh,12);ctx.fillStyle=`rgba(90,240,255,${0.18+0.12*pu})`;ctx.fill();ctx.strokeStyle='#5ff4ff';ctx.lineWidth=2;ctx.stroke();txt('시작',bx+bw/2,by+bh/2,Math.round(fs*1.25),'#fff',900);
     const rb2=rushBtnR;rrect(rb2.x,rb2.y,bw,bh,12);ctx.fillStyle=`rgba(255,154,106,${0.14+0.1*pu})`;ctx.fill();ctx.strokeStyle='#ff9a6a';ctx.lineWidth=2;ctx.stroke();
@@ -1304,16 +1305,17 @@ function drawOver(){
   if(hc){drawHcFail();return;}
   ctx.fillStyle=`rgba(5,7,15,${Math.min(0.78,overT)})`;ctx.fillRect(0,0,W,H);
   if(overT<0.4)return;
-  txt(rush&&P.hp>0?'시간 종료':'쓰러졌다',W/2,H*0.22,Math.round(H*0.1),rush&&P.hp>0?'#5ff4ff':'#ff5d86',900);
+  {const qt=quitRun?'게임 종료':rush&&P.hp>0?'시간 종료':'쓰러졌다';txt(qt,W/2,H*0.22,Math.round(H*0.1),quitRun||rush&&P.hp>0?'#5ff4ff':'#ff5d86',900);}
   txt(score.toLocaleString(),W/2,H*0.38,Math.round(H*0.09),'#fff',900);
   {const bb=rush?rushBest:best;txt((rush?'섬광 러시 · ':'')+(score>=bb&&score>0?'최고 기록!':'최고 '+bb.toLocaleString()),W/2,H*0.47,Math.round(H*0.04),score>=bb?'#ffe066':'rgba(255,255,255,0.6)',700);}
   const fs=Math.round(clamp(H*0.04,12,17));
   txt(rush?`처치 ${kills}   ·   최대 연쇄 ${rMax}   ·   섬광 ${flashes}회   ·   ${fmtT(Math.round(RUSH_LEN-rushT))} 생존`:`WAVE ${wave}   ·   처치 ${kills}   ·   최대 콤보 ${maxCombo}   ·   섬광 ${flashes}회`,W/2,H*0.6,fs,'rgba(200,240,255,0.85)',600);
-  const ow=TRACKS.filter(c=>owned[c.id]).map(c=>c.name+' Lv'+owned[c.id]).join(' · ');if(ow)txt(ow,W/2,H*0.68,Math.round(fs*0.85),'rgba(255,230,140,0.8)',600);
-  if(!rush)txt('+'+lastEarn.toLocaleString()+' 코인   (보유 ◆ '+META.coins.toLocaleString()+')',W/2,H*0.74,Math.round(fs*0.95),'#ffe066',800);
-  overRankBtn=null;if(rankOn()){if(pendRec&&!nick&&overT>1){const b={x:W/2-110,y:H*0.835-18,w:220,h:36};overRankBtn=b;rrect(b.x,b.y,b.w,b.h,10);ctx.fillStyle='rgba(200,140,255,0.2)';ctx.fill();ctx.strokeStyle='#d9b8ff';ctx.lineWidth=1.5;ctx.stroke();txt('닉네임 정하고 랭킹 등록',W/2,b.y+b.h/2,Math.round(fs*0.95),'#fff',800);}
-    else if(recMsg)txt(recMsg,W/2,H*0.825,Math.round(fs*0.85),'#d9b8ff',700);}
-  if(overT>1&&Math.floor(time*2)%2===0)txt('터치해서 다시',W/2,H*0.94,Math.round(fs*1.15),'#fff',800);
+  const ow=TRACKS.filter(c=>owned[c.id]).map(c=>c.name+' Lv'+owned[c.id]).join(' · ');if(ow)txt(ow,W/2,H*0.655,Math.round(fs*0.85),'rgba(255,230,140,0.8)',600);
+  if(!rush)txt('+'+lastEarn.toLocaleString()+' 코인   (보유 ◆ '+META.coins.toLocaleString()+')',W/2,H*0.715,Math.round(fs*0.95),'#ffe066',800);
+  overRankBtn=null;if(rankOn()){if(pendRec&&!nick&&overT>1){const b={x:W/2-110,y:H*0.81-17,w:220,h:32};overRankBtn=b;rrect(b.x,b.y,b.w,b.h,10);ctx.fillStyle='rgba(200,140,255,0.2)';ctx.fill();ctx.strokeStyle='#d9b8ff';ctx.lineWidth=1.5;ctx.stroke();txt('닉네임 정하고 랭킹 등록',W/2,b.y+b.h/2,Math.round(fs*0.95),'#fff',800);}
+    else if(recMsg)txt(recMsg,W/2,H*0.81,Math.round(fs*0.85),'#d9b8ff',700);}
+  overBtns=null;if(overT>1){const bw=Math.min(200,W*0.3),bh=Math.max(38,Math.min(46,H*0.1)),g=14,by=H-bh-10;overBtns=[{x:W/2-bw-g/2,y:by,w:bw,h:bh},{x:W/2+g/2,y:by,w:bw,h:bh}];
+    overBtns.forEach((r,i)=>{rrect(r.x,r.y,r.w,r.h,10);ctx.fillStyle=i?'rgba(255,255,255,0.08)':'rgba(90,240,255,0.22)';ctx.fill();ctx.strokeStyle=i?'rgba(255,255,255,0.35)':'#5ff4ff';ctx.lineWidth=2;ctx.stroke();txt(i?'메뉴로':'다시 하기',r.x+r.w/2,r.y+r.h/2,Math.round(fs*1.1),'#fff',800);});}
 }
 function render(){
   ctx.setTransform(DPR,0,0,DPR,0,0);
