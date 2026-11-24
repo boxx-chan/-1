@@ -108,7 +108,7 @@ let rush=false,rushT=0,rChain=0,rChainT=0,rMax=0,rushSpawnT=0,rushElite={},rushB
 let hc=0,hcQueue=[],hcSpawnT=0,hcCap=2,hcSpd=1,hcNew=false,hcEarn=0,hcSelUI={back:null,tiles:[]},hcBtns=[];
 const RUSH_LEN=60,RCHAIN_KEEP=2.5,rMul=()=>1+0.25*Math.min(rChain,12);
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1127.26';
+const VERSION='1127.27';
 const WCOIN=60,RCOIN_N=3,RCOIN_MAX=600;const today=()=>{const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();};const rcLeft=()=>{const r=META.rd||{};return r.d===today()?Math.max(0,RCOIN_N-(r.n||0)):RCOIN_N;};let overBtns=null,quitRun=false,rcUsed=false;let hitSrc='',runT=0,endless=false,clearBonus=0,clrW=0,clrK=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
 let ult=null,mines=[];const ultMax=()=>U.ultFast?75:100,ultN=()=>rush?4:U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#8a6cff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
@@ -118,7 +118,8 @@ const SEASON=4;const RANK={url:'https://zepcjksuvhpafhwxaumq.supabase.co',key:'s
 let nick='';try{nick=localStorage.getItem('flash_nick')||'';}catch(e){}
 let ptok='',pid='',pidOk=true;try{ptok=localStorage.getItem('flash_tok')||'';if(!ptok){const a=new Uint8Array(18);crypto.getRandomValues(a);ptok=[...a].map(b=>b.toString(16).padStart(2,'0')).join('');localStorage.setItem('flash_tok',ptok);}}catch(e){}
 (async()=>{try{if(ptok&&crypto.subtle)pid=[...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(ptok)))].map(b=>b.toString(16).padStart(2,'0')).join('');}catch(e){}})();
-function renameRemote(){if(!rankOn()||!ptok||!nick)return;fetch(RANK.url+'/rest/v1/rpc/rename_player',{method:'POST',headers:rankHdr(),body:JSON.stringify({p_tok:ptok,p_nick:nick})}).then(()=>{rankList=null;if(state==='rank')loadRank();}).catch(()=>{});}
+function renameRemote(){if(!rankOn()||!ptok||!nick)return;recMsg='';fetch(RANK.url+'/rest/v1/rpc/rename_player',{method:'POST',headers:rankHdr(),body:JSON.stringify({p_tok:ptok,p_nick:nick})}).then(x=>{renMsg=x.ok?'이름 변경 반영 완료':'이름 변경 실패 ('+x.status+')';renUntil=time+4;rankList=null;if(state==='rank')loadRank();}).catch(()=>{renMsg='이름 변경 실패 (인터넷 확인)';renUntil=time+4;});}
+let renMsg='',renUntil=0;
 let rankList=null,rankErr='',rankLoading=false,pendRec=null,recMsg='',clearTimeRec=null,rankUI={back:null,nick:null,tabs:[]},overRankBtn=null;
 const rankOn=()=>!!(RANK.url&&RANK.key);
 function cleanNick(v){return String(v||'').replace(/[\u0000-\u001f\u007f<>]/g,'').trim().slice(0,12);}
@@ -126,13 +127,13 @@ function rankHdr(){const h={'apikey':RANK.key,'Content-Type':'application/json'}
 function postRec(r){if(!rankOn()||!nick){pendRec=r;recMsg=rankOn()?'':'';return;}pendRec=null;recMsg='랭킹 등록 중...';
   const send=b=>fetch(RANK.url+'/rest/v1/scores',{method:'POST',headers:Object.assign(rankHdr(),{'Prefer':'return=minimal'}),body:JSON.stringify(b)});
   const body=Object.assign({nickname:nick},r);if(pid&&pidOk)body.pid=pid;
-  send(body).then(x=>{if(!x.ok&&body.pid&&x.status===400){pidOk=false;delete body.pid;return send(body);}return x;})
+  send(body).then(x=>{if(!x.ok&&body.pid&&x.status===400){delete body.pid;return send(body);}return x;})
    .then(x=>{recMsg=x.ok?'랭킹 등록 완료 ('+nick+')':'랭킹 등록 실패 ('+x.status+')';rankList=null;}).catch(()=>{recMsg='랭킹 등록 실패 (인터넷 확인)';});}
 function makeRec(){const cl=clearTimeRec!==null;return{season:SEASON,wave:Math.max(1,Math.min(999,wave)),cleared:cl,clear_time:cl?Math.max(60,Math.round(clearTimeRec)):null,score:Math.max(0,Math.round(score)),kills,mode:rush?'rush':'main'};}
 function loadRank(){if(!rankOn()||rankLoading)return;rankLoading=true;rankErr='';
   const tab=rankTab,q=tab===0?'&mode=eq.main&cleared=eq.true&order=clear_time.asc,score.desc':tab===1?'&mode=eq.main&order=score.desc':'&mode=eq.rush&order=score.desc';
   const get=cols=>fetch(RANK.url+'/rest/v1/scores?select='+cols+'&season='+(tab===0?'in.(2,3,'+SEASON+')':'eq.'+SEASON)+q+'&limit=500',{headers:rankHdr(),cache:'no-store'});
-  get('nickname,wave,cleared,clear_time,score,kills'+(pidOk?',pid':'')).then(x=>{if(!x.ok&&pidOk&&x.status===400){pidOk=false;return get('nickname,wave,cleared,clear_time,score,kills');}return x;})
+  get('nickname,wave,cleared,clear_time,score,kills'+(pidOk?',pid':'')).then(x=>{if(!x.ok&&pidOk&&x.status===400){return get('nickname,wave,cleared,clear_time,score,kills');}return x;})
    .then(x=>x.ok?x.json():x.text().then(t=>Promise.reject(x.status+' '+t.slice(0,60)))).then(d=>{const seen=new Set(),out=[];for(const r of d){const key=r.pid?'p:'+r.pid:'n:'+r.nickname;if(seen.has(key))continue;seen.add(key);out.push(r);if(out.length>=30)break;}if(tab===rankTab)rankList=out;rankLoading=false;if(tab!==rankTab)loadRank();})
    .catch(er=>{rankErr='불러오기 실패: '+(typeof er==='string'?er:'인터넷 연결');rankLoading=false;});}
 function openRank(){state='rank';rankList=null;rankScroll=0;loadRank();}
@@ -1266,6 +1267,7 @@ function drawTitle(){
   const hb2={x:W-150,y:134,w:136,h:40};hcBtnR=hb2;rrect(hb2.x,hb2.y,hb2.w,hb2.h,10);ctx.fillStyle='rgba(255,77,125,0.12)';ctx.fill();ctx.strokeStyle='rgba(255,77,125,0.65)';ctx.lineWidth=1.5;ctx.stroke();
   txt('하드코어 '+(META.hc||0)+'/10',hb2.x+hb2.w/2,hb2.y+hb2.h/2,14,'#ff8da6',800);
 }
+function drawRenMsg(){if(time<renUntil)txt(renMsg,W/2,H-14,13,renMsg.includes('실패')?'#ff8da6':'#8ff',800);}
 function drawRank(){
   drawBg();ctx.fillStyle='rgba(5,7,15,0.7)';ctx.fillRect(0,0,W,H);
   const bk={x:14,y:14,w:96,h:38};rankUI.back=bk;rrect(bk.x,bk.y,bk.w,bk.h,10);ctx.fillStyle='rgba(255,255,255,0.06)';ctx.fill();ctx.strokeStyle='rgba(255,255,255,0.3)';ctx.lineWidth=1.5;ctx.stroke();txt('← 뒤로',bk.x+bk.w/2,bk.y+bk.h/2,14,'#fff',800);
@@ -1340,11 +1342,11 @@ function drawOver(){
 }
 function render(){
   ctx.setTransform(DPR,0,0,DPR,0,0);
-  if(state==='title'){drawTitle();}
+  if(state==='title'){drawTitle();drawRenMsg();}
   else if(state==='shop'){drawShop();}
   else if(state==='help'){drawHelp();}
   else if(state==='inst'){drawInst();}
-  else if(state==='rank'){drawRank();}
+  else if(state==='rank'){drawRank();drawRenMsg();}
   else if(state==='hcsel'){drawHcSel();}
   else{
     ctx.fillStyle='#05070f';ctx.fillRect(0,0,W,H);
