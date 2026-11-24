@@ -108,7 +108,7 @@ let rush=false,rushT=0,rChain=0,rChainT=0,rMax=0,rushSpawnT=0,rushElite={},rushB
 let hc=0,hcQueue=[],hcSpawnT=0,hcCap=2,hcSpd=1,hcNew=false,hcEarn=0,hcSelUI={back:null,tiles:[]},hcBtns=[];
 const RUSH_LEN=60,RCHAIN_KEEP=2.5,rMul=()=>1+0.25*Math.min(rChain,12);
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1127.18';
+const VERSION='1127.19';
 let hitSrc='',runT=0,endless=false,clearBonus=0,clrW=0,clrK=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
 let ult=null,mines=[];const ultMax=()=>U.ultFast?75:100,ultN=()=>rush?4:U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#8a6cff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
@@ -443,7 +443,7 @@ function updateHC(dt){hcSpawnT-=dt;
 function hcClear(){state='hcclear';overT=0;flashT=0;ult=null;ts=1;const n=hc;META.hcBest=META.hcBest||{};hcNew=!META.hcBest[n]||runT<META.hcBest[n];if(hcNew)META.hcBest[n]=runT;
   hcEarn=0;if(n>(META.hc||0)){META.hc=n;}saveMeta();SFX.wave();banner(n+'단계 클리어!');}
 function hurt(sx,sy,dmg){
-  const p=P;if(hc){p.hp=0;}const dd=Math.max(1,Math.round((dmg||15)*dmgMul()));p.hp=Math.max(0,p.hp-dd);addText(p.x,p.y-40,'-'+dd,'#ff5d86',20,0.9);p.inv=1.1;p.hurtLock=1.1;combo=0;waveHurt=true;rChain=0;rChainT=0;hurtFlash=1;trauma=Math.min(1,trauma+0.6);hitstop=Math.max(hitstop,0.1);
+  const p=P;if(hc){p.hp=0;}const dd=Math.min(Math.ceil(p.maxHp*0.35),Math.max(1,Math.round((dmg||15)*dmgMul())));p.hp=Math.max(0,p.hp-dd);addText(p.x,p.y-40,'-'+dd,'#ff5d86',20,0.9);p.inv=1.1;p.hurtLock=1.1;combo=0;waveHurt=true;rChain=0;rChainT=0;hurtFlash=1;trauma=Math.min(1,trauma+0.6);hitstop=Math.max(hitstop,0.1);
   const a=Math.atan2(p.y-sy,p.x-sx);p.vx+=Math.cos(a)*380;p.vy+=Math.sin(a)*380;
   SFX.hurt();vib(160);burst(p.x,p.y,16,'#f46',300,0.5,2);
   if(p.hp<=0)endRun();
@@ -649,8 +649,8 @@ function updateWaves(dt){
   if(hc){updateHC(dt);return;}
   if(waveT>0){waveT-=dt;if(waveT<=0&&pickNext){openPick();return;}if(waveT<=0){wave++;waveQueue=buildWave(wave);banner(wave%5===0?'BOSS':'WAVE '+wave);SFX.wave();spawnT=0.3;}return;}
   spawnT-=dt;
-  if(waveQueue.length&&enemies.length+markers.length<Math.min(16,3+Math.round(wave*1.3))&&spawnT<=0){
-    spawnT=0.28;const type=waveQueue.shift();let x,y,tries=0;
+  if(waveQueue.length&&enemies.length+markers.length<(wave>15?Math.min(26,16+(wave-15)):Math.min(16,3+Math.round(wave*1.3)))&&spawnT<=0){
+    spawnT=wave>15?Math.max(0.16,0.28-0.012*(wave-15)):0.28;const type=waveQueue.shift();let x,y,tries=0;
     do{x=rnd(60,AW-60);y=rnd(60,AH-60);tries++;}while(Math.hypot(x-P.x,y-P.y)<300&&tries<30);
     markers.push({x,y,type,t:0,dur:0.9});
   }
@@ -714,14 +714,14 @@ function update(rdt){
 
 /* ---------- upgrades ---------- */
 const TRACKS=[
-  {id:'hp',k:'hp',name:'체력',base:'최대 체력 +20 · 체력 30 회복',bonus:{2:'흡수: 적 25마리 처치마다 체력 10 회복',4:'날렵함: 회피 쿨타임 -0.15초'}},
+  {id:'hp',k:'hp',name:'체력',base:'최대 체력 +20 · 체력 30% 회복',bonus:{2:'흡수: 적 25마리 처치마다 체력 10 회복',4:'날렵함: 회피 쿨타임 -0.15초'}},
   {id:'atk',k:'atk',name:'공격력',base:'베기 · 찌르기 공격력 +25%',bonus:{2:'큰 휘두르기: 베기 범위 +25%',3:'검기: 2단 베기가 관통하는 검기를 날림',4:'긴 창: 찌르기 길이 +40% · 폭 2배 · 꿰뚫을 때마다 데미지 +50%',5:'검기 확장: 검기 크기·사거리 +50%'}},
   {id:'flash',k:'fx',name:'섬광',base:'섬광 일격 데미지 +30% · 일격 후 공격력 버프 지속 +0.5초',bonus:{2:'거인 사냥: 섬광 일격·충격파가 보라 큰 적·보스에게 데미지 +50%',3:'난무 수련: 난무 게이지가 25% 빨리 참',4:'충격파: 일격 착지점에 폭발',5:'난무 극의: 난무 돌진 6회 → 8회 + 마지막 돌진이 큰 폭발로 끝남'}},
 ];
 const CARDS=TRACKS;
 const CARD_COL={atk:'#ffe066',fx:'#7ff4ff',hp:'#ff7fa6'};
 function applyTrack(id,lv){
-  if(id==='hp'){P.maxHp+=20;heal(30);if(lv===2)U.vamp=true;if(lv===4)U.dashRed+=0.15;}
+  if(id==='hp'){P.maxHp+=20;heal(P.maxHp*0.3);if(lv===2)U.vamp=true;if(lv===4)U.dashRed+=0.15;}
   else if(id==='atk'){U.slash+=0.25;U.thrust+=0.25;if(lv===2)U.range+=0.25;if(lv===3)U.wave=true;if(lv===4)U.chain=true;if(lv===5)U.waveBig=true;}
   else{U.strike+=0.3;U.powDur+=0.5;if(lv===2)U.bigDmg=true;if(lv===4)U.shock=true;if(lv===3)U.ultFast=true;if(lv===5){U.ultMore=true;U.ultFin=true;}}
 }
