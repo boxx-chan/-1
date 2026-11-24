@@ -108,7 +108,7 @@ let rush=false,rushT=0,rChain=0,rChainT=0,rMax=0,rushSpawnT=0,rushElite={},rushB
 let hc=0,hcQueue=[],hcSpawnT=0,hcCap=2,hcSpd=1,hcNew=false,hcEarn=0,hcSelUI={back:null,tiles:[]},hcBtns=[];
 const RUSH_LEN=60,RCHAIN_KEEP=2.5,rMul=()=>1+0.25*Math.min(rChain,12);
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1127.16';
+const VERSION='1127.17';
 let hitSrc='',runT=0,endless=false,clearBonus=0,clrW=0,clrK=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
 let ult=null,mines=[];const ultMax=()=>U.ultFast?75:100,ultN=()=>rush?4:U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#8a6cff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
@@ -137,7 +137,7 @@ function closeNick(ok){const b=document.getElementById('nickBox'),v=cleanNick(do
 addEventListener('load',()=>{document.getElementById('nickOk').onclick=()=>closeNick(true);document.getElementById('nickNo').onclick=()=>closeNick(false);
   document.getElementById('nickIn').addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Enter')closeNick(true);if(e.key==='Escape')closeNick(false);});});
 try{const m=JSON.parse(localStorage.getItem('flash_meta')||'null');if(m&&typeof m==='object'){META.coins=Math.max(0,+m.coins||0);META.own=Object.assign({flash:1},m.own||{});if(SKINS.some(k=>k.id===m.eq)&&META.own[m.eq])META.eq=m.eq;META.cleared=m.cleared||0;META.bestClear=m.bestClear||0;META.hc=Math.min(10,Math.max(0,+m.hc||0));META.hcBest=(m.hcBest&&typeof m.hcBest==='object')?m.hcBest:{};META.ownT=Object.assign({},m.ownT||{});if(!m.tv)delete META.ownT.flash;if(SKINS.some(k=>k.id===m.eqT)&&META.ownT[m.eqT])META.eqT=m.eqT;}}catch(e){}
-const TPRICES={flash:5000,ghost:10000,ink:10000,bolt:10000,fire:13000,sakura:13000};const tPrice=id=>TPRICES[id]||10000;
+const TPRICES={flash:5000,ghost:10000,ink:10000,bolt:13000,fire:13000,sakura:13000};const tPrice=id=>TPRICES[id]||10000;
 (async()=>{try{const q=new URLSearchParams(location.search).get('dev');if(!q||!crypto.subtle)return;
   const h=[...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(q)))].map(b=>b.toString(16).padStart(2,'0')).join('');
   history.replaceState(null,'',location.pathname);if(h!=='41c64ab096a2b90401c785d60ddf7c8677d551fc8c49fbb5b6f06e7ad0b99b08')return;
