@@ -108,7 +108,7 @@ let rush=false,rushT=0,rChain=0,rChainT=0,rMax=0,rushSpawnT=0,rushElite={},rushB
 let hc=0,hcQueue=[],hcSpawnT=0,hcCap=2,hcSpd=1,hcNew=false,hcEarn=0,hcSelUI={back:null,tiles:[]},hcBtns=[];
 const RUSH_LEN=60,RCHAIN_KEEP=2.5,rMul=()=>1+0.25*Math.min(rChain,12);
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1127.20';
+const VERSION='1127.21';
 let overBtns=null,quitRun=false;let hitSrc='',runT=0,endless=false,clearBonus=0,clrW=0,clrK=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
 let ult=null,mines=[];const ultMax=()=>U.ultFast?75:100,ultN=()=>rush?4:U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#8a6cff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
@@ -1226,8 +1226,8 @@ function drawTitle(){
   txt('섬광',W/2,cy,Math.round(H*0.17),'#5ff4ff',900);
   txt(META.cleared?'클리어 ✓  최고 '+fmtT(META.bestClear):'목표: 웨이브 15 보스 처치',W/2,cy+H*0.17,Math.round(H*0.032),META.cleared?'#ffe066':'rgba(255,224,102,0.8)',800);
   txt('FLASH COUNTER',W/2,cy+H*0.12,Math.round(H*0.035),'rgba(200,240,255,0.6)',700);
-  const fs=Math.round(clamp(H*0.036,12,17));let y=H*0.505;
-  {const NOTE=['웨이브 15 이후 적 체력 증가량 절반으로 감소','한 대 피해 상한: 최대 체력의 35% (최소 3대는 버팀)','체력 강화 회복량 30 → 최대 체력의 30%','웨이브 15 이후 적이 더 많이, 더 빠르게 등장','일시정지 → 나가기도 랭킹에 기록돼요'];
+  const fs=Math.round(clamp(H*0.036,12,17));let y=H*0.475;
+  {const NOTE=['웨이브 15 이후 적 체력 증가량 절반으로 감소','한 대 피해 상한: 최대 체력의 35% (최소 3대는 버팀)','체력 강화 회복량 30 → 최대 체력의 30%','웨이브 15 이후 적이 더 많이, 더 빠르게 등장','일시정지 → 나가기도 랭킹에 기록돼요','닉네임을 바꾸면 랭킹 기록이 새 이름으로 따로 쌓여요'];
     const bw=Math.min(W-40,fs*26),bh=fs*1.5*NOTE.length+fs*2.2,bx=W/2-bw/2;rrect(bx,y-fs*0.6,bw,bh,10);ctx.fillStyle='rgba(255,224,102,0.07)';ctx.fill();ctx.strokeStyle='rgba(255,224,102,0.35)';ctx.lineWidth=1;ctx.stroke();
     txt('업데이트 공지',W/2,y+fs*0.3,fs,'#ffe066',900);y+=fs*1.7;
     for(const l of NOTE){txt('· '+l,bx+fs,y,Math.round(fs*0.88),'rgba(255,255,255,0.85)',600,'left');y+=fs*1.5;}y=y-fs*0.4;}
