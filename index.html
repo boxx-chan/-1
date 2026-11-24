@@ -108,12 +108,12 @@ let rush=false,rushT=0,rChain=0,rChainT=0,rMax=0,rushSpawnT=0,rushElite={},rushB
 let hc=0,hcQueue=[],hcSpawnT=0,hcCap=2,hcSpd=1,hcNew=false,hcEarn=0,hcSelUI={back:null,tiles:[]},hcBtns=[];
 const RUSH_LEN=60,RCHAIN_KEEP=2.5,rMul=()=>1+0.25*Math.min(rChain,12);
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1127.12';
+const VERSION='1127.13';
 let hitSrc='',runT=0,endless=false,clearBonus=0,clrW=0,clrK=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
 let ult=null,mines=[];const ultMax=()=>U.ultFast?75:100,ultN=()=>rush?4:U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#8a6cff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
   {id:'bolt',name:'번개',price:2500,col:'#fff07a'},{id:'fire',name:'화염',price:4000,col:'#ff8a3d'},{id:'sakura',name:'벚꽃',price:8000,col:'#ffb3d6'}];
-let META={coins:0,own:{flash:1},eq:'flash',ownT:{flash:1},eqT:'flash'},lastEarn=0;
+let META={coins:0,own:{flash:1},eq:'flash',ownT:{},eqT:'none',tv:1},lastEarn=0;
 const SEASON=4;const RANK={url:'https://zepcjksuvhpafhwxaumq.supabase.co',key:'sb_publishable_N3F5KSKFTc4HX0qC3nxuWA_-B9LOLbX'};
 let nick='';try{nick=localStorage.getItem('flash_nick')||'';}catch(e){}
 let rankList=null,rankErr='',rankLoading=false,pendRec=null,recMsg='',clearTimeRec=null,rankUI={back:null,nick:null,tabs:[]},overRankBtn=null;
@@ -136,8 +136,8 @@ function closeNick(ok){const b=document.getElementById('nickBox'),v=cleanNick(do
   if(ok){nick=v;try{localStorage.setItem('flash_nick',nick)}catch(e){}if(nickCb)nickCb();}nickCb=null;}
 addEventListener('load',()=>{document.getElementById('nickOk').onclick=()=>closeNick(true);document.getElementById('nickNo').onclick=()=>closeNick(false);
   document.getElementById('nickIn').addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Enter')closeNick(true);if(e.key==='Escape')closeNick(false);});});
-try{const m=JSON.parse(localStorage.getItem('flash_meta')||'null');if(m&&typeof m==='object'){META.coins=Math.max(0,+m.coins||0);META.own=Object.assign({flash:1},m.own||{});if(SKINS.some(k=>k.id===m.eq)&&META.own[m.eq])META.eq=m.eq;META.cleared=m.cleared||0;META.bestClear=m.bestClear||0;META.hc=Math.min(10,Math.max(0,+m.hc||0));META.hcBest=(m.hcBest&&typeof m.hcBest==='object')?m.hcBest:{};META.ownT=Object.assign({flash:1},m.ownT||{});if(SKINS.some(k=>k.id===m.eqT)&&META.ownT[m.eqT])META.eqT=m.eqT;}}catch(e){}
-const TPRICE=20000;const tPrice=id=>id==='flash'?0:TPRICE;
+try{const m=JSON.parse(localStorage.getItem('flash_meta')||'null');if(m&&typeof m==='object'){META.coins=Math.max(0,+m.coins||0);META.own=Object.assign({flash:1},m.own||{});if(SKINS.some(k=>k.id===m.eq)&&META.own[m.eq])META.eq=m.eq;META.cleared=m.cleared||0;META.bestClear=m.bestClear||0;META.hc=Math.min(10,Math.max(0,+m.hc||0));META.hcBest=(m.hcBest&&typeof m.hcBest==='object')?m.hcBest:{};META.ownT=Object.assign({},m.ownT||{});if(!m.tv)delete META.ownT.flash;if(SKINS.some(k=>k.id===m.eqT)&&META.ownT[m.eqT])META.eqT=m.eqT;}}catch(e){}
+const TPRICE=20000;const tPrice=id=>id==='flash'?10000:TPRICE;
 function saveMeta(){try{localStorage.setItem('flash_meta',JSON.stringify(META))}catch(e){}}
 const skinById=id=>SKINS.find(k=>k.id===id)||SKINS[0];
 const CHAIN_MUL=[1,1.5,2],CHAIN_KEEP=2,MAX_CHARGE=3,GRACE=0.25,FLASH_CD=3,THRUST_L=175,FLASH_DUR=1.6;
@@ -866,7 +866,7 @@ function emitDash(sk,x,y,a){const bx=-Math.cos(a),by=-Math.sin(a),px=-by,py=bx;
   else if(sk==='sakura'){if(Math.random()<0.8){const C=['#ffb3d6','#ffc8e2','#ff8fc4','#ffe6f2'],o=rnd(-12,12);parts.push({x:x+px*o,y:y+py*o,vx:bx*rnd(20,60)+rnd(-25,25),vy:by*rnd(20,60)-rnd(10,40),t:0,life:rnd(0.8,1.2),col:C[Math.random()*4|0],w:rnd(4,6.5),k:'p',rot:rnd(0,TAU),vr:rnd(-8,8),fr:3,g:80});}}
   else if(sk==='ghost'){if(Math.random()<0.4)parts.push({x:x+rnd(-6,6),y:y+rnd(-6,6),vx:0,vy:0,t:0,life:rnd(0.25,0.45),col:Math.random()<0.5?'#ffffff':'#bfe6ff',w:rnd(0.8,1.4),k:'d'});}
 }
-function drawDashTrail(tr,sk,r){if(!tr.length)return;
+function drawDashTrail(tr,sk,r){if(!tr.length||sk==='none')return;
   const n=tr.length,ag=q=>1-q.t/TRL;
   if(sk==='ghost'){ctx.globalCompositeOperation='lighter';
     tr.forEach((q,i)=>{if(i%2)return;const a=ag(q),px=-Math.sin(q.a)*3,py=Math.cos(q.a)*3;
@@ -1108,7 +1108,7 @@ function shopTap(x,y){
   for(const tb of shopUI.tabs||[])if(inR(x,y,tb)){if(pv.tab!==tb.id){pv.tab=tb.id;pvReset();SFX.tink();}return;}
   for(let i=0;i<shopUI.cards.length;i++)if(inR(x,y,shopUI.cards[i])){const id=SKINS[i].id;if(pv.tab==='t'){if(pv.selT!==id){pv.selT=id;pvReset();}}else if(pv.sel!==id){pv.sel=id;pvReset();}return;}
   if(inR(x,y,shopUI.act)&&pv.tab==='t'){const k=skinById(pv.selT),pr=tPrice(k.id);
-    if(META.ownT[k.id]){if(META.eqT!==k.id){META.eqT=k.id;saveMeta();SFX.tink();pv.msg='장착 완료';pv.msgT=1.2;}}
+    if(META.ownT[k.id]){if(META.eqT!==k.id){META.eqT=k.id;pv.msg='장착 완료';}else{META.eqT='none';pv.msg='해제 완료';}saveMeta();SFX.tink();pv.msgT=1.2;}
     else if(META.coins>=pr){META.coins-=pr;META.ownT[k.id]=1;META.eqT=k.id;saveMeta();SFX.wave();vib(30);pv.msg=k.name+' 트레일 구매 완료!';pv.msgT=1.6;}
     else{SFX.hurt();pv.msg='코인이 '+(pr-META.coins).toLocaleString()+' 부족해요';pv.msgT=1.6;}return;}
   if(inR(x,y,shopUI.act)){const k=skinById(pv.sel);
@@ -1140,7 +1140,7 @@ function drawShop(){
   const act={x:px0+pw/2-100,y:H-62,w:200,h:46};shopUI.act=act;rrect(act.x,act.y,act.w,act.h,10);
   ctx.fillStyle=eq?'rgba(255,255,255,0.06)':own?'rgba(90,240,255,0.25)':can?'rgba(255,224,102,0.28)':'rgba(255,255,255,0.06)';ctx.fill();
   ctx.strokeStyle=eq?'rgba(255,255,255,0.2)':own?'#8ff':can?'#ffe066':'rgba(255,255,255,0.2)';ctx.lineWidth=2;ctx.stroke();
-  txt(eq?'장착중':own?'장착하기':'구매  ◆ '+kp.toLocaleString(),act.x+act.w/2,act.y+act.h/2,17,eq?'rgba(255,255,255,0.5)':own?'#cff':can?'#ffe066':'rgba(255,255,255,0.45)',800);
+  txt(eq?(T?'장착중 (탭: 해제)':'장착중'):own?'장착하기':'구매  ◆ '+kp.toLocaleString(),act.x+act.w/2,act.y+act.h/2,17,eq?'rgba(255,255,255,0.5)':own?'#cff':can?'#ffe066':'rgba(255,255,255,0.45)',800);
   if(!T&&pv.sel==='sakura')txt('✿ 특수효과 적용 (처치 시 꽃잎)',px0+pw/2,py0+ph-16,13,'#ffb3d6',800);
   if(pv.msgT>0){ctx.globalAlpha=Math.min(1,pv.msgT*3);txt(pv.msg,px0+pw/2,py0+20,14,'#fff',800);ctx.globalAlpha=1;}
   const gx0=W*0.45,gx1=W-14,gy0=top,gy1=H-14,gap=10,cw=(gx1-gx0-gap*2)/3,ch=(gy1-gy0-gap)/2;shopUI.cards=[];
