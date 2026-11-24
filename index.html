@@ -108,7 +108,7 @@ let rush=false,rushT=0,rChain=0,rChainT=0,rMax=0,rushSpawnT=0,rushElite={},rushB
 let hc=0,hcQueue=[],hcSpawnT=0,hcCap=2,hcSpd=1,hcNew=false,hcEarn=0,hcSelUI={back:null,tiles:[]},hcBtns=[];
 const RUSH_LEN=60,RCHAIN_KEEP=2.5,rMul=()=>1+0.25*Math.min(rChain,12);
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1127.30';
+const VERSION='1127.31';
 const WCOIN=60,RCOIN_N=3,RCOIN_MAX=600;const today=()=>{const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();};const rcLeft=()=>{const r=META.rd||{};return r.d===today()?Math.max(0,RCOIN_N-(r.n||0)):RCOIN_N;};let overBtns=null,quitRun=false,rcUsed=false;let hitSrc='',runT=0,endless=false,clearBonus=0,clrW=0,clrK=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
 let ult=null,mines=[];const ultMax=()=>U.ultFast?75:100,ultN=()=>rush?4:U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#8a6cff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
@@ -198,7 +198,7 @@ function menuTap(x,y){
   if(state==='help'){helpTap(x,y);return;}
   if(state==='inst'){if(x===undefined||inR(x,y,instBack))state='title';return;}
   if(state==='rank'){if(x===undefined||inR(x,y,rankUI.back)){state='title';return;}if(inR(x,y,rankUI.nick)){askNick(()=>{});return;}for(let i=0;i<rankUI.tabs.length;i++)if(inR(x,y,rankUI.tabs[i])&&rankTab!==i){rankTab=i;rankList=null;rankErr='';loadRank();}return;}
-  if(state==='title'){if(inR(x,y,shopBtnR)){openShop();return;}if(hcBtnR&&inR(x,y,hcBtnR)){state='hcsel';return;}if(inR(x,y,rankBtnR)){openRank();return;}if(inR(x,y,helpBtnR)){state='help';helpPage=0;return;}if(iosBtnR&&inR(x,y,iosBtnR)){instKind='ios';state='inst';return;}if(andBtnR&&inR(x,y,andBtnR)){instKind='and';state='inst';return;}const isRush=x!==undefined&&rushBtnR&&inR(x,y,rushBtnR);if(x!==undefined&&!inR(x,y,startBtnR)&&!isRush)return;if(rankOn()&&!nick&&!nickAsked){nickAsked=true;askNick(()=>{});return;}rush=!!isRush;hc=0;reset();state='play';goFS();if(rush)banner('섬광 러시 · 1분');}
+  if(state==='title'){for(const r of voteR)if(inR(x,y,r)){voteScarf(r.v);return;}if(inR(x,y,shopBtnR)){openShop();return;}if(hcBtnR&&inR(x,y,hcBtnR)){state='hcsel';return;}if(inR(x,y,rankBtnR)){openRank();return;}if(inR(x,y,helpBtnR)){state='help';helpPage=0;return;}if(iosBtnR&&inR(x,y,iosBtnR)){instKind='ios';state='inst';return;}if(andBtnR&&inR(x,y,andBtnR)){instKind='and';state='inst';return;}const isRush=x!==undefined&&rushBtnR&&inR(x,y,rushBtnR);if(x!==undefined&&!inR(x,y,startBtnR)&&!isRush)return;if(rankOn()&&!nick&&!nickAsked){nickAsked=true;askNick(()=>{});return;}rush=!!isRush;hc=0;reset();state='play';goFS();if(rush)banner('섬광 러시 · 1분');}
   else if(state==='over'&&overT>1.0){if(x!==undefined&&overRankBtn&&inR(x,y,overRankBtn)){askNick(()=>{if(pendRec)postRec(pendRec);});return;}if(x!==undefined){if(overBtns&&inR(x,y,overBtns[1])){reset();state='title';return;}if(!overBtns||!inR(x,y,overBtns[0]))return;}reset();state='play';}
   else if(state==='clear'&&overT>1.0&&x!==undefined){const rs=clearRects();if(inR(x,y,rs[0])){endless=true;state='play';last=performance.now();banner('무한 모드');}
     else if(inR(x,y,rs[1])){lastEarn=wave*WCOIN+kills;META.coins+=lastEarn;saveMeta();if(score>best){best=score;try{localStorage.setItem('flash_best',best)}catch(e){}}reset();state='title';}}
@@ -1237,7 +1237,8 @@ const HELP=[
   ['웨이브 강화','웨이브를 깰 때마다 체력·공격력·섬광 중 하나 강화 + 체력 10 회복\n레벨이 오르면 검기·긴 창·난무 강화 같은 기술이 열림'],
   ['코인 · 상점','죽으면 (웨이브×60 + 처치 수) 코인 → 처음 화면 상점에서 베기 스킨 구매']]}
 ];
-let instKind='ios',instBack=null,iosBtnR=null,andBtnR=null;
+let instKind='ios',instBack=null,iosBtnR=null,andBtnR=null,voteR=[],voteMsg='',voteBusy=false,myVote=0;try{myVote=+(localStorage.getItem('flash_sv')||0);}catch(e){}
+function voteScarf(v){if(voteBusy||!rankOn()||!ptok)return;voteBusy=true;voteMsg='보내는 중…';fetch(RANK.url+'/rest/v1/rpc/vote_scarf',{method:'POST',headers:rankHdr(),body:JSON.stringify({p_tok:ptok,p_v:v})}).then(x=>x.ok?x.json():'err').catch(()=>'err').then(r=>{voteBusy=false;if(r==='ok'){myVote=v;try{localStorage.setItem('flash_sv',v);}catch(e){}voteMsg='투표 완료! 고마워요';}else voteMsg='투표 실패, 다시 눌러주세요';});}
 const INST={ios:{t:'아이폰 앱 설치',col:'#d9e4ff',steps:['반드시 Safari(사파리)로 게임 링크 열기 (카톡·크롬 X)','아래쪽 공유 버튼(네모에 위쪽 화살표) 누르기','목록을 내려서 "홈 화면에 추가" 누르기','오른쪽 위 "추가" 누르기','홈 화면에 생긴 섬광 아이콘으로 실행'],
   notes:['Safari와 홈 화면 앱은 저장 기록이 따로예요. 앱으로만 플레이하세요.','Safari에서만 하면 7일 정도 안 들어갔을 때 기록이 지워질 수 있어요.']},
  and:{t:'안드로이드 앱 설치',col:'#b8ffcf',steps:['크롬(Chrome)으로 게임 링크 열기 (카톡 안에서 열지 말기)','오른쪽 위 ⋮ 메뉴 누르기','"앱 설치" 또는 "홈 화면에 추가" 누르기','"설치" 누르기','홈 화면에 생긴 섬광 아이콘으로 실행'],
@@ -1295,6 +1296,10 @@ function drawTitle(){
   txt('v'+VERSION,16,20,11,'rgba(255,255,255,0.3)',600,'left');
   const hb={x:14,y:34,w:136,h:40};helpBtnR=hb;rrect(hb.x,hb.y,hb.w,hb.h,10);ctx.fillStyle='rgba(90,240,255,0.1)';ctx.fill();ctx.strokeStyle='rgba(90,240,255,0.6)';ctx.lineWidth=1.5;ctx.stroke();
   txt('게임 방법',hb.x+hb.w/2,hb.y+hb.h/2,14,'#8ff',800);
+  voteR=[];if(kstDay()===SCARF_EV.day){const vx=14,vy=186,vw=136;rrect(vx,vy,vw,96,10);ctx.fillStyle='rgba(255,255,255,0.04)';ctx.fill();ctx.strokeStyle='rgba(255,224,102,0.35)';ctx.lineWidth=1;ctx.stroke();
+    txt('🧣 목도리 스킨',vx+vw/2,vy+15,12,'#ffe066',900);txt('정식 출시할까요?',vx+vw/2,vy+31,11,'rgba(255,255,255,0.8)',700);
+    [[1,'👍 좋아요',vx+6],[-1,'👎 별로',vx+vw/2+3]].forEach(([v,lb,bx])=>{const r={x:bx,y:vy+42,w:vw/2-9,h:30,v};voteR.push(r);rrect(r.x,r.y,r.w,r.h,8);ctx.fillStyle=myVote===v?(v>0?'rgba(90,240,160,0.3)':'rgba(255,110,110,0.3)'):'rgba(255,255,255,0.06)';ctx.fill();ctx.strokeStyle=myVote===v?(v>0?'#5af0a0':'#ff6e6e'):'rgba(255,255,255,0.3)';ctx.lineWidth=1.5;ctx.stroke();txt(lb,r.x+r.w/2,r.y+r.h/2,11,'#fff',800);});
+    txt(voteMsg||(myVote?'투표 완료 · 바꿀 수 있어요':'하루만 받아요'),vx+vw/2,vy+85,10,'rgba(255,255,255,0.6)',600);}
   [['아이폰 앱 설치','ios',84],['안드로이드 앱 설치','and',134]].forEach(([lb,k,yy])=>{const r={x:14,y:yy,w:136,h:40};if(k==='ios')iosBtnR=r;else andBtnR=r;rrect(r.x,r.y,r.w,r.h,10);ctx.fillStyle='rgba(255,255,255,0.05)';ctx.fill();ctx.strokeStyle='rgba(255,255,255,0.3)';ctx.lineWidth=1.5;ctx.stroke();txt(lb,r.x+r.w/2,r.y+r.h/2,13,'rgba(255,255,255,0.85)',800);});
   const sb={x:W-150,y:34,w:136,h:40};shopBtnR=sb;rrect(sb.x,sb.y,sb.w,sb.h,10);ctx.fillStyle='rgba(255,224,102,0.12)';ctx.fill();ctx.strokeStyle='rgba(255,224,102,0.6)';ctx.lineWidth=1.5;ctx.stroke();
   txt('상점  ◆ '+META.coins.toLocaleString(),sb.x+sb.w/2,sb.y+sb.h/2,14,'#ffe066',800);
