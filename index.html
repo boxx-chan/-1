@@ -108,7 +108,7 @@ let rush=false,rushT=0,rChain=0,rChainT=0,rMax=0,rushSpawnT=0,rushElite={},rushB
 let hc=0,hcQueue=[],hcSpawnT=0,hcCap=2,hcSpd=1,hcNew=false,hcEarn=0,hcSelUI={back:null,tiles:[]},hcBtns=[];
 const RUSH_LEN=60,RCHAIN_KEEP=2.5,rMul=()=>1+0.25*Math.min(rChain,12);
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1127.32';
+const VERSION='1127.33';
 const WCOIN=60,RCOIN_N=3,RCOIN_MAX=600;const today=()=>{const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();};const rcLeft=()=>{const r=META.rd||{};return r.d===today()?Math.max(0,RCOIN_N-(r.n||0)):RCOIN_N;};let overBtns=null,quitRun=false,rcUsed=false;let hitSrc='',runT=0,endless=false,clearBonus=0,clrW=0,clrK=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
 let ult=null,mines=[];const ultMax=()=>U.ultFast?75:100,ultN=()=>rush?4:U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#8a6cff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
@@ -134,7 +134,7 @@ function loadRank(){if(!rankOn()||rankLoading)return;rankLoading=true;rankErr=''
   const tab=rankTab,q=tab===0?'&mode=eq.main&cleared=eq.true&order=clear_time.asc,score.desc':tab===1?'&mode=eq.main&order=score.desc':'&mode=eq.rush&order=score.desc';
   const get=cols=>fetch(RANK.url+'/rest/v1/scores?select='+cols+'&season='+(tab===0?'in.(2,3,'+SEASON+')':'eq.'+SEASON)+q+'&limit=500',{headers:rankHdr(),cache:'no-store'});
   get('nickname,wave,cleared,clear_time,score,kills'+(pidOk?',pid':'')).then(x=>{if(!x.ok&&pidOk&&x.status===400){return get('nickname,wave,cleared,clear_time,score,kills');}return x;})
-   .then(x=>x.ok?x.json():x.text().then(t=>Promise.reject(x.status+' '+t.slice(0,60)))).then(d=>{const seen=new Set(),out=[];for(const r of d){const key=r.pid?'p:'+r.pid:'n:'+r.nickname;if(seen.has(key))continue;seen.add(key);out.push(r);if(out.length>=30)break;}if(tab===rankTab)rankList=out;rankLoading=false;if(tab!==rankTab)loadRank();})
+   .then(x=>x.ok?x.json():x.text().then(t=>Promise.reject(x.status+' '+t.slice(0,60)))).then(d=>{const seen=new Set(),out=[];for(const r of d){const key='n:'+r.nickname;if(seen.has(key))continue;seen.add(key);out.push(r);if(out.length>=30)break;}if(tab===rankTab)rankList=out;rankLoading=false;if(tab!==rankTab)loadRank();})
    .catch(er=>{rankErr='불러오기 실패: '+(typeof er==='string'?er:'인터넷 연결');rankLoading=false;});}
 function openRank(){state='rank';rankList=null;rankScroll=0;loadRank();}
 let rankScroll=0,nickCb=null,nickAsked=false,rankTab=0;
