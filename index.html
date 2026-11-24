@@ -108,7 +108,7 @@ let rush=false,rushT=0,rChain=0,rChainT=0,rMax=0,rushSpawnT=0,rushElite={},rushB
 let hc=0,hcQueue=[],hcSpawnT=0,hcCap=2,hcSpd=1,hcNew=false,hcEarn=0,hcSelUI={back:null,tiles:[]},hcBtns=[];
 const RUSH_LEN=60,RCHAIN_KEEP=2.5,rMul=()=>1+0.25*Math.min(rChain,12);
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1127.24';
+const VERSION='1127.25';
 const WCOIN=60,RCOIN_N=3,RCOIN_MAX=600;const today=()=>{const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();};const rcLeft=()=>{const r=META.rd||{};return r.d===today()?Math.max(0,RCOIN_N-(r.n||0)):RCOIN_N;};let overBtns=null,quitRun=false,rcUsed=false;let hitSrc='',runT=0,endless=false,clearBonus=0,clrW=0,clrK=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
 let ult=null,mines=[];const ultMax=()=>U.ultFast?75:100,ultN=()=>rush?4:U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#8a6cff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
@@ -180,8 +180,9 @@ function menuTap(x,y){
   if(state==='hcclear'){if(overT<0.8)return;if(x===undefined){state='hcsel';return;}if(hcBtns[0]&&inR(x,y,hcBtns[0])){if(hc<10)hcStart(hc+1);else{state='hcsel';}return;}if(hcBtns[1]&&inR(x,y,hcBtns[1])){state='hcsel';return;}return;}
   if(state==='over'&&hc&&overT>0.8){if(x!==undefined&&hcBtns[1]&&inR(x,y,hcBtns[1])){state='hcsel';return;}hcStart(hc);return;}
   if(state==='help'){helpTap(x,y);return;}
+  if(state==='inst'){if(x===undefined||inR(x,y,instBack))state='title';return;}
   if(state==='rank'){if(x===undefined||inR(x,y,rankUI.back)){state='title';return;}if(inR(x,y,rankUI.nick)){askNick(()=>{});return;}for(let i=0;i<rankUI.tabs.length;i++)if(inR(x,y,rankUI.tabs[i])&&rankTab!==i){rankTab=i;rankList=null;rankErr='';loadRank();}return;}
-  if(state==='title'){if(inR(x,y,shopBtnR)){openShop();return;}if(hcBtnR&&inR(x,y,hcBtnR)){state='hcsel';return;}if(inR(x,y,rankBtnR)){openRank();return;}if(inR(x,y,helpBtnR)){state='help';helpPage=0;return;}const isRush=x!==undefined&&rushBtnR&&inR(x,y,rushBtnR);if(x!==undefined&&!inR(x,y,startBtnR)&&!isRush)return;if(rankOn()&&!nick&&!nickAsked){nickAsked=true;askNick(()=>{});return;}rush=!!isRush;hc=0;reset();state='play';goFS();if(rush)banner('섬광 러시 · 1분');}
+  if(state==='title'){if(inR(x,y,shopBtnR)){openShop();return;}if(hcBtnR&&inR(x,y,hcBtnR)){state='hcsel';return;}if(inR(x,y,rankBtnR)){openRank();return;}if(inR(x,y,helpBtnR)){state='help';helpPage=0;return;}if(iosBtnR&&inR(x,y,iosBtnR)){instKind='ios';state='inst';return;}if(andBtnR&&inR(x,y,andBtnR)){instKind='and';state='inst';return;}const isRush=x!==undefined&&rushBtnR&&inR(x,y,rushBtnR);if(x!==undefined&&!inR(x,y,startBtnR)&&!isRush)return;if(rankOn()&&!nick&&!nickAsked){nickAsked=true;askNick(()=>{});return;}rush=!!isRush;hc=0;reset();state='play';goFS();if(rush)banner('섬광 러시 · 1분');}
   else if(state==='over'&&overT>1.0){if(x!==undefined&&overRankBtn&&inR(x,y,overRankBtn)){askNick(()=>{if(pendRec)postRec(pendRec);});return;}if(x!==undefined){if(overBtns&&inR(x,y,overBtns[1])){reset();state='title';return;}if(!overBtns||!inR(x,y,overBtns[0]))return;}reset();state='play';}
   else if(state==='clear'&&overT>1.0&&x!==undefined){const rs=clearRects();if(inR(x,y,rs[0])){endless=true;state='play';last=performance.now();banner('무한 모드');}
     else if(inR(x,y,rs[1])){lastEarn=wave*WCOIN+kills;META.coins+=lastEarn;saveMeta();if(score>best){best=score;try{localStorage.setItem('flash_best',best)}catch(e){}}reset();state='title';}}
@@ -1193,6 +1194,18 @@ const HELP=[
   ['웨이브 강화','웨이브를 깰 때마다 체력·공격력·섬광 중 하나 강화 + 체력 10 회복\n레벨이 오르면 검기·긴 창·난무 강화 같은 기술이 열림'],
   ['코인 · 상점','죽으면 (웨이브×60 + 처치 수) 코인 → 처음 화면 상점에서 베기 스킨 구매']]}
 ];
+let instKind='ios',instBack=null,iosBtnR=null,andBtnR=null;
+const INST={ios:{t:'아이폰 앱 설치',col:'#d9e4ff',steps:['반드시 Safari(사파리)로 게임 링크 열기 (카톡·크롬 X)','아래쪽 공유 버튼(네모에 위쪽 화살표) 누르기','목록을 내려서 "홈 화면에 추가" 누르기','오른쪽 위 "추가" 누르기','홈 화면에 생긴 섬광 아이콘으로 실행'],
+  notes:['Safari와 홈 화면 앱은 저장 기록이 따로예요. 앱으로만 플레이하세요.','Safari에서만 하면 7일 정도 안 들어갔을 때 기록이 지워질 수 있어요.']},
+ and:{t:'안드로이드 앱 설치',col:'#b8ffcf',steps:['크롬(Chrome)으로 게임 링크 열기 (카톡 안에서 열지 말기)','오른쪽 위 ⋮ 메뉴 누르기','"앱 설치" 또는 "홈 화면에 추가" 누르기','"설치" 누르기','홈 화면에 생긴 섬광 아이콘으로 실행'],
+  notes:['크롬·삼성 인터넷·카톡 브라우저는 저장 기록이 서로 따로예요.','설치한 앱은 크롬과 기록을 같이 써요. 한 곳에서만 플레이하세요.']}};
+function drawInst(){drawBg();const I=INST[instKind];
+  const back={x:14,y:12,w:84,h:34};instBack=back;rrect(back.x,back.y,back.w,back.h,8);ctx.fillStyle='rgba(255,255,255,0.08)';ctx.fill();ctx.strokeStyle='rgba(255,255,255,0.25)';ctx.lineWidth=1;ctx.stroke();
+  txt('← 뒤로',back.x+back.w/2,back.y+back.h/2,14,'#fff',700);txt(I.t,W/2,29,20,I.col,900);
+  const fs=Math.round(clamp(H*0.04,12,17)),lx=Math.max(30,W/2-fs*14);let y=74;
+  I.steps.forEach((st,i)=>{ctx.fillStyle='rgba(90,240,255,0.2)';ctx.beginPath();ctx.arc(lx+fs*0.7,y,fs*0.75,0,TAU);ctx.fill();txt(String(i+1),lx+fs*0.7,y,Math.round(fs*0.9),'#5ff4ff',900);
+    txt(st,lx+fs*1.9,y,fs,'#fff',700,'left');y+=fs*2.05;});
+  y+=fs*0.3;for(const n of I.notes){txt('※ '+n,lx,y,Math.round(fs*0.85),'#ffe066',600,'left');y+=fs*1.5;}}
 function helpTap(x,y){
   if(x===undefined){helpPage=(helpPage+1)%HELP.length;return;}
   if(inR(x,y,helpUI.back)){state='title';return;}
@@ -1239,6 +1252,7 @@ function drawTitle(){
   txt('v'+VERSION,16,20,11,'rgba(255,255,255,0.3)',600,'left');
   const hb={x:14,y:34,w:136,h:40};helpBtnR=hb;rrect(hb.x,hb.y,hb.w,hb.h,10);ctx.fillStyle='rgba(90,240,255,0.1)';ctx.fill();ctx.strokeStyle='rgba(90,240,255,0.6)';ctx.lineWidth=1.5;ctx.stroke();
   txt('게임 방법',hb.x+hb.w/2,hb.y+hb.h/2,14,'#8ff',800);
+  [['아이폰 앱 설치','ios',84],['안드로이드 앱 설치','and',134]].forEach(([lb,k,yy])=>{const r={x:14,y:yy,w:136,h:40};if(k==='ios')iosBtnR=r;else andBtnR=r;rrect(r.x,r.y,r.w,r.h,10);ctx.fillStyle='rgba(255,255,255,0.05)';ctx.fill();ctx.strokeStyle='rgba(255,255,255,0.3)';ctx.lineWidth=1.5;ctx.stroke();txt(lb,r.x+r.w/2,r.y+r.h/2,13,'rgba(255,255,255,0.85)',800);});
   const sb={x:W-150,y:34,w:136,h:40};shopBtnR=sb;rrect(sb.x,sb.y,sb.w,sb.h,10);ctx.fillStyle='rgba(255,224,102,0.12)';ctx.fill();ctx.strokeStyle='rgba(255,224,102,0.6)';ctx.lineWidth=1.5;ctx.stroke();
   txt('상점  ◆ '+META.coins.toLocaleString(),sb.x+sb.w/2,sb.y+sb.h/2,14,'#ffe066',800);
   const rb={x:W-150,y:84,w:136,h:40};rankBtnR=rb;rrect(rb.x,rb.y,rb.w,rb.h,10);ctx.fillStyle='rgba(200,140,255,0.12)';ctx.fill();ctx.strokeStyle='rgba(200,140,255,0.6)';ctx.lineWidth=1.5;ctx.stroke();
@@ -1323,6 +1337,7 @@ function render(){
   if(state==='title'){drawTitle();}
   else if(state==='shop'){drawShop();}
   else if(state==='help'){drawHelp();}
+  else if(state==='inst'){drawInst();}
   else if(state==='rank'){drawRank();}
   else if(state==='hcsel'){drawHcSel();}
   else{
