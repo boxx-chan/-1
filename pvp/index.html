@@ -35,7 +35,7 @@ canvas{position:fixed;left:0;top:0;display:block;touch-action:none}
 'use strict';
 // installed main-game app must never stay on this test page: send it back to the game
 try{if((matchMedia('(display-mode: standalone)').matches||navigator.standalone)&&!/[?&]app=1/.test(location.search)){location.replace('../');}}catch(e){}
-const PVER='p14';document.getElementById('pv').textContent=PVER;
+const PVER='p15';document.getElementById('pv').textContent=PVER;
 /* ---------- setup ---------- */
 const cvs=document.getElementById('c'),ctx=cvs.getContext('2d');
 const AW=900,AH=520,TAU=Math.PI*2,FONT='system-ui,-apple-system,"Noto Sans KR",sans-serif';
@@ -138,7 +138,7 @@ function onAttack(m){if(!me||phase!=='fight')return;
   if(m.k!=='strike')SFX.swing();
   inc.push({m,t:0,v:'me'});}
 /* blade sweeps over time; damage lands the moment it touches (no late-dodge grace) */
-const SWEEP_S=0.2,SWEEP_T=0.075,SLASH_DUR=SWEEP_S*2.4;let inc=[];
+const SWEEP_S=0.4,SWEEP_T=0.075,SLASH_DUR=SWEEP_S+0.15;let inc=[];
 function touchAt(m,k,ax,ay,x,y,r,tol){
   if(m.k==='slash'){const dx=x-ax,dy=y-ay,d=Math.hypot(dx,dy);if(d>108+r)return false;if(d<r*2)return true;const dir=m.step===2?-1:1,rel=angDiff(m.a,Math.atan2(dy,dx))*dir;return rel>=-(1.35+tol)&&rel<=-1.35+2.7*k+tol;}
   if(m.k==='thrust'){const L=THRUST_L*k;return segDist(x,y,ax,ay,ax+Math.cos(m.a)*L,ay+Math.sin(m.a)*L)<r+14;}
@@ -280,7 +280,7 @@ function crescent(x,y,R,r,a0,a1,dir){ctx.beginPath();if(dir>0){ctx.arc(x,y,R,a0,
 function strokeL(layers){for(const [c,w] of layers){ctx.strokeStyle=c;ctx.lineWidth=w;ctx.stroke();}}
 function drawSlash2(s){const o=s.own==='me'?me:op,x=o.x,y=o.y,pr=s.t/s.dur,al=1-pr*pr,fc=s.own==='me'?'210,250,255':'255,200,222';ctx.lineCap='round';ctx.lineJoin='round';
   if(s.thrust){const k=Math.min(1,pr*3),c=Math.cos(s.a),sn=Math.sin(s.a),L=s.range*k,w=12*(1-pr*0.5),ex=x+c*L,ey=y+sn*L;ctx.beginPath();ctx.moveTo(x-sn*w,y+c*w);ctx.lineTo(ex,ey);ctx.lineTo(x+sn*w,y-c*w);ctx.closePath();ctx.fillStyle=s.own==='me'?`rgba(255,240,170,${al*0.9})`:`rgba(255,170,200,${al*0.9})`;ctx.fill();ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(ex,ey);strokeL([[`rgba(255,255,255,${al})`,2]]);}
-  else{const k=Math.min(1,pr*2.4),R=s.range*(0.92+0.08*k),r=s.range*0.5,dir=s.dir,a0=dir>0?s.a-s.arc/2:s.a+s.arc/2,a1=a0+dir*s.arc*k,lo=Math.min(a0,a1),hi=Math.max(a0,a1);
+  else{const k=Math.min(1,s.t/SWEEP_S),al=s.t<SWEEP_S?1:Math.max(0,1-(s.t-SWEEP_S)/(s.dur-SWEEP_S)),R=s.range*(0.92+0.08*k),r=s.range*0.5,dir=s.dir,a0=dir>0?s.a-s.arc/2:s.a+s.arc/2,a1=a0+dir*s.arc*k,lo=Math.min(a0,a1),hi=Math.max(a0,a1);
     crescent(x,y,R,r,a0,a1,dir);ctx.fillStyle=`rgba(${fc},${al*0.75})`;ctx.fill();ctx.beginPath();ctx.arc(x,y,R,lo,hi);strokeL([[`rgba(255,255,255,${al})`,2]]);}
   ctx.lineCap='butt';ctx.lineJoin='miter';}
 function drawAim(){if(!(atkDrag&&atkDrag.aim)||inp.aimA===null)return;const a=inp.aimA,x=me.x,y=me.y;
