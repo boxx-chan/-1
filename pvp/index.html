@@ -33,7 +33,7 @@ canvas{position:fixed;left:0;top:0;display:block;touch-action:none}
 </div></div>
 <script>
 'use strict';
-const PVER='p3';document.getElementById('pv').textContent=PVER;
+const PVER='p4';document.getElementById('pv').textContent=PVER;
 /* ---------- setup ---------- */
 const cvs=document.getElementById('c'),ctx=cvs.getContext('2d');
 const AW=900,AH=520,TAU=Math.PI*2,FONT='system-ui,-apple-system,"Noto Sans KR",sans-serif';
@@ -273,13 +273,19 @@ function drawSlash2(s){const o=s.own==='me'?me:op,x=o.x,y=o.y,pr=s.t/s.dur,al=1-
     crescent(x,y,R,r,a0,a1,dir);ctx.fillStyle=`rgba(${fc},${al*0.75})`;ctx.fill();ctx.beginPath();ctx.arc(x,y,R,lo,hi);strokeL([[`rgba(255,255,255,${al})`,2]]);}
   ctx.lineCap='butt';ctx.lineJoin='miter';}
 function drawAim(){if(!(atkDrag&&atkDrag.aim)||inp.aimA===null)return;const a=inp.aimA,x=me.x,y=me.y;
-  if(flashT<=0&&me.comboWin>0&&me.comboStep===2){const c=Math.cos(a),sn=Math.sin(a),L=THRUST_L,tw=14;ctx.fillStyle='rgba(255,230,140,0.18)';ctx.beginPath();ctx.moveTo(x-sn*tw,y+c*tw);ctx.lineTo(x+c*L-sn*tw,y+sn*L+c*tw);ctx.lineTo(x+c*L+sn*tw,y+sn*L-c*tw);ctx.lineTo(x+sn*tw,y-c*tw);ctx.closePath();ctx.fill();ctx.strokeStyle='rgba(255,230,140,0.9)';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+c*L,y+sn*L);ctx.stroke();return;}
-  ctx.fillStyle=flashT>0?'rgba(150,255,255,0.22)':'rgba(255,255,255,0.12)';ctx.beginPath();ctx.moveTo(x,y);ctx.arc(x,y,flashT>0?300:90,a-(flashT>0?0.12:1),a+(flashT>0?0.12:1));ctx.closePath();ctx.fill();
-  ctx.strokeStyle='rgba(255,255,255,0.7)';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(x+Math.cos(a)*22,y+Math.sin(a)*22);ctx.lineTo(x+Math.cos(a)*(flashT>0?300:95),y+Math.sin(a)*(flashT>0?300:95));ctx.stroke();}
+  if(flashT<=0&&me.comboWin>0&&me.comboStep===2){const c=Math.cos(a),sn=Math.sin(a),L=THRUST_L+me.r,tw=14+op.r;ctx.fillStyle='rgba(255,230,140,0.18)';ctx.beginPath();ctx.moveTo(x-sn*tw,y+c*tw);ctx.lineTo(x+c*L-sn*tw,y+sn*L+c*tw);ctx.lineTo(x+c*L+sn*tw,y+sn*L-c*tw);ctx.lineTo(x+sn*tw,y-c*tw);ctx.closePath();ctx.fill();ctx.strokeStyle='rgba(255,230,140,0.9)';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+c*L,y+sn*L);ctx.stroke();return;}
+  ctx.fillStyle=flashT>0?'rgba(150,255,255,0.22)':'rgba(255,255,255,0.12)';ctx.beginPath();ctx.moveTo(x,y);ctx.arc(x,y,flashT>0?300:123,a-(flashT>0?0.12:1.5),a+(flashT>0?0.12:1.5));ctx.closePath();ctx.fill();
+  ctx.strokeStyle='rgba(255,255,255,0.7)';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(x+Math.cos(a)*22,y+Math.sin(a)*22);ctx.lineTo(x+Math.cos(a)*(flashT>0?300:123),y+Math.sin(a)*(flashT>0?300:123));ctx.stroke();}
 function drawSlash(s){const k=s.t/s.dur;ctx.globalAlpha=1-k;ctx.strokeStyle=s.col;ctx.fillStyle=s.col;
   if(s.thrust){const ex=s.x+Math.cos(s.a)*s.range,ey=s.y+Math.sin(s.a)*s.range;ctx.lineWidth=10*(1-k)+2;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(s.x,s.y);ctx.lineTo(ex,ey);ctx.stroke();ctx.lineCap='butt';}
   else{const sw=s.arc*Math.min(1,k*3),a0=s.dir>0?s.a-s.arc/2:s.a+s.arc/2,a1=s.dir>0?a0+sw:a0-sw;ctx.beginPath();ctx.arc(s.x,s.y,s.range,Math.min(a0,a1),Math.max(a0,a1));ctx.arc(s.x,s.y,s.range*0.72,Math.max(a0,a1),Math.min(a0,a1),true);ctx.closePath();ctx.globalAlpha=(1-k)*0.55;ctx.fill();}
   ctx.globalAlpha=1;}
+function drawButton(b,label,active,cd,glow){const r=b.r;
+  if(glow){ctx.fillStyle=`rgba(120,255,255,${0.25+0.15*Math.sin(time*16)})`;ctx.beginPath();ctx.arc(b.x,b.y,r*1.35,0,TAU);ctx.fill();}
+  ctx.fillStyle=glow?'rgba(160,255,255,0.45)':`rgba(255,255,255,${active?0.22:0.08})`;ctx.beginPath();ctx.arc(b.x,b.y,r,0,TAU);ctx.fill();
+  ctx.strokeStyle=glow?'#cff':'rgba(255,255,255,0.35)';ctx.lineWidth=2;ctx.stroke();
+  if(cd>0){ctx.strokeStyle='rgba(90,240,255,0.9)';ctx.lineWidth=4;ctx.beginPath();ctx.arc(b.x,b.y,r-3,-Math.PI/2,-Math.PI/2+TAU*(1-cd));ctx.stroke();}
+  txt(glow?'섬광':label,b.x,b.y,Math.round(r*0.36),glow?'#fff':'rgba(255,255,255,0.8)',800);}
 function hpBar(x,y,w,hp,col,al){ctx.fillStyle='rgba(255,255,255,0.1)';ctx.fillRect(x,y,w,12);ctx.fillStyle=col;const fw=w*clamp(hp/MAXHP,0,1);ctx.fillRect(al==='right'?x+w-fw:x,y,fw,12);}
 function render(){ctx.setTransform(DPR,0,0,DPR,0,0);ctx.fillStyle='#05070f';ctx.fillRect(0,0,W,H);
   if(state!=='play'||!me){ctx.strokeStyle='rgba(90,140,255,0.07)';for(let x=0;x<W;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}return;}
@@ -299,9 +305,8 @@ function render(){ctx.setTransform(DPR,0,0,DPR,0,0);ctx.fillStyle='#05070f';ctx.
   txt((mySide()===0?'나 ':'상대 ')+Math.max(0,L.hp),14,36,12,L.col,800,'left');txt(Math.max(0,R.hp)+(mySide()===1?' 나':' 상대'),W-14,36,12,R.col,800,'right');
   txt(score[0]+' : '+score[1],W/2,20,20,'#fff',900);txt(PVER+' · ROUND '+Math.max(1,round)+' · '+(netMode==='bot'?'봇 연습':netMode==='direct'?'직접 연결':'서버 경유')+' '+ping+'ms',W/2,40,11,'rgba(200,230,255,0.6)',700);
   // controls
-  if(phase!=='match'){ctx.globalAlpha=0.5;ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.beginPath();ctx.arc(btn.atk.x,btn.atk.y,btn.atk.r,0,TAU);ctx.stroke();txt('공격',btn.atk.x,btn.atk.y,18,'#fff',900);
-    ctx.beginPath();ctx.arc(btn.dash.x,btn.dash.y,btn.dash.r,0,TAU);ctx.stroke();txt('회피',btn.dash.x,btn.dash.y,14,'#fff',900);
-    if(joy.id!==null){ctx.beginPath();ctx.arc(joy.bx,joy.by,60,0,TAU);ctx.stroke();ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(joy.x,joy.y,22,0,TAU);ctx.fill();}ctx.globalAlpha=1;
+  if(phase!=='match'){drawButton(btn.atk,'공격',ptr.atk!==null,0,flashT>0);drawButton(btn.dash,'회피',ptr.dash!==null,me.dashCD>0?me.dashCD/DASH_CD:0,false);
+    ctx.globalAlpha=0.5;ctx.strokeStyle='#fff';ctx.lineWidth=2;if(joy.id!==null){ctx.beginPath();ctx.arc(joy.bx,joy.by,60,0,TAU);ctx.stroke();ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(joy.x,joy.y,22,0,TAU);ctx.fill();}ctx.globalAlpha=1;
     if(atkDrag&&atkDrag.aim){let dx=atkDrag.x-atkDrag.sx,dy=atkDrag.y-atkDrag.sy;const d=Math.hypot(dx,dy),m=btn.atk.r*0.6;if(d>m){dx=dx/d*m;dy=dy/d*m;}ctx.fillStyle='rgba(255,255,255,0.35)';ctx.beginPath();ctx.arc(btn.atk.x+dx,btn.atk.y+dy,btn.atk.r*0.38,0,TAU);ctx.fill();}}
   if(phase==='wait')txt('방장을 기다리는 중...',W/2,H/2,22,'#fff',900);
   if(phase==='count')txt(phaseT>0.7?String(Math.ceil(phaseT-0.7)):'시작!',W/2,H/2-20,64,'#ffe066',900);
