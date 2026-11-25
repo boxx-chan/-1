@@ -35,7 +35,7 @@ canvas{position:fixed;left:0;top:0;display:block;touch-action:none}
 'use strict';
 // installed main-game app must never stay on this test page: send it back to the game
 try{if((matchMedia('(display-mode: standalone)').matches||navigator.standalone)&&!/[?&]app=1/.test(location.search)){location.replace('../');}}catch(e){}
-const PVER='p15';document.getElementById('pv').textContent=PVER;
+const PVER='p16';document.getElementById('pv').textContent=PVER;
 /* ---------- setup ---------- */
 const cvs=document.getElementById('c'),ctx=cvs.getContext('2d');
 const AW=900,AH=520,TAU=Math.PI*2,FONT='system-ui,-apple-system,"Noto Sans KR",sans-serif';
@@ -138,7 +138,7 @@ function onAttack(m){if(!me||phase!=='fight')return;
   if(m.k!=='strike')SFX.swing();
   inc.push({m,t:0,v:'me'});}
 /* blade sweeps over time; damage lands the moment it touches (no late-dodge grace) */
-const SWEEP_S=0.4,SWEEP_T=0.075,SLASH_DUR=SWEEP_S+0.15;let inc=[];
+const SWEEP_S=0.3,SWEEP_T=0.075,SLASH_DUR=SWEEP_S+0.15;let inc=[];
 function touchAt(m,k,ax,ay,x,y,r,tol){
   if(m.k==='slash'){const dx=x-ax,dy=y-ay,d=Math.hypot(dx,dy);if(d>108+r)return false;if(d<r*2)return true;const dir=m.step===2?-1:1,rel=angDiff(m.a,Math.atan2(dy,dx))*dir;return rel>=-(1.35+tol)&&rel<=-1.35+2.7*k+tol;}
   if(m.k==='thrust'){const L=THRUST_L*k;return segDist(x,y,ax,ay,ax+Math.cos(m.a)*L,ay+Math.sin(m.a)*L)<r+14;}
