@@ -116,8 +116,7 @@ const SFX={
   shoot(){sTone(1200,320,0.1,0.09,'square',{lp:3000});sNoise(0.04,3000,1,0.06,'bandpass');},
   lunge(){sNoise(0.14,900,2,0.17,'bandpass',300,{a:0.02});},
   slam(){sTone(95,26,0.6,0.85,'sine');sTone(70,25,0.4,0.45,'triangle',{dist:true});sNoise(0.4,420,0.6,0.5,'lowpass',60,{rv:0.3});},
-  click(){sNoise(0.03,5200,1.2,0.22,'highpass');sTone(2650,2600,0.07,0.05,'triangle');sTone(3910,3880,0.05,0.035,'triangle');
-    sNoise(0.06,1500,2.2,0.32,'bandpass',900,{d:0.055});sTone(420,300,0.05,0.09,'square',{d:0.055});sTone(1870,1850,0.08,0.03,'triangle',{d:0.055});},
+  click(){sNoise(0.025,4800,1.2,0.2,'highpass');sNoise(0.04,1600,2,0.22,'bandpass',1000);sTone(2650,2600,0.05,0.035,'triangle');},
   tink(){sTone(2300,1900,0.08,0.15,'triangle');},
   wave(){const ch=[523,659,784,1047];ch.forEach((f,i)=>{sTone(f,f,0.6,0.09,'triangle',{d:i*0.07,rv:0.6,a:0.005});sTone(f*2,f*2,0.4,0.025,'sine',{d:i*0.07,rv:0.6});});},
   ult(){sNoise(0.7,300,0.8,0.35,'bandpass',8000,{a:0.25,rv:0.6});sTone(60,240,0.7,0.35,'sawtooth',{lp:1500,a:0.2});sTone(110,30,1.0,0.5,'sine',{d:0.3});sNoise(0.5,500,0.7,0.35,'lowpass',80,{d:0.28,rv:0.4});}
@@ -132,7 +131,7 @@ let rush=false,rushT=0,rChain=0,rChainT=0,rMax=0,rushSpawnT=0,rushElite={},rushB
 let hc=0,hcQueue=[],hcSpawnT=0,hcCap=2,hcSpd=1,hcNew=false,hcEarn=0,hcSelUI={back:null,tiles:[]},hcBtns=[];
 const RUSH_LEN=60,RCHAIN_KEEP=2.5,rMul=()=>1+0.25*Math.min(rChain,12);
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1127.46';
+const VERSION='1127.47';
 const WCOIN=60,RCOIN_N=3,RCOIN_MAX=600;const today=()=>{const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();};const rcLeft=()=>{const r=META.rd||{};return r.d===today()?Math.max(0,RCOIN_N-(r.n||0)):RCOIN_N;};let overBtns=null,quitRun=false,rcUsed=false;let hitSrc='',runT=0,endless=false,clearBonus=0,clrW=0,clrK=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
 let ult=null,mines=[];const ultMax=()=>U.ultFast?75:100,ultN=()=>rush?4:U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#8a6cff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
