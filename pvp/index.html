@@ -33,7 +33,7 @@ canvas{position:fixed;left:0;top:0;display:block;touch-action:none}
 </div></div>
 <script>
 'use strict';
-const PVER='p4';document.getElementById('pv').textContent=PVER;
+const PVER='p5';document.getElementById('pv').textContent=PVER;
 /* ---------- setup ---------- */
 const cvs=document.getElementById('c'),ctx=cvs.getContext('2d');
 const AW=900,AH=520,TAU=Math.PI*2,FONT='system-ui,-apple-system,"Noto Sans KR",sans-serif';
@@ -56,7 +56,7 @@ const SFX={swing:()=>beep(420,0.08,'triangle',0.06,180),hit:()=>beep(160,0.12,'s
 const vib=p=>{try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}};
 
 /* ---------- constants (same as main game) ---------- */
-const DASH_CD=0.95,COMBO_WIN=1.2,MAX_CHARGE=3,FLASH_DUR=1.6,THRUST_L=175,CHAIN_MUL=[1,1.5,2],CHAIN_KEEP=2.5,GRACE=0.25;
+const DASH_CD=1.4,COMBO_WIN=1.2,MAX_CHARGE=2,FLASH_DUR=1.6,THRUST_L=175,CHAIN_MUL=[1,1.5,2],CHAIN_KEEP=2.5,GRACE=0.25;
 const DMG={slash:8,thrust:15,strike:22},ROUNDS_WIN=2,MAXHP=100;
 
 /* ---------- state ---------- */
@@ -264,7 +264,7 @@ function drawPlayer(p,isMe){
   if(isMe&&p.dashCD>0){ctx.strokeStyle='rgba(255,255,255,0.35)';ctx.lineWidth=2;ctx.beginPath();ctx.arc(p.x,p.y,p.r+4,Math.PI/2-Math.PI*0.5*(p.dashCD/DASH_CD),Math.PI/2+Math.PI*0.5*(p.dashCD/DASH_CD));ctx.stroke();}
   ctx.fillStyle=fl?'#fff':p.col;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,TAU);ctx.fill();
   const a=p.face;ctx.fillStyle='#070a14';ctx.beginPath();ctx.moveTo(p.x+Math.cos(a)*p.r*0.95,p.y+Math.sin(a)*p.r*0.95);ctx.lineTo(p.x+Math.cos(a+2.5)*p.r*0.5,p.y+Math.sin(a+2.5)*p.r*0.5);ctx.lineTo(p.x+Math.cos(a-2.5)*p.r*0.5,p.y+Math.sin(a-2.5)*p.r*0.5);ctx.closePath();ctx.fill();
-  const ch=p.charge||0;for(let n=0;n<MAX_CHARGE;n++){const x=p.x+(n-1)*15,y=p.y-p.r-14,k=clamp(ch-n,0,1);ctx.save();ctx.translate(x,y);ctx.rotate(Math.PI/4);ctx.strokeStyle=p.col;ctx.globalAlpha=0.6;ctx.lineWidth=1.5;ctx.strokeRect(-4,-4,8,8);ctx.globalAlpha=1;if(k>0){ctx.fillStyle=p.col;ctx.globalAlpha=k>=1?1:0.45;ctx.fillRect(-4,-4,8,8);ctx.globalAlpha=1;}ctx.restore();}}
+  const ch=p.charge||0;for(let n=0;n<MAX_CHARGE;n++){const x=p.x+(n-(MAX_CHARGE-1)/2)*15,y=p.y-p.r-14,k=clamp(ch-n,0,1);ctx.save();ctx.translate(x,y);ctx.rotate(Math.PI/4);ctx.strokeStyle=p.col;ctx.globalAlpha=0.6;ctx.lineWidth=1.5;ctx.strokeRect(-4,-4,8,8);ctx.globalAlpha=1;if(k>0){ctx.fillStyle=p.col;ctx.globalAlpha=k>=1?1:0.45;ctx.fillRect(-4,-4,8,8);ctx.globalAlpha=1;}ctx.restore();}}
 function crescent(x,y,R,r,a0,a1,dir){ctx.beginPath();if(dir>0){ctx.arc(x,y,R,a0,a1,false);ctx.arc(x,y,r,a1,a0,true);}else{ctx.arc(x,y,R,a0,a1,true);ctx.arc(x,y,r,a1,a0,false);}ctx.closePath();}
 function strokeL(layers){for(const [c,w] of layers){ctx.strokeStyle=c;ctx.lineWidth=w;ctx.stroke();}}
 function drawSlash2(s){const o=s.own==='me'?me:op,x=o.x,y=o.y,pr=s.t/s.dur,al=1-pr*pr,fc=s.own==='me'?'210,250,255':'255,200,222';ctx.lineCap='round';ctx.lineJoin='round';
