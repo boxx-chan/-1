@@ -133,7 +133,7 @@ let rush=false,rushT=0,rChain=0,rChainT=0,rMax=0,rushSpawnT=0,rushElite={},rushB
 let hc=0,hcQueue=[],hcSpawnT=0,hcCap=2,hcSpd=1,hcNew=false,hcEarn=0,hcSelUI={back:null,tiles:[]},hcBtns=[];
 const RUSH_LEN=60,RCHAIN_KEEP=2.5,rMul=()=>1+0.25*Math.min(rChain,12);
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1127.60';
+const VERSION='1127.61';
 const WCOIN=60,RCOIN_N=3,RCOIN_MAX=600;const today=()=>{const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();};const rcLeft=()=>{const r=META.rd||{};return r.d===today()?Math.max(0,RCOIN_N-(r.n||0)):RCOIN_N;};let overBtns=null,quitRun=false,rcUsed=false;let hitSrc='',runT=0,endless=false,clearBonus=0,clrW=0,clrK=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
 let ult=null,mines=[];const ultMax=()=>U.ultFast?75:100,ultN=()=>rush?4:U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#8a6cff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
@@ -960,9 +960,9 @@ function drawDashTrail(tr,sk,r){if(!tr.length||sk==='none')return;
   else{tr.forEach(q=>{const a=ag(q);ctx.globalAlpha=a*0.35;ctx.fillStyle='#5ff';ctx.beginPath();ctx.arc(q.x,q.y,r*(0.7+a*0.3),0,TAU);ctx.fill();});}
   ctx.globalAlpha=1;}
 const CAPES={green:{fill:'#294536',edge:'#4d6e5b'},black:{fill:'#1c1c24',edge:'#8c8c9c'}};
-let cape=null;const SCARF_EV={day:'2026-11-25',id:'black'};
+let cape=null;
 function kstDay(){return new Date(Date.now()+9*3600e3).toISOString().slice(0,10);}
-function scarfOn(){if(META.cape&&CAPES[META.cape])return META.cape;return kstDay()===SCARF_EV.day?SCARF_EV.id:null;}
+function scarfOn(){if(META.cape&&CAPES[META.cape])return META.cape;return null;}
 const SN=9,SL=4.2;
 function scarfAnch(p,fa,side){const u=side<0?-0.72:0.02,px=-Math.sin(fa),py=Math.cos(fa),f=0.12*(1-u*u);return[p.x+px*u*p.r+Math.cos(fa)*f*p.r,p.y+py*u*p.r+Math.sin(fa)*f*p.r];}
 function updCape(p,dt){const mv=Math.hypot(p.vx,p.vy);if(mv>40)p.cfa=Math.atan2(p.vy,p.vx);const fa=p.cfa!==undefined?p.cfa:p.face;p.sfa=fa;
@@ -1441,7 +1441,7 @@ function drawTitle(){
   txt(META.cleared?'클리어 ✓  최고 '+fmtT(META.bestClear):'목표: 웨이브 15 보스 처치',W/2,cy+H*0.17,Math.round(H*0.032),META.cleared?'#ffe066':'rgba(255,224,102,0.8)',800);
   txt('FLASH COUNTER',W/2,cy+H*0.12,Math.round(H*0.035),'rgba(200,240,255,0.6)',700);
   const fs=Math.round(clamp(H*0.036,12,17));let y=H*0.485;
-  {const NOTE=[kstDay()===SCARF_EV.day?'🧣 오늘 하루 한정: 검은 목도리 무료 체험 (자동 착용)':'웨이브 15 이후: 적 체력 증가 절반 · 적 수와 등장 속도 증가','한 대 피해 상한: 최대 체력의 35% (최소 3대는 버팀)','체력 강화 회복량 30 → 최대 체력의 30%','일시정지 → 나가기도 랭킹에 기록돼요','닉네임을 바꾸면 이 기기의 랭킹 기록 이름도 함께 바뀌어요','섬광 러시 코인: 처치×2.5 (판당 최대 600) · 하루 3번','웨이브 코인 20 → 60 (15웨이브 클리어 시 약 2,000)'];
+  {const NOTE=['웨이브 15 이후: 적 체력 증가 절반 · 적 수와 등장 속도 증가','한 대 피해 상한: 최대 체력의 35% (최소 3대는 버팀)','체력 강화 회복량 30 → 최대 체력의 30%','일시정지 → 나가기도 랭킹에 기록돼요','닉네임을 바꾸면 이 기기의 랭킹 기록 이름도 함께 바뀌어요','섬광 러시 코인: 처치×2.5 (판당 최대 600) · 하루 3번','웨이브 코인 20 → 60 (15웨이브 클리어 시 약 2,000)'];
     const bw=Math.min(W-40,fs*26),bh=fs*1.28*NOTE.length+fs*2.1,bx=W/2-bw/2;rrect(bx,y-fs*0.6,bw,bh,10);ctx.fillStyle='rgba(255,224,102,0.07)';ctx.fill();ctx.strokeStyle='rgba(255,224,102,0.35)';ctx.lineWidth=1;ctx.stroke();
     txt('업데이트 공지',W/2,y+fs*0.3,fs,'#ffe066',900);y+=fs*1.7;
     for(const l of NOTE){txt('· '+l,bx+fs,y,Math.round(fs*0.82),'rgba(255,255,255,0.85)',600,'left');y+=fs*1.28;}y=y-fs*0.4;}
@@ -1453,10 +1453,7 @@ function drawTitle(){
   txt('v'+VERSION,16,20,11,'rgba(255,255,255,0.3)',600,'left');bgmUI=null;drawBgmBtn(14,H-44);
   const hb={x:14,y:34,w:136,h:40};helpBtnR=hb;rrect(hb.x,hb.y,hb.w,hb.h,10);ctx.fillStyle='rgba(90,240,255,0.1)';ctx.fill();ctx.strokeStyle='rgba(90,240,255,0.6)';ctx.lineWidth=1.5;ctx.stroke();
   txt('게임 방법',hb.x+hb.w/2,hb.y+hb.h/2,14,'#8ff',800);
-  voteR=[];if(kstDay()===SCARF_EV.day){const vx=14,vy=186,vw=136;rrect(vx,vy,vw,96,10);ctx.fillStyle='rgba(255,255,255,0.04)';ctx.fill();ctx.strokeStyle='rgba(255,224,102,0.35)';ctx.lineWidth=1;ctx.stroke();
-    txt('🧣 목도리 스킨',vx+vw/2,vy+15,12,'#ffe066',900);txt('정식 출시할까요?',vx+vw/2,vy+31,11,'rgba(255,255,255,0.8)',700);
-    [[1,'👍 좋아요',vx+6],[-1,'👎 별로',vx+vw/2+3]].forEach(([v,lb,bx])=>{const r={x:bx,y:vy+42,w:vw/2-9,h:30,v};voteR.push(r);rrect(r.x,r.y,r.w,r.h,8);ctx.fillStyle=myVote===v?(v>0?'rgba(90,240,160,0.3)':'rgba(255,110,110,0.3)'):'rgba(255,255,255,0.06)';ctx.fill();ctx.strokeStyle=myVote===v?(v>0?'#5af0a0':'#ff6e6e'):'rgba(255,255,255,0.3)';ctx.lineWidth=1.5;ctx.stroke();txt(lb,r.x+r.w/2,r.y+r.h/2,11,'#fff',800);});
-    txt(voteMsg||(myVote?'투표 완료 · 바꿀 수 있어요':'하루만 받아요'),vx+vw/2,vy+85,10,'rgba(255,255,255,0.6)',600);}
+  voteR=[];
   [['아이폰 앱 설치','ios',84],['안드로이드 앱 설치','and',134]].forEach(([lb,k,yy])=>{const r={x:14,y:yy,w:136,h:40};if(k==='ios')iosBtnR=r;else andBtnR=r;rrect(r.x,r.y,r.w,r.h,10);ctx.fillStyle='rgba(255,255,255,0.05)';ctx.fill();ctx.strokeStyle='rgba(255,255,255,0.3)';ctx.lineWidth=1.5;ctx.stroke();txt(lb,r.x+r.w/2,r.y+r.h/2,13,'rgba(255,255,255,0.85)',800);});
   const sb={x:W-150,y:34,w:136,h:40};shopBtnR=sb;rrect(sb.x,sb.y,sb.w,sb.h,10);ctx.fillStyle='rgba(255,224,102,0.12)';ctx.fill();ctx.strokeStyle='rgba(255,224,102,0.6)';ctx.lineWidth=1.5;ctx.stroke();
   txt('상점  ◆ '+META.coins.toLocaleString(),sb.x+sb.w/2,sb.y+sb.h/2,14,'#ffe066',800);
