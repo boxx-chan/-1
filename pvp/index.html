@@ -20,7 +20,7 @@ canvas{position:fixed;left:0;top:0;display:block;touch-action:none}
 </style></head><body><canvas id="c"></canvas>
 <div id="lobby"><div class="card">
   <h1>섬광 대전</h1>
-  <div class="sub">같은 와이파이나 핫스팟에 연결된 두 폰으로 1:1 대결<br>테스트 버전 · 기록과 코인에는 영향 없음</div>
+  <div class="sub">같은 와이파이나 핫스팟에 연결된 두 폰으로 1:1 대결<br>테스트 버전 · 기록과 코인에는 영향 없음 · <span id="pv"></span></div>
   <div id="pMain">
     <button id="bHost">방 만들기</button>
     <button id="bJoin" class="alt">코드로 참가</button>
@@ -33,6 +33,7 @@ canvas{position:fixed;left:0;top:0;display:block;touch-action:none}
 </div></div>
 <script>
 'use strict';
+const PVER='p3';document.getElementById('pv').textContent=PVER;
 /* ---------- setup ---------- */
 const cvs=document.getElementById('c'),ctx=cvs.getContext('2d');
 const AW=900,AH=520,TAU=Math.PI*2,FONT='system-ui,-apple-system,"Noto Sans KR",sans-serif';
@@ -296,7 +297,7 @@ function render(){ctx.setTransform(DPR,0,0,DPR,0,0);ctx.fillStyle='#05070f';ctx.
   const bw=Math.min(260,W*0.3);const L=mySide()===0?me:op,R=mySide()===0?op:me;
   hpBar(14,14,bw,L.hp,L.col);hpBar(W-14-bw,14,bw,R.hp,R.col,'right');
   txt((mySide()===0?'나 ':'상대 ')+Math.max(0,L.hp),14,36,12,L.col,800,'left');txt(Math.max(0,R.hp)+(mySide()===1?' 나':' 상대'),W-14,36,12,R.col,800,'right');
-  txt(score[0]+' : '+score[1],W/2,20,20,'#fff',900);txt('ROUND '+Math.max(1,round)+' · '+(netMode==='bot'?'봇 연습':netMode==='direct'?'직접 연결':'서버 경유')+' '+ping+'ms',W/2,40,11,'rgba(200,230,255,0.6)',700);
+  txt(score[0]+' : '+score[1],W/2,20,20,'#fff',900);txt(PVER+' · ROUND '+Math.max(1,round)+' · '+(netMode==='bot'?'봇 연습':netMode==='direct'?'직접 연결':'서버 경유')+' '+ping+'ms',W/2,40,11,'rgba(200,230,255,0.6)',700);
   // controls
   if(phase!=='match'){ctx.globalAlpha=0.5;ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.beginPath();ctx.arc(btn.atk.x,btn.atk.y,btn.atk.r,0,TAU);ctx.stroke();txt('공격',btn.atk.x,btn.atk.y,18,'#fff',900);
     ctx.beginPath();ctx.arc(btn.dash.x,btn.dash.y,btn.dash.r,0,TAU);ctx.stroke();txt('회피',btn.dash.x,btn.dash.y,14,'#fff',900);
