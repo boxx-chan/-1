@@ -33,7 +33,9 @@ canvas{position:fixed;left:0;top:0;display:block;touch-action:none}
 </div></div>
 <script>
 'use strict';
-const PVER='p6';document.getElementById('pv').textContent=PVER;
+// installed main-game app must never stay on this test page: send it back to the game
+try{if((matchMedia('(display-mode: standalone)').matches||navigator.standalone)&&!/[?&]app=1/.test(location.search)){location.replace('../');}}catch(e){}
+const PVER='p7';document.getElementById('pv').textContent=PVER;
 /* ---------- setup ---------- */
 const cvs=document.getElementById('c'),ctx=cvs.getContext('2d');
 const AW=900,AH=520,TAU=Math.PI*2,FONT='system-ui,-apple-system,"Noto Sans KR",sans-serif';
