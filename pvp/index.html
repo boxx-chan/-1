@@ -35,7 +35,7 @@ canvas{position:fixed;left:0;top:0;display:block;touch-action:none}
 'use strict';
 // installed main-game app must never stay on this test page: send it back to the game
 try{if((matchMedia('(display-mode: standalone)').matches||navigator.standalone)&&!/[?&]app=1/.test(location.search)){location.replace('../');}}catch(e){}
-const PVER='p8';document.getElementById('pv').textContent=PVER;
+const PVER='p9';document.getElementById('pv').textContent=PVER;
 /* ---------- setup ---------- */
 const cvs=document.getElementById('c'),ctx=cvs.getContext('2d');
 const AW=900,AH=520,TAU=Math.PI*2,FONT='system-ui,-apple-system,"Noto Sans KR",sans-serif';
@@ -166,7 +166,7 @@ function aimAt(range,a0,cone){const p=me,dx=op.x-p.x,dy=op.y-p.y,d=Math.hypot(dx
 function swing(){const p=me,mm=Math.hypot(inp.jx,inp.jy);const step=p.comboWin>0?(p.comboStep%3)+1:1;p.comboStep=step;const fin=step===3;let a;
   if(inp.aimA!==null){a=inp.aimA;const t=aimAt(fin?THRUST_L+60:130+60,a,fin?0.12:0.35);if(t!==null)a=t;}
   else{a=mm>0.2?Math.atan2(inp.jy,inp.jx):p.face;const t=aimAt(230,a,Math.PI);if(t!==null)a=t;}
-  p.face=a;p.atkCD=fin?0.5:0.32;p.comboWin=COMBO_WIN;SFX.swing();
+  p.face=a;p.atkCD=fin?0.5:0.32;p.comboWin=COMBO_WIN;if(fin){p.vx+=Math.cos(a)*340;p.vy+=Math.sin(a)*340;}SFX.swing();
   doAttack(fin?'thrust':'slash',a,step);}
 function flashStrike(){const p=me;p.chain=p.chainT>0?Math.min(3,p.chain+1):1;const cm=CHAIN_MUL[p.chain-1];
   const aim=inp.aimA;let a,len;const t=aimAt(430,aim!==null?aim:p.face,aim!==null?0.6:Math.PI);
@@ -234,7 +234,7 @@ function botUpdate(dt){const p=B;if(!p)return;p.atkCD-=dt;p.comboWin-=dt;p.inv-=
     if(p.hurtLock<=0&&p.atkCD<=0&&botT<=0&&(d<118||(p.flashT>0&&d<400))){botT=0.35+Math.random()*0.45;p.face=a;
       const id=++atkId;
       if(p.flashT>0){const len=d+me.r+55,ex=clamp(p.x+Math.cos(a)*len,p.r,AW-p.r),ey=clamp(p.y+Math.sin(a)*len,p.r,AH-p.r);onAttack({t:'a',id,k:'strike',x:p.x,y:p.y,a,ex,ey,mul:1});p.x=ex;p.y=ey;p.flashT=0;p.atkCD=0.28;p.comboWin=0;p.inv=0.4;SFX.strike();}
-      else{const step=p.comboWin>0?(p.comboStep%3)+1:1;p.comboStep=step;const fin=step===3;p.atkCD=fin?0.5:0.32;p.comboWin=COMBO_WIN;onAttack({t:'a',id,k:fin?'thrust':'slash',x:p.x,y:p.y,a,step});}}
+      else{const step=p.comboWin>0?(p.comboStep%3)+1:1;p.comboStep=step;const fin=step===3;p.atkCD=fin?0.5:0.32;p.comboWin=COMBO_WIN;if(fin){p.vx+=Math.cos(a)*340;p.vy+=Math.sin(a)*340;}onAttack({t:'a',id,k:fin?'thrust':'slash',x:p.x,y:p.y,a,step});}}
     else if(p.dashCD<=0&&d<150&&Math.random()<dt*0.8){const da=a+(Math.random()<0.5?1.6:-1.6);p.dx=Math.cos(da);p.dy=Math.sin(da);p.dashT=0.15;p.dashCD=DASH_CD;}
     const sp=210,k=Math.min(1,dt*13);p.vx+=(mx*sp-p.vx)*k;p.vy+=(my*sp-p.vy)*k;}
   p.x=clamp(p.x+p.vx*dt,p.r,AW-p.r);p.y=clamp(p.y+p.vy*dt,p.r,AH-p.r);p.face=p.dashT>0?Math.atan2(p.dy,p.dx):a;botState();}
