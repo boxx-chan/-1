@@ -33,7 +33,7 @@ canvas{position:fixed;left:0;top:0;display:block;touch-action:none}
 </div></div>
 <script>
 'use strict';
-const PVER='p5';document.getElementById('pv').textContent=PVER;
+const PVER='p6';document.getElementById('pv').textContent=PVER;
 /* ---------- setup ---------- */
 const cvs=document.getElementById('c'),ctx=cvs.getContext('2d');
 const AW=900,AH=520,TAU=Math.PI*2,FONT='system-ui,-apple-system,"Noto Sans KR",sans-serif';
@@ -228,13 +228,13 @@ function botUpdate(dt){const p=B;if(!p)return;p.atkCD-=dt;p.comboWin-=dt;p.inv-=
   if(p.dashT>0){p.dashT-=dt;p.vx=p.dx*1050;p.vy=p.dy*1050;if(p.dashT<=0){p.vx*=0.25;p.vy*=0.25;}}
   else{let mx=0,my=0;
     if(d>95){mx=Math.cos(a);my=Math.sin(a);}else if(d<60){mx=-Math.cos(a);my=-Math.sin(a);}
-    const st=Math.sin(time*1.7)*0.6;mx+=-Math.sin(a)*st;my+=Math.cos(a)*st;
-    if(p.hurtLock<=0&&p.atkCD<=0&&botT<=0&&(d<118||(p.flashT>0&&d<400))){botT=0.18+Math.random()*0.35;p.face=a;
+    const st=Math.sin(time*1.7)*0.6;mx+=-Math.sin(a)*st;my+=Math.cos(a)*st;{const ml=Math.hypot(mx,my);if(ml>1){mx/=ml;my/=ml;}}
+    if(p.hurtLock<=0&&p.atkCD<=0&&botT<=0&&(d<118||(p.flashT>0&&d<400))){botT=0.35+Math.random()*0.45;p.face=a;
       const id=++atkId;
       if(p.flashT>0){const len=d+me.r+55,ex=clamp(p.x+Math.cos(a)*len,p.r,AW-p.r),ey=clamp(p.y+Math.sin(a)*len,p.r,AH-p.r);onAttack({t:'a',id,k:'strike',x:p.x,y:p.y,a,ex,ey,mul:1});p.x=ex;p.y=ey;p.flashT=0;p.atkCD=0.28;p.comboWin=0;p.inv=0.4;SFX.strike();}
       else{const step=p.comboWin>0?(p.comboStep%3)+1:1;p.comboStep=step;const fin=step===3;p.atkCD=fin?0.5:0.32;p.comboWin=COMBO_WIN;p.vx+=Math.cos(a)*(fin?340:170);p.vy+=Math.sin(a)*(fin?340:170);onAttack({t:'a',id,k:fin?'thrust':'slash',x:p.x,y:p.y,a,step});}}
     else if(p.dashCD<=0&&d<150&&Math.random()<dt*0.8){const da=a+(Math.random()<0.5?1.6:-1.6);p.dx=Math.cos(da);p.dy=Math.sin(da);p.dashT=0.15;p.dashCD=DASH_CD;}
-    const sp=p.atkCD>0.06?80:230,k=Math.min(1,dt*13);p.vx+=(mx*sp-p.vx)*k;p.vy+=(my*sp-p.vy)*k;}
+    const sp=p.atkCD>0.06?80:210,k=Math.min(1,dt*13);p.vx+=(mx*sp-p.vx)*k;p.vy+=(my*sp-p.vy)*k;}
   p.x=clamp(p.x+p.vx*dt,p.r,AW-p.r);p.y=clamp(p.y+p.vy*dt,p.r,AH-p.r);p.face=p.dashT>0?Math.atan2(p.dy,p.dx):a;botState();}
 
 /* ---------- input ---------- */
