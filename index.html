@@ -133,7 +133,7 @@ let rush=false,rushT=0,rChain=0,rChainT=0,rMax=0,rushSpawnT=0,rushElite={},rushB
 let hc=0,hcQueue=[],hcSpawnT=0,hcCap=2,hcSpd=1,hcNew=false,hcEarn=0,hcSelUI={back:null,tiles:[]},hcBtns=[];
 const RUSH_LEN=60,RCHAIN_KEEP=2.5,rMul=()=>1+0.25*Math.min(rChain,12);
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1127.61';
+const VERSION='1127.62';
 const WCOIN=60,RCOIN_N=3,RCOIN_MAX=600;const today=()=>{const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();};const rcLeft=()=>{const r=META.rd||{};return r.d===today()?Math.max(0,RCOIN_N-(r.n||0)):RCOIN_N;};let overBtns=null,quitRun=false,rcUsed=false;let hitSrc='',runT=0,endless=false,clearBonus=0,clrW=0,clrK=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
 let ult=null,mines=[];const ultMax=()=>U.ultFast?75:100,ultN=()=>rush?4:U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#8a6cff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
@@ -181,6 +181,11 @@ addEventListener('load',()=>{let nk2=null;try{nk2=localStorage.getItem('flash_nk
   document.getElementById('nickOk').onclick=()=>closeNick(true);document.getElementById('nickNo').onclick=()=>closeNick(false);
   document.getElementById('nickIn').addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Enter')closeNick(true);if(e.key==='Escape')closeNick(false);});});
 try{const m=JSON.parse(localStorage.getItem('flash_meta')||'null');if(m&&typeof m==='object'){META.coins=Math.max(0,+m.coins||0);META.own=Object.assign({flash:1},m.own||{});if(SKINS.some(k=>k.id===m.eq)&&META.own[m.eq])META.eq=m.eq;META.cleared=m.cleared||0;META.bestClear=m.bestClear||0;META.hc=Math.min(10,Math.max(0,+m.hc||0));META.hcBest=(m.hcBest&&typeof m.hcBest==='object')?m.hcBest:{};META.ownT=Object.assign({},m.ownT||{});META.rd=(m.rd&&typeof m.rd==='object')?m.rd:{};if(!m.tv)delete META.ownT.flash;if(SKINS.some(k=>k.id===m.eqT)&&META.ownT[m.eqT])META.eqT=m.eqT;if(META.eq==='reaper')META.eqT='reaper';else if(META.eqT==='reaper')META.eqT='none';}}catch(e){}
+const RP_EV='2026-11-26',rpDay=()=>new Date(Date.now()+9*3600e3).toISOString().slice(0,10)===RP_EV,rpTrial=()=>rpDay()&&!META.own.reaper,ownS=id=>!!META.own[id]||(id==='reaper'&&rpTrial());
+(function(){let m=null;try{m=JSON.parse(localStorage.getItem('flash_meta')||'null')}catch(e){}
+  if(m&&m.rpT){META.rpT=1;META.rpPrev=Array.isArray(m.rpPrev)?m.rpPrev:null;}
+  if(rpTrial()){if(!META.rpT){META.rpPrev=[META.eq,META.eqT];META.rpT=1;META.eq='reaper';META.eqT='reaper';saveMeta();}else if(m&&m.eq==='reaper'){META.eq='reaper';META.eqT='reaper';}}
+  else if(META.rpT){if(!META.own.reaper){const pv0=META.rpPrev||['flash','none'];if(META.eq==='flash'||META.eq==='reaper'){META.eq=META.own[pv0[0]]?pv0[0]:'flash';META.eqT=META.eq==='reaper'?'reaper':(META.ownT[pv0[1]]&&pv0[1]!=='reaper'?pv0[1]:'none');}}delete META.rpT;delete META.rpPrev;saveMeta();}})();
 const TPRICES={flash:5000,ghost:10000,ink:10000,bolt:13000,fire:13000,sakura:13000};const tPrice=id=>TPRICES[id]||10000;
 (async()=>{try{const q=new URLSearchParams(location.search).get('gift');if(!q||!crypto.subtle)return;
   const h=[...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(q)))].map(b=>b.toString(16).padStart(2,'0')).join('');
@@ -1321,7 +1326,7 @@ function shopTap(x,y){
     else if(META.coins>=pr){META.coins-=pr;META.ownT[k.id]=1;META.eqT=k.id;saveMeta();SFX.wave();vib(30);pv.msg=k.name+' 트레일 구매 완료!';pv.msgT=1.6;}
     else{SFX.hurt();pv.msg='코인이 '+(pr-META.coins).toLocaleString()+' 부족해요';pv.msgT=1.6;}return;}
   if(inR(x,y,shopUI.act)){const k=skinById(pv.sel);
-    if(META.own[k.id]){if(META.eq!==k.id){const wasSet=skinById(META.eq).set;META.eq=k.id;if(k.set){META.ownT[k.id]=1;META.eqT=k.id;}else if(wasSet)META.eqT='none';saveMeta();SFX.tink();pv.msg='장착 완료'+(wasSet&&!k.set?' · 사신 세트 해제됨':'');pv.msgT=1.4;}}
+    if(ownS(k.id)){if(META.eq!==k.id){const wasSet=skinById(META.eq).set;META.eq=k.id;if(k.set){META.ownT[k.id]=1;META.eqT=k.id;}else if(wasSet)META.eqT='none';saveMeta();SFX.tink();pv.msg='장착 완료'+(wasSet&&!k.set?' · 사신 세트 해제됨':'');pv.msgT=1.4;}}
     else if(META.coins>=k.price){META.coins-=k.price;META.own[k.id]=1;if(k.set){META.ownT[k.id]=1;META.eqT=k.id;}else if(skinById(META.eq).set)META.eqT='none';META.eq=k.id;saveMeta();SFX.wave();vib(30);pv.msg=k.name+' 구매 완료!';pv.msgT=1.6;}
     else{SFX.hurt();pv.msg='코인이 '+(k.price-META.coins).toLocaleString()+' 부족해요';pv.msgT=1.6;}}
 }
@@ -1346,7 +1351,7 @@ function drawShop(){
   drawDashTrail(pv.tr,pvT(),11);if(pv.dz&&pv.dz.t>=0){ctx.globalAlpha=pv.dz.t>0.2?Math.max(0,1-(pv.dz.t-0.2)/0.3):1;ctx.fillStyle='#5ff4ff';ctx.beginPath();ctx.arc(pv.dz.x,pv.dz.y,11,0,TAU);ctx.fill();ctx.globalAlpha=1;}
   drawSlashList(pv.sl,0,0,pvS(),false);drawWaveList(pv.wv,pvS());drawParts(pv.pt);
   ctx.restore();
-  const T=pv.tab==='t',k=skinById(T?pv.selT:pv.sel),kp=T?tPrice(k.id):k.price,own=!!(T?META.ownT:META.own)[k.id],eq=(T?META.eqT:META.eq)===k.id,can=META.coins>=kp;
+  const T=pv.tab==='t',k=skinById(T?pv.selT:pv.sel),kp=T?tPrice(k.id):k.price,own=T?!!META.ownT[k.id]:ownS(k.id),eq=(T?META.eqT:META.eq)===k.id,can=META.coins>=kp;
   const act={x:px0+pw/2-100,y:H-62,w:200,h:46};shopUI.act=act;rrect(act.x,act.y,act.w,act.h,10);
   ctx.fillStyle=eq?'rgba(255,255,255,0.06)':own?'rgba(90,240,255,0.25)':can?'rgba(255,224,102,0.28)':'rgba(255,255,255,0.06)';ctx.fill();
   ctx.strokeStyle=eq?'rgba(255,255,255,0.2)':own?'#8ff':can?'#ffe066':'rgba(255,255,255,0.2)';ctx.lineWidth=2;ctx.stroke();
@@ -1356,14 +1361,14 @@ function drawShop(){
   if(pv.msgT>0){ctx.globalAlpha=Math.min(1,pv.msgT*3);txt(pv.msg,px0+pw/2,py0+20,14,'#fff',800);ctx.globalAlpha=1;}
   const LIST=shopList(),NC=LIST.length>6?4:3,gx0=W*0.45,gx1=W-14,gy0=top,gy1=H-14,gap=10,cw=(gx1-gx0-gap*(NC-1))/NC,ch=(gy1-gy0-gap)/2;shopUI.cards=[];
   LIST.forEach((sk,i)=>{const cx=gx0+(i%NC)*(cw+gap),cy=gy0+Math.floor(i/NC)*(ch+gap),r={x:cx,y:cy,w:cw,h:ch};shopUI.cards.push(r);
-    const sel=(T?pv.selT:pv.sel)===sk.id,o=!!(T?META.ownT:META.own)[sk.id],e=(T?META.eqT:META.eq)===sk.id,pr=T?tPrice(sk.id):sk.price;
+    const sel=(T?pv.selT:pv.sel)===sk.id,o=T?!!META.ownT[sk.id]:ownS(sk.id),e=(T?META.eqT:META.eq)===sk.id,pr=T?tPrice(sk.id):sk.price;
     rrect(cx,cy,cw,ch,10);ctx.fillStyle=sel?'rgba(255,255,255,0.12)':'rgba(255,255,255,0.04)';ctx.fill();ctx.strokeStyle=sel?sk.col:'rgba(255,255,255,0.14)';ctx.lineWidth=sel?2.5:1;ctx.stroke();
     const ir=Math.min(cw,ch)*0.24,iy=cy+ch*0.5;ctx.lineCap='round';
     if(T){const y0=iy-ir*0.55;for(let j=0;j<5;j++){ctx.globalAlpha=0.25+0.15*j;ctx.fillStyle=sk.id==='ink'?'#e8e8ee':sk.col;ctx.beginPath();ctx.arc(cx+cw/2-ir*1.1+j*ir*0.45,y0,ir*(0.16+0.04*j),0,TAU);ctx.fill();}ctx.globalAlpha=1;}
     else{ctx.beginPath();ctx.arc(cx+cw/2,iy,ir,Math.PI*1.15,Math.PI*1.85);
     ctx.strokeStyle=sk.id==='ink'?'rgba(240,240,250,0.9)':sk.col;ctx.lineWidth=ir*0.32;ctx.stroke();if(sk.id==='ink'){ctx.strokeStyle='#0b0b12';ctx.lineWidth=ir*0.22;ctx.stroke();}}ctx.lineCap='butt';
     txt(sk.name+(sk.set?' 세트':''),cx+cw/2,cy+ch*0.62,Math.round(clamp(Math.min(ch*0.13,cw*0.16),12,18)),sk.set?'#d9c2ff':'#fff',800);
-    txt(e?'장착중':o?'보유':'◆ '+pr.toLocaleString(),cx+cw/2,cy+ch*0.82,Math.round(clamp(ch*0.1,11,14)),e?'#8ff':o?'rgba(255,255,255,0.55)':META.coins>=pr?'#ffe066':'rgba(255,224,102,0.45)',700);});
+    txt(e?'장착중':o?(!T&&sk.id==='reaper'&&rpTrial()?'무료 체험':'보유'):'◆ '+pr.toLocaleString(),cx+cw/2,cy+ch*0.82,Math.round(clamp(ch*0.1,11,14)),e?'#8ff':o?'rgba(255,255,255,0.55)':META.coins>=pr?'#ffe066':'rgba(255,224,102,0.45)',700);});
 }
 const HELP=[
  {t:'기본 조작',rows:[
@@ -1441,7 +1446,7 @@ function drawTitle(){
   txt(META.cleared?'클리어 ✓  최고 '+fmtT(META.bestClear):'목표: 웨이브 15 보스 처치',W/2,cy+H*0.17,Math.round(H*0.032),META.cleared?'#ffe066':'rgba(255,224,102,0.8)',800);
   txt('FLASH COUNTER',W/2,cy+H*0.12,Math.round(H*0.035),'rgba(200,240,255,0.6)',700);
   const fs=Math.round(clamp(H*0.036,12,17));let y=H*0.485;
-  {const NOTE=['웨이브 15 이후: 적 체력 증가 절반 · 적 수와 등장 속도 증가','한 대 피해 상한: 최대 체력의 35% (최소 3대는 버팀)','체력 강화 회복량 30 → 최대 체력의 30%','일시정지 → 나가기도 랭킹에 기록돼요','닉네임을 바꾸면 이 기기의 랭킹 기록 이름도 함께 바뀌어요','섬광 러시 코인: 처치×2.5 (판당 최대 600) · 하루 3번','웨이브 코인 20 → 60 (15웨이브 클리어 시 약 2,000)'];
+  {const NOTE=[...(rpDay()?['💀 11/26 하루 한정: 사신 세트 무료 체험 (자동 장착)']:[]),'웨이브 15 이후: 적 체력 증가 절반 · 적 수와 등장 속도 증가','한 대 피해 상한: 최대 체력의 35% (최소 3대는 버팀)','체력 강화 회복량 30 → 최대 체력의 30%','일시정지 → 나가기도 랭킹에 기록돼요','닉네임을 바꾸면 이 기기의 랭킹 기록 이름도 함께 바뀌어요','섬광 러시 코인: 처치×2.5 (판당 최대 600) · 하루 3번','웨이브 코인 20 → 60 (15웨이브 클리어 시 약 2,000)'].slice(0,7);
     const bw=Math.min(W-40,fs*26),bh=fs*1.28*NOTE.length+fs*2.1,bx=W/2-bw/2;rrect(bx,y-fs*0.6,bw,bh,10);ctx.fillStyle='rgba(255,224,102,0.07)';ctx.fill();ctx.strokeStyle='rgba(255,224,102,0.35)';ctx.lineWidth=1;ctx.stroke();
     txt('업데이트 공지',W/2,y+fs*0.3,fs,'#ffe066',900);y+=fs*1.7;
     for(const l of NOTE){txt('· '+l,bx+fs,y,Math.round(fs*0.82),'rgba(255,255,255,0.85)',600,'left');y+=fs*1.28;}y=y-fs*0.4;}
