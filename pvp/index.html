@@ -35,7 +35,7 @@ canvas{position:fixed;left:0;top:0;display:block;touch-action:none}
 'use strict';
 // installed main-game app must never stay on this test page: send it back to the game
 try{if((matchMedia('(display-mode: standalone)').matches||navigator.standalone)&&!/[?&]app=1/.test(location.search)){location.replace('../');}}catch(e){}
-const PVER='p13';document.getElementById('pv').textContent=PVER;
+const PVER='p14';document.getElementById('pv').textContent=PVER;
 /* ---------- setup ---------- */
 const cvs=document.getElementById('c'),ctx=cvs.getContext('2d');
 const AW=900,AH=520,TAU=Math.PI*2,FONT='system-ui,-apple-system,"Noto Sans KR",sans-serif';
@@ -67,7 +67,7 @@ let burstT=0,oBurstT=0,me=null,op=null,parts=[],slashes=[],lines=[],texts=[],fla
 let round=0,score=[0,0],phase='wait',phaseT=0,roundWin=-1,atkId=0,netMode='',ping=0;
 function mkP(side){return{x:side?AW-150:150,y:AH/2,vx:0,vy:0,r:15,hp:MAXHP,face:side?Math.PI:0,dashT:0,dashCD:0,dx:1,dy:0,inv:0,just:0,justUsed:true,atkCD:0,comboStep:0,comboWin:0,charge:1,chain:0,chainT:0,grace:0,hurtLock:0,trail:[],flash:false,col:side?'#ff7aa8':'#5ff4ff'};}
 const mySide=()=>role==='host'?0:1;
-function resetRound(){pend=[];me=mkP(mySide());op=mkP(1-mySide());op.tx=op.x;op.ty=op.y;flashT=0;parts=[];slashes=[];lines=[];texts=[];}
+function resetRound(){inc=[];me=mkP(mySide());op=mkP(1-mySide());op.tx=op.x;op.ty=op.y;flashT=0;parts=[];slashes=[];lines=[];texts=[];}
 
 /* ---------- fx ---------- */
 function addText(x,y,s,col,size,life){texts.push({x,y,s,col,size:size||16,t:0,life:life||0.7});}
@@ -128,24 +128,32 @@ function endRound(winnerSide){score[winnerSide]++;roundWin=winnerSide;const done
 /* attacker side: perform attack locally (visual) and send to victim */
 function doAttack(kind,a,step,ex,ey){const id=++atkId;const m={t:'a',id,k:kind,x:me.x,y:me.y,a,step,ex,ey};
   if(kind==='strike'){lines.push({x1:m.x,y1:m.y,x2:ex,y2:ey,t:0,dur:0.45,col:me.col});}
-  else slashes.push({own:'me',a,range:kind==='thrust'?THRUST_L:108,arc:2.7,t:0,dur:kind==='thrust'?0.22:0.15,step,thrust:kind==='thrust',dir:step===2?-1:1});
+  else slashes.push({own:'me',a,range:kind==='thrust'?THRUST_L:108,arc:2.7,t:0,dur:kind==='thrust'?0.22:SLASH_DUR,step,thrust:kind==='thrust',dir:step===2?-1:1});
   send(m);}
 /* victim side: decide hit / just-dodge on MY phone (dodger decides) */
 function onAttack(m){if(!me||phase!=='fight')return;
   const col=op.col;
   if(m.k==='strike')lines.push({x1:m.x,y1:m.y,x2:m.ex,y2:m.ey,t:0,dur:0.45,col});
-  else slashes.push({own:'op',a:m.a,range:m.k==='thrust'?THRUST_L:108,arc:2.7,t:0,dur:m.k==='thrust'?0.22:0.15,step:m.step,thrust:m.k==='thrust',dir:m.step===2?-1:1});
+  else slashes.push({own:'op',a:m.a,range:m.k==='thrust'?THRUST_L:108,arc:2.7,t:0,dur:m.k==='thrust'?0.22:SLASH_DUR,step:m.step,thrust:m.k==='thrust',dir:m.step===2?-1:1});
   if(m.k!=='strike')SFX.swing();
-  let hit=false;const p=me;
-  if(m.k==='slash'){const dx=p.x-m.x,dy=p.y-m.y,d=Math.hypot(dx,dy);hit=d<=108+p.r&&(d<p.r*2||Math.abs(angDiff(m.a,Math.atan2(dy,dx)))<=2.7/2+0.15);}
-  else if(m.k==='thrust'){const ex=m.x+Math.cos(m.a)*THRUST_L,ey=m.y+Math.sin(m.a)*THRUST_L;hit=segDist(p.x,p.y,m.x,m.y,ex,ey)<p.r+14;}
-  else if(m.k==='strike'){hit=segDist(p.x,p.y,m.x,m.y,m.ex,m.ey)<p.r+38;}
-  if(!hit&&p.just>0&&!p.justUsed){const q={x:p.jx0,y:p.jy0,r:p.r+34};if(m.k==='slash'){const dx=q.x-m.x,dy=q.y-m.y,d=Math.hypot(dx,dy);hit=d<=108+q.r&&(d<q.r*2||Math.abs(angDiff(m.a,Math.atan2(dy,dx)))<=2.7/2+0.3);}else if(m.k==='thrust'){hit=segDist(q.x,q.y,m.x,m.y,m.x+Math.cos(m.a)*THRUST_L,m.y+Math.sin(m.a)*THRUST_L)<q.r+14;}else hit=segDist(q.x,q.y,m.x,m.y,m.ex,m.ey)<q.r+38;}
-  if(!hit){send({t:'r',id:m.id,res:'miss'});return;}
-  if(p.just>0&&!p.justUsed){const f=triggerFlash(m.x,m.y);send({t:'r',id:m.id,res:f?'flash':'just'});return;}
+  inc.push({m,t:0,v:'me'});}
+/* blade sweeps over time; damage lands the moment it touches (no late-dodge grace) */
+const SWEEP_S=0.2,SWEEP_T=0.075,SLASH_DUR=SWEEP_S*2.4;let inc=[];
+function touchAt(m,k,ax,ay,x,y,r,tol){
+  if(m.k==='slash'){const dx=x-ax,dy=y-ay,d=Math.hypot(dx,dy);if(d>108+r)return false;if(d<r*2)return true;const dir=m.step===2?-1:1,rel=angDiff(m.a,Math.atan2(dy,dx))*dir;return rel>=-(1.35+tol)&&rel<=-1.35+2.7*k+tol;}
+  if(m.k==='thrust'){const L=THRUST_L*k;return segDist(x,y,ax,ay,ax+Math.cos(m.a)*L,ay+Math.sin(m.a)*L)<r+14;}
+  return segDist(x,y,m.x,m.y,m.ex,m.ey)<r+38;}
+function stepInc(rdt){for(const c of inc){if(c.done)continue;c.t+=rdt;const m=c.m,k=Math.min(1,c.t/(m.k==='slash'?SWEEP_S:SWEEP_T)),bot=c.v==='bot',V=bot?B:me,A=bot?me:op;
+    if(!V||!A){c.done=true;continue;}
+    const justOn=bot?(time-(V.dash0||-9)<0.2&&!V.justUsed):(V.just>0&&!V.justUsed);
+    if(touchAt(m,k,A.x,A.y,V.x,V.y,V.r,0.15)){c.done=true;bot?botResolve(m,justOn):meResolve(m,justOn);continue;}
+    if(justOn&&touchAt(m,k,A.x,A.y,V.jx0,V.jy0,V.r+34,0.3)){c.done=true;bot?botResolve(m,true):meResolve(m,true);continue;}
+    if(k>=1){c.done=true;if(bot)onNet({t:'r',id:m.id,res:'miss'});else send({t:'r',id:m.id,res:'miss'});}}
+  inc=inc.filter(c=>!c.done);}
+function meResolve(m,just){const p=me;
+  if(just){const f=triggerFlash(m.x,m.y);send({t:'r',id:m.id,res:f?'flash':'just'});return;}
   if(p.inv>0||p.grace>0){send({t:'r',id:m.id,res:'miss'});return;}
-  pend.push({m,t:LATE});}
-const LATE=0.12;let pend=[];
+  applyHit(m);}
 function applyHit(m){const p=me;if(phase!=='fight')return;
   const dmg=Math.round(m.k==='slash'?DMG.slash:m.k==='thrust'?DMG.thrust:DMG.strike*(m.mul||1));
   p.hp=Math.max(0,p.hp-dmg);const ka=Math.atan2(p.y-m.y,p.x-m.x),kb=m.k==='slash'?300:m.k==='thrust'?560:620;p.vx+=Math.cos(ka)*kb;p.vy+=Math.sin(ka)*kb;p.hurtLock=0.22;p.inv=0.12;
@@ -154,7 +162,7 @@ function applyHit(m){const p=me;if(phase!=='fight')return;
   if(p.hp<=0){send({t:'dead'});if(role==='host'&&phase==='fight')endRound(1);}}
 function onResult(m){if(!me)return;
   if(m.res==='hit'){const gain=m.k==='thrust'?0.5:m.k==='slash'?0.25:0;if(gain&&me.charge<MAX_CHARGE){const c0=Math.floor(me.charge);me.charge=Math.min(MAX_CHARGE,me.charge+gain);if(Math.floor(me.charge)>c0)addText(me.x,me.y-36,'섬광 '+Math.floor(me.charge),'#8ff',14,0.7);}
-    sparks(op.x,op.y,Math.atan2(op.y-me.y,op.x-me.x),8,'#fff',380);hitstop=Math.max(hitstop,0.05);trauma=Math.min(1,trauma+0.15);SFX.hit();vib(15);}
+    if(netMode!=='bot'&&m.dmg)addText(op.x,op.y-34,'-'+m.dmg,'#ffe066',18,0.7);burst(op.x,op.y,8,'#fff',320,0.3);sparks(op.x,op.y,Math.atan2(op.y-me.y,op.x-me.x),10,'#fff',420);hitstop=Math.max(hitstop,0.07);trauma=Math.min(1,trauma+0.2);SFX.hit();vib(20);}
   else if(m.res==='flash'){addText(op.x,op.y-40,'섬광!','#ffd0e0',22,0.9);ring(op.x,op.y,10,140,op.col,0.5,4);SFX.flash();}
   else if(m.res==='just'){addText(op.x,op.y-36,'회피!','#ffd0e0',16,0.6);SFX.tink();}}
 
@@ -183,8 +191,7 @@ function updateMe(dt){const p=me,mx=inp.jx,my=inp.jy,mm=Math.hypot(mx,my);
   if(flashT>0){flashT-=dt;if(flashT<=0){flashT=0;p.grace=GRACE;}}
   if(mm>0.1&&p.atkCD<=0.04&&p.dashT<=0)p.face=Math.atan2(my,mx);
   if(flashT>0)inp.dash=0;
-  if(inp.dash>0&&p.dashCD<=0&&p.dashT<=0&&p.hurtLock<=0){inp.dash=0;const a=mm>0.2?Math.atan2(my,mx):p.face;p.dx=Math.cos(a);p.dy=Math.sin(a);p.face=a;p.dashT=0.15;p.dashCD=DASH_CD;p.just=0.2;p.justUsed=false;p.jx0=p.x;p.jy0=p.y;SFX.dash();vib(8);
-    if(pend.length){const q=pend.shift();pend=[];const f=triggerFlash(q.m.x,q.m.y);send({t:'r',id:q.m.id,res:f?'flash':'just'});}}
+  if(inp.dash>0&&p.dashCD<=0&&p.dashT<=0&&p.hurtLock<=0){inp.dash=0;const a=mm>0.2?Math.atan2(my,mx):p.face;p.dx=Math.cos(a);p.dy=Math.sin(a);p.face=a;p.dashT=0.15;p.dashCD=DASH_CD;p.just=0.2;p.justUsed=false;p.jx0=p.x;p.jy0=p.y;SFX.dash();vib(8);}
   if(p.dashT>0){p.dashT-=dt;p.vx=p.dx*1050;p.vy=p.dy*1050;p.trail.push({x:p.x,y:p.y,t:0});if(p.dashT<=0){p.vx*=0.25;p.vy*=0.25;}}
   else{if(inp.atk>0&&p.atkCD<=0&&p.hurtLock<=0){inp.atk=0;if(flashT>0)flashStrike();else swing();if(!atkDrag)inp.aimA=null;}
     const sp=250,k=Math.min(1,dt*13);p.vx+=(mx*sp-p.vx)*k;p.vy+=(my*sp-p.vy)*k;}
@@ -196,7 +203,7 @@ function update(rdt){time+=rdt;if(burstT>0)burstT-=rdt;if(oBurstT>0)oBurstT-=rdt
   if(phase==='count'){phaseT-=rdt;if(phaseT<=0){phase='fight';}}
   else if(phase==='end'){phaseT-=rdt;if(phaseT<=0&&role==='host')startRound();}
   const dt=hitstop>0?0:rdt;
-  for(const q of pend)q.t-=rdt;while(pend.length&&pend[0].t<=0)applyHit(pend.shift().m);
+  if(phase==='fight')stepInc(rdt);
   if(phase==='fight'){updateMe(dt);if(netMode==='bot')botUpdate(dt);}
   else{me.vx*=0.85;me.vy*=0.85;}
   // remote smoothing
@@ -207,36 +214,35 @@ function update(rdt){time+=rdt;if(burstT>0)burstT-=rdt;if(oBurstT>0)oBurstT-=rdt
   for(const s of slashes)s.t+=rdt;slashes=slashes.filter(s=>s.t<s.dur);for(const l of lines)l.t+=rdt;lines=lines.filter(l=>l.t<l.dur);for(const t of texts){t.t+=rdt;t.y-=30*rdt;}texts=texts.filter(t=>t.t<t.life);}
 
 /* ---------- practice bot (acts like a remote player) ---------- */
-let B=null,botT=0;const BOT={flash:0.3,just:0.12};
+let B=null,botT=0;const BOT={dashRate:0.6,react:0.35};
+function botDash(a){const p=B;p.dx=Math.cos(a);p.dy=Math.sin(a);p.dashT=0.15;p.dashCD=DASH_CD;p.dash0=time;p.jx0=p.x;p.jy0=p.y;p.justUsed=false;}
 function botState(){onNet({t:'s',x:B.x,y:B.y,vx:B.vx,vy:B.vy,f:B.face,d:B.dashT>0?1:0,hp:B.hp,c:B.charge,fl:B.flashT>0?1:0});}
 function botRecv(m){if(!B)return;
   if(m.t==='ping'){onNet({t:'pong',c:m.c});return;}
   if(m.t==='r'){if(m.res==='hit'){const g=m.k==='thrust'?0.5:m.k==='slash'?0.25:0;B.charge=Math.min(MAX_CHARGE,B.charge+g);}return;}
   if(m.t!=='a'||phase!=='fight')return;
-  let hit=false;if(m.k==='slash'){const dx=B.x-m.x,dy=B.y-m.y,d=Math.hypot(dx,dy);hit=d<=108+B.r&&(d<B.r*2||Math.abs(angDiff(m.a,Math.atan2(dy,dx)))<=2.7/2+0.15);}
-  else if(m.k==='thrust'){const ex=m.x+Math.cos(m.a)*THRUST_L,ey=m.y+Math.sin(m.a)*THRUST_L;hit=segDist(B.x,B.y,m.x,m.y,ex,ey)<B.r+14;}
-  else hit=segDist(B.x,B.y,m.x,m.y,m.ex,m.ey)<B.r+38;
-  const reply=r=>setTimeout(()=>onNet(Object.assign({t:'r',id:m.id},r)),0);
-  if(!hit){reply({res:'miss'});return;}
+  inc.push({m,t:0,v:'bot'});
+  if(m.k!=='strike'&&!(B.reactT>0)&&Math.random()<BOT.react)B.reactT=0.1+Math.random()*0.1;}
+function botResolve(m,just){const reply=r=>onNet(Object.assign({t:'r',id:m.id},r));
+  if(just){B.justUsed=true;B.dashCD=0;
+    if(B.charge>=1){B.charge-=1;B.flashT=FLASH_DUR;B.inv=0.6;reply({res:'flash'});}else reply({res:'just'});return;}
   if(B.inv>0){reply({res:'miss'});return;}
-  const r=Math.random();
-  if(r<BOT.just){const a=Math.atan2(B.y-m.y,B.x-m.x)+(Math.random()<0.5?1.4:-1.4);B.dx=Math.cos(a);B.dy=Math.sin(a);B.dashT=0.15;B.dashCD=DASH_CD;
-    if(B.charge>=1&&Math.random()<BOT.flash/BOT.just*0.5){B.charge-=1;B.flashT=FLASH_DUR;B.inv=0.6;reply({res:'flash'});}else reply({res:'just'});return;}
   const dmg=Math.round(m.k==='slash'?DMG.slash:m.k==='thrust'?DMG.thrust:DMG.strike*(m.mul||1));B.hp=Math.max(0,B.hp-dmg);
   const ka=Math.atan2(B.y-m.y,B.x-m.x),kb=m.k==='slash'?300:m.k==='thrust'?560:620;B.vx+=Math.cos(ka)*kb;B.vy+=Math.sin(ka)*kb;B.hurtLock=0.3;B.inv=0.12;
-  setTimeout(()=>{addText(B.x,B.y-34,'-'+dmg,'#ffe066',18,0.7);},0);reply({res:'hit',dmg,k:m.k});
+  addText(B.x,B.y-34,'-'+dmg,'#ffe066',18,0.7);reply({res:'hit',dmg,k:m.k});
   if(B.hp<=0&&phase==='fight')endRound(0);}
 function botUpdate(dt){const p=B;if(!p)return;p.atkCD-=dt;p.comboWin-=dt;p.inv-=dt;p.dashCD-=dt;if(p.hurtLock>0)p.hurtLock-=dt;if(p.flashT>0)p.flashT-=dt;
   const dx=me.x-p.x,dy=me.y-p.y,d=Math.hypot(dx,dy),a=Math.atan2(dy,dx);botT-=dt;
   if(p.dashT>0){p.dashT-=dt;p.vx=p.dx*1050;p.vy=p.dy*1050;if(p.dashT<=0){p.vx*=0.25;p.vy*=0.25;}}
   else{let mx=0,my=0;
+    if(p.reactT>0&&(p.reactT-=dt)<=0&&p.dashCD<=0&&p.hurtLock<=0)botDash(a+(Math.random()<0.5?1.6:-1.6));
     if(d>95){mx=Math.cos(a);my=Math.sin(a);}else if(d<60){mx=-Math.cos(a);my=-Math.sin(a);}
     const st=Math.sin(time*1.7)*0.6;mx+=-Math.sin(a)*st;my+=Math.cos(a)*st;{const ml=Math.hypot(mx,my);if(ml>1){mx/=ml;my/=ml;}}
     if(p.hurtLock<=0&&p.atkCD<=0&&botT<=0&&(d<118||(p.flashT>0&&d<400))){botT=0.35+Math.random()*0.45;p.face=a;
       const id=++atkId;
       if(p.flashT>0){const len=d+me.r+55,ex=clamp(p.x+Math.cos(a)*len,p.r,AW-p.r),ey=clamp(p.y+Math.sin(a)*len,p.r,AH-p.r);onAttack({t:'a',id,k:'strike',x:p.x,y:p.y,a,ex,ey,mul:1});p.x=ex;p.y=ey;p.flashT=0;p.atkCD=0.28;p.comboWin=0;p.inv=0.4;SFX.strike();}
       else{const step=p.comboWin>0?(p.comboStep%3)+1:1;p.comboStep=step;const fin=step===3;p.atkCD=fin?0.5:0.32;p.comboWin=COMBO_WIN;if(fin){p.vx+=Math.cos(a)*340;p.vy+=Math.sin(a)*340;}onAttack({t:'a',id,k:fin?'thrust':'slash',x:p.x,y:p.y,a,step});}}
-    else if(p.dashCD<=0&&d<150&&Math.random()<dt*0.8){const da=a+(Math.random()<0.5?1.6:-1.6);p.dx=Math.cos(da);p.dy=Math.sin(da);p.dashT=0.15;p.dashCD=DASH_CD;}
+    else if(p.dashCD<=0&&d<150&&Math.random()<dt*BOT.dashRate)botDash(a+(Math.random()<0.5?1.6:-1.6));
     const sp=210,k=Math.min(1,dt*13);p.vx+=(mx*sp-p.vx)*k;p.vy+=(my*sp-p.vy)*k;}
   p.x=clamp(p.x+p.vx*dt,p.r,AW-p.r);p.y=clamp(p.y+p.vy*dt,p.r,AH-p.r);p.face=p.dashT>0?Math.atan2(p.dy,p.dx):a;botState();}
 
