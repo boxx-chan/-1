@@ -48,7 +48,7 @@ const portrait=()=>H>W*1.05;
 /* ---------- audio ---------- */
 let bgmLv=2;try{const v=localStorage.getItem('flash_bgmv');if(v!==null)bgmLv=Math.max(0,Math.min(5,+v||0));else if(localStorage.getItem('flash_bgm')==='0')bgmLv=0;}catch(e){}
 let bgmUI=null;
-const BGM={wave:{src:'bgm/wave.mp3',g:1},boss1:{src:'bgm/boss1.mp3',g:0.95},boss3:{src:'bgm/boss3.mp3',g:0.8}};let bgmCur=null,bgmBtnR=null;
+const BGM={wave:{src:'bgm/wave2.mp3',g:1.1},boss1:{src:'bgm/boss1.mp3',g:0.95},boss3:{src:'bgm/boss3.mp3',g:0.8}};let bgmCur=null,bgmBtnR=null;
 function bgmWant(){if(!bgmLv||document.hidden||!AC||(state!=='play'&&state!=='pause'&&state!=='pick'))return null;const b=enemies.find(e=>e.type==='boss'&&!e.dead);if(!b)return 'wave';return bossKind(b)===3?'boss3':'boss1';}
 function bgmNode(id){const B=BGM[id];if(!B.el){try{const a=new Audio(B.src);a.loop=true;a.preload='auto';B.el=a;const src=AC.createMediaElementSource(a);B.gn=AC.createGain();B.gn.gain.value=0;src.connect(B.gn);B.gn.connect(AC.destination);}catch(e){B.el=null;return null;}}return B;}
 function updBgm(){if(!AC)return;const want=bgmWant(),t=AC.currentTime;
@@ -128,7 +128,7 @@ let rush=false,rushT=0,rChain=0,rChainT=0,rMax=0,rushSpawnT=0,rushElite={},rushB
 let hc=0,hcQueue=[],hcSpawnT=0,hcCap=2,hcSpd=1,hcNew=false,hcEarn=0,hcSelUI={back:null,tiles:[]},hcBtns=[];
 const RUSH_LEN=60,RCHAIN_KEEP=2.5,rMul=()=>1+0.25*Math.min(rChain,12);
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1127.39';
+const VERSION='1127.40';
 const WCOIN=60,RCOIN_N=3,RCOIN_MAX=600;const today=()=>{const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();};const rcLeft=()=>{const r=META.rd||{};return r.d===today()?Math.max(0,RCOIN_N-(r.n||0)):RCOIN_N;};let overBtns=null,quitRun=false,rcUsed=false;let hitSrc='',runT=0,endless=false,clearBonus=0,clrW=0,clrK=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
 let ult=null,mines=[];const ultMax=()=>U.ultFast?75:100,ultN=()=>rush?4:U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#8a6cff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
