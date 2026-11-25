@@ -133,7 +133,7 @@ let rush=false,rushT=0,rChain=0,rChainT=0,rMax=0,rushSpawnT=0,rushElite={},rushB
 let hc=0,hcQueue=[],hcSpawnT=0,hcCap=2,hcSpd=1,hcNew=false,hcEarn=0,hcSelUI={back:null,tiles:[]},hcBtns=[];
 const RUSH_LEN=60,RCHAIN_KEEP=2.5,rMul=()=>1+0.25*Math.min(rChain,12);
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1127.58';
+const VERSION='1127.59';
 const WCOIN=60,RCOIN_N=3,RCOIN_MAX=600;const today=()=>{const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();};const rcLeft=()=>{const r=META.rd||{};return r.d===today()?Math.max(0,RCOIN_N-(r.n||0)):RCOIN_N;};let overBtns=null,quitRun=false,rcUsed=false;let hitSrc='',runT=0,endless=false,clearBonus=0,clrW=0,clrK=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
 let ult=null,mines=[];const ultMax=()=>U.ultFast?75:100,ultN=()=>rush?4:U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#8a6cff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
@@ -367,7 +367,7 @@ function killEnemy(e,strike){
   if(U.vamp&&kills%25===0)heal(10);
   const pts=e.type==='boss'?e.pts:Math.round(e.pts*mult()*(strike?(rush?2:3):1));score+=pts;
   addText(e.x,e.y-e.r-22,'+'+pts,strike?'#7ff':'#9fe',13,0.9);
-  if(META.eq==='reaper'){const big=e.type==='boss'?2.2:e.type==='brute'?1.5:1;parts.push({x:e.x,y:e.y,vx:0,vy:-28,t:0,life:0.95,k:'sk',n:true,w:14*big,fr:1});for(let i=0;i<6;i++){const aa=rnd(0,TAU),v=rnd(20,60);parts.push({x:e.x,y:e.y,vx:Math.cos(aa)*v,vy:Math.sin(aa)*v,t:0,life:rnd(0.5,0.8),k:'sm',n:true,w:rnd(6,10)*big,fr:2});}for(let i=0;i<4;i++)parts.push({x:e.x+rnd(-16,16)*big,y:e.y+rnd(-16,16)*big,vx:0,vy:0,t:0,life:rnd(0.3,0.6),k:'st',w:rnd(2.5,5),col:'#ffffff'});}
+  if(META.eq==='reaper'){const big=e.type==='boss'?2.2:e.type==='brute'?1.5:1;parts.push({x:e.x,y:e.y,vx:0,vy:-28,t:0,life:0.95,k:'sk',n:true,w:21*big,fr:1});for(let i=0;i<6;i++){const aa=rnd(0,TAU),v=rnd(20,60);parts.push({x:e.x,y:e.y,vx:Math.cos(aa)*v,vy:Math.sin(aa)*v,t:0,life:rnd(0.5,0.8),k:'sm',n:true,w:rnd(6,10)*big,fr:2});}for(let i=0;i<4;i++)parts.push({x:e.x+rnd(-16,16)*big,y:e.y+rnd(-16,16)*big,vx:0,vy:0,t:0,life:rnd(0.3,0.6),k:'st',w:rnd(2.5,5),col:'#ffffff'});}
   if(META.eq==='sakura'){petalBurst(e.x,e.y,e.type==='boss'?40:e.type==='brute'?28:16,e.type==='brute'||e.type==='boss'?320:240);burst(e.x,e.y,6,'#fff',220,0.25,2);ring(e.x,e.y,e.r,e.r*4,'#ffb3d6',0.4,3);}
   else{burst(e.x,e.y,e.type==='brute'?40:20,e.col,e.type==='brute'?520:380,0.6,3);
   burst(e.x,e.y,8,'#fff',260,0.3,2);
@@ -1070,6 +1070,13 @@ function scythe(x,y,a,dir,al,sc,ghost){
   if(!ghost){ctx.fillStyle='#c9a8ff';ctx.beginPath();ctx.arc(H,0,4*sc,0,TAU);ctx.fill();}
   ctx.beginPath();ctx.moveTo(H+2*sc,-d*4*sc);ctx.bezierCurveTo(H+22*sc,-d*2*sc,H+20*sc,d*58*sc,H-58*sc,d*80*sc);ctx.bezierCurveTo(H-14*sc,d*58*sc,H-2*sc,d*30*sc,H-8*sc,d*8*sc);ctx.closePath();
   if(ghost){ctx.fillStyle='rgb(120,70,230)';ctx.fill();ctx.restore();return;}
+  {// smoky purple aura hugging the blade (irregular, animated)
+    const tm=performance.now()/1000,bz=(t,p0,p1,p2,p3)=>{const m=1-t;return m*m*m*p0+3*m*m*t*p1+3*m*t*t*p2+t*t*t*p3;};
+    ctx.save();ctx.shadowColor='rgba(150,80,255,0.9)';ctx.shadowBlur=22*sc;ctx.fillStyle='rgba(90,40,180,0.35)';ctx.fill();ctx.restore();
+    for(let i=0;i<14;i++){const t=(i+0.5)/14,bx=bz(t,H+2*sc,H+22*sc,H+20*sc,H-58*sc),by=bz(t,-d*4*sc,-d*2*sc,d*58*sc,d*80*sc),ix=bz(t,H-8*sc,H-2*sc,H-14*sc,H-58*sc),iy=bz(t,d*8*sc,d*30*sc,d*58*sc,d*80*sc);
+      for(const [px,py,o] of [[bx,by,1],[ix*0.5+bx*0.5,iy*0.5+by*0.5,0.6]]){const ph=tm*3+i*1.7+o*4,r=(7+4*Math.sin(ph)+3*Math.sin(ph*2.3+1))*sc*(0.6+0.6*Math.sin(Math.PI*t)),ox=Math.sin(ph*1.3)*3*sc,oy=Math.cos(ph*0.9)*3*sc;
+        const gr=ctx.createRadialGradient(px+ox,py+oy,0,px+ox,py+oy,r);gr.addColorStop(0,`rgba(120,60,220,${0.32*o})`);gr.addColorStop(0.6,`rgba(70,25,140,${0.18*o})`);gr.addColorStop(1,'rgba(40,10,80,0)');ctx.fillStyle=gr;ctx.beginPath();ctx.arc(px+ox,py+oy,r,0,TAU);ctx.fill();}}
+    ctx.beginPath();ctx.moveTo(H+2*sc,-d*4*sc);ctx.bezierCurveTo(H+22*sc,-d*2*sc,H+20*sc,d*58*sc,H-58*sc,d*80*sc);ctx.bezierCurveTo(H-14*sc,d*58*sc,H-2*sc,d*30*sc,H-8*sc,d*8*sc);ctx.closePath();}
   const g=ctx.createLinearGradient(H+10*sc,0,H-50*sc,d*80*sc);g.addColorStop(0,'#1c0a33');g.addColorStop(0.55,'#5a24b0');g.addColorStop(1,'#d8c2ff');
   ctx.shadowColor='rgba(180,120,255,0.9)';ctx.shadowBlur=10*sc;ctx.fillStyle=g;ctx.fill();ctx.shadowBlur=0;
   ctx.save();ctx.clip();
