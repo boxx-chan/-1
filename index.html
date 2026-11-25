@@ -61,7 +61,7 @@ function bgmStop(){for(const k in BGM){const B=BGM[k];if(B.el){try{B.el.pause();
 function drawBgmBtn(x,y){const w=150,h=32;rrect(x,y,w,h,9);ctx.fillStyle='rgba(255,255,255,0.05)';ctx.fill();ctx.strokeStyle=bgmLv?'rgba(127,224,160,0.6)':'rgba(255,255,255,0.25)';ctx.lineWidth=1.5;ctx.stroke();
   bgmUI={m:{x,y,w:38,h},p:{x:x+w-38,y,w:38,h}};txt('−',x+19,y+h/2,18,bgmLv?'#fff':'rgba(255,255,255,0.3)',900);txt('+',x+w-19,y+h/2,18,bgmLv<5?'#fff':'rgba(255,255,255,0.3)',900);
   txt('♪ 음악 '+(bgmLv?bgmLv:'끔'),x+w/2,y+h/2,12,bgmLv?'#a8f0c0':'rgba(255,255,255,0.55)',800);}
-const VOL_BOOST=1.8;let outB=null;
+const VOL_BOOST=2.5;let outB=null;
 function outBus(){if(!outB){const lim=AC.createDynamicsCompressor();lim.threshold.value=-2;lim.knee.value=0;lim.ratio.value=20;lim.attack.value=0.001;lim.release.value=0.12;lim.connect(AC.destination);outB=AC.createGain();outB.gain.value=VOL_BOOST;outB.connect(lim);}return outB;}
 let AC=null,master=null,nbuf=null,revIn=null,shaper=null;
 function initAudio(){
@@ -116,6 +116,7 @@ const SFX={
   shoot(){sTone(1200,320,0.1,0.09,'square',{lp:3000});sNoise(0.04,3000,1,0.06,'bandpass');},
   lunge(){sNoise(0.14,900,2,0.17,'bandpass',300,{a:0.02});},
   slam(){sTone(95,26,0.6,0.85,'sine');sTone(70,25,0.4,0.45,'triangle',{dist:true});sNoise(0.4,420,0.6,0.5,'lowpass',60,{rv:0.3});},
+  click(){sTone(1500,1100,0.045,0.13,'triangle');sTone(3000,2400,0.02,0.04,'sine');},
   tink(){sTone(2300,1900,0.08,0.15,'triangle');},
   wave(){const ch=[523,659,784,1047];ch.forEach((f,i)=>{sTone(f,f,0.6,0.09,'triangle',{d:i*0.07,rv:0.6,a:0.005});sTone(f*2,f*2,0.4,0.025,'sine',{d:i*0.07,rv:0.6});});},
   ult(){sNoise(0.7,300,0.8,0.35,'bandpass',8000,{a:0.25,rv:0.6});sTone(60,240,0.7,0.35,'sawtooth',{lp:1500,a:0.2});sTone(110,30,1.0,0.5,'sine',{d:0.3});sNoise(0.5,500,0.7,0.35,'lowpass',80,{d:0.28,rv:0.4});}
@@ -130,7 +131,7 @@ let rush=false,rushT=0,rChain=0,rChainT=0,rMax=0,rushSpawnT=0,rushElite={},rushB
 let hc=0,hcQueue=[],hcSpawnT=0,hcCap=2,hcSpd=1,hcNew=false,hcEarn=0,hcSelUI={back:null,tiles:[]},hcBtns=[];
 const RUSH_LEN=60,RCHAIN_KEEP=2.5,rMul=()=>1+0.25*Math.min(rChain,12);
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1127.44';
+const VERSION='1127.45';
 const WCOIN=60,RCOIN_N=3,RCOIN_MAX=600;const today=()=>{const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();};const rcLeft=()=>{const r=META.rd||{};return r.d===today()?Math.max(0,RCOIN_N-(r.n||0)):RCOIN_N;};let overBtns=null,quitRun=false,rcUsed=false;let hitSrc='',runT=0,endless=false,clearBonus=0,clrW=0,clrK=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
 let ult=null,mines=[];const ultMax=()=>U.ultFast?75:100,ultN=()=>rush?4:U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#8a6cff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
@@ -232,9 +233,9 @@ function menuTap(x,y){
 }
 cvs.addEventListener('pointerdown',e=>{
   e.preventDefault();initAudio();
-  if(state!=='play'){if(state==='rank')rkDrag={y:e.clientY,s:rankScroll};menuTap(e.clientX,e.clientY-TOP);return;}
+  if(state!=='play'){if(state==='rank')rkDrag={y:e.clientY,s:rankScroll};tapHit=false;const s0=state;menuTap(e.clientX,e.clientY-TOP);if(tapHit||state!==s0)SFX.click();return;}
   const x=e.clientX,y=e.clientY-TOP;
-  if(Math.hypot(x-pauseBtn().x,y-pauseBtn().y)<30){pauseGame();return;}
+  if(Math.hypot(x-pauseBtn().x,y-pauseBtn().y)<30){SFX.click();pauseGame();return;}
   if(x<W*0.45){if(joy.id===null){joy.id=e.pointerId;joy.bx=x;joy.by=y;joy.x=x;joy.y=y;}return;}
   const dd=Math.hypot(x-btn.dash.x,y-btn.dash.y),da=Math.hypot(x-btn.atk.x,y-btn.atk.y);
   if(dd<btn.dash.r*1.4&&dd<da)press('dash',e.pointerId);
@@ -1169,7 +1170,7 @@ function drawHUD(){
     txt('섬광 — 공격 버튼!',W/2,92+fy,16,'#cff',800);}
   if(bannerT>0&&state==='play'){const a=Math.min(1,bannerT*2.5);ctx.globalAlpha=a;txt(bannerText,W/2,H*0.32,Math.round(H*0.09),bannerText==='CLEAR'?'#9fe':'#fff',900);ctx.globalAlpha=1;}
 }
-const inR=(x,y,r)=>r&&x>=r.x&&x<=r.x+r.w&&y>=r.y&&y<=r.y+r.h;
+let tapHit=false;const inR=(x,y,r)=>{const h=!!(r&&x>=r.x&&x<=r.x+r.w&&y>=r.y&&y<=r.y+r.h);if(h)tapHit=true;return h;};
 let rankBtnR=null,shopBtnR=null,startBtnR=null,rushBtnR=null,hcBtnR=null,helpBtnR=null,helpPage=0,helpUI={back:null,tabs:[],next:null},shopUI={back:null,act:null,cards:[]};
 const pv={tab:'s',selT:'flash',sl:[],pt:[],wv:[],tr:[],dz:null,t:0,wait:0.3,step:0,sel:'flash',msg:'',msgT:0};
 const pvS=()=>pv.tab==='s'?pv.sel:META.eq,pvT=()=>pv.tab==='t'?pv.selT:META.eqT;
