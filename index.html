@@ -133,7 +133,7 @@ let rush=false,rushT=0,rChain=0,rChainT=0,rMax=0,rushSpawnT=0,rushElite={},rushB
 let hc=0,hcQueue=[],hcSpawnT=0,hcCap=2,hcSpd=1,hcNew=false,hcEarn=0,hcSelUI={back:null,tiles:[]},hcBtns=[];
 const RUSH_LEN=60,RCHAIN_KEEP=2.5,rMul=()=>1+0.25*Math.min(rChain,12);
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1127.57';
+const VERSION='1127.58';
 const WCOIN=60,RCOIN_N=3,RCOIN_MAX=600;const today=()=>{const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();};const rcLeft=()=>{const r=META.rd||{};return r.d===today()?Math.max(0,RCOIN_N-(r.n||0)):RCOIN_N;};let overBtns=null,quitRun=false,rcUsed=false;let hitSrc='',runT=0,endless=false,clearBonus=0,clrW=0,clrK=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
 let ult=null,mines=[];const ultMax=()=>U.ultFast?75:100,ultN=()=>rush?4:U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#8a6cff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
@@ -1080,7 +1080,24 @@ function scythe(x,y,a,dir,al,sc,ghost){
   ctx.fillStyle='rgba(225,205,255,0.85)';for(const [u,v] of [[H+11*sc,d*12*sc],[H+8*sc,d*32*sc],[H-6*sc,d*50*sc],[H-28*sc,d*64*sc]]){ctx.beginPath();ctx.moveTo(u,v-2.2*sc);ctx.lineTo(u+1.6*sc,v);ctx.lineTo(u,v+2.2*sc);ctx.lineTo(u-1.6*sc,v);ctx.closePath();ctx.fill();}
   ctx.restore();
   ctx.beginPath();ctx.moveTo(H-58*sc,d*80*sc);ctx.bezierCurveTo(H-14*sc,d*58*sc,H-2*sc,d*30*sc,H-8*sc,d*8*sc);ctx.strokeStyle='rgba(250,245,255,1)';ctx.lineWidth=2*sc;ctx.stroke();
+  scytheHead(H/sc,d,sc);
   ctx.restore();}
+function scytheHead(H,d,sc){// ornate dark feathered head at blade root (ref: maple reaper scythe)
+  ctx.save();ctx.translate(H*sc,-d*1*sc);ctx.scale(sc,sc*d);
+  const fth=(ang,len,w,c1)=>{ctx.save();ctx.rotate(ang);ctx.beginPath();ctx.moveTo(0,-w*0.5);
+    const n=4;for(let i=1;i<=n;i++){const u=i/n,x=len*u,hw=w*(1-u*0.85)*(0.55+0.45*Math.sin(u*Math.PI*0.9));ctx.lineTo(x-len*0.12,-hw*1.15);ctx.lineTo(x,-hw*0.55);}
+    ctx.quadraticCurveTo(len*0.6,w*0.35,0,w*0.5);ctx.closePath();
+    const g=ctx.createLinearGradient(0,0,len,0);g.addColorStop(0,'#0e0414');g.addColorStop(0.6,'#24103f');g.addColorStop(1,c1);ctx.fillStyle=g;ctx.fill();
+    ctx.strokeStyle='rgba(150,105,225,0.6)';ctx.lineWidth=0.7;ctx.stroke();
+    ctx.strokeStyle='rgba(10,3,16,0.9)';ctx.lineWidth=0.6;ctx.beginPath();ctx.moveTo(1,0);ctx.lineTo(len*0.85,-w*0.1);ctx.stroke();ctx.restore();};
+  // feathers fan backward on the side opposite the blade (local -y is away from blade after d-scale)
+  fth(-2.25,30,9,'#5b2aa8');fth(-2.7,26,8,'#4a2090');fth(-1.85,22,7,'#6d3bc4');fth(-3.05,20,7,'#3a1870');fth(-1.45,15,5.5,'#7a46d0');fth(2.85,16,6,'#2c1052');
+  ctx.beginPath();ctx.ellipse(0,0,7,6,0,0,TAU);ctx.fillStyle='#120619';ctx.fill();ctx.strokeStyle='rgba(180,145,240,0.7)';ctx.lineWidth=0.9;ctx.stroke();
+  ctx.shadowColor='rgba(190,130,255,1)';ctx.shadowBlur=6;ctx.beginPath();ctx.ellipse(0.5,0,2.4,2,0,0,TAU);ctx.fillStyle='#c9a0ff';ctx.fill();ctx.shadowBlur=0;
+  ctx.restore();
+  // pommel hook at the butt of the handle
+  ctx.beginPath();ctx.moveTo(-14*sc,0);ctx.quadraticCurveTo(-24*sc,-d*1*sc,-24*sc,-d*8*sc);ctx.quadraticCurveTo(-23*sc,-d*13*sc,-18*sc,-d*12*sc);ctx.strokeStyle='#16081f';ctx.lineWidth=3*sc;ctx.lineCap='round';ctx.stroke();ctx.strokeStyle='rgba(160,120,230,0.8)';ctx.lineWidth=1.1*sc;ctx.stroke();
+  ctx.beginPath();ctx.arc(-14*sc,0,2.6*sc,0,TAU);ctx.fillStyle='#b98cff';ctx.fill();}
 const RP_IMP=0.13;
 // weapon pose for a slash entry at time t: [angle, dir, scale, alpha]
 function reaperPose(s,t){
@@ -1112,8 +1129,8 @@ function reaperTick(list,x,y,game){
     for(let i=0;i<2;i++)if(Math.random()<0.7){const q=Math.random(),[bx,by]=at(H+12*sc-55*sc*q,dr*(4+74*q)*sc+rnd(-12,12));parts.push({x:bx,y:by,vx:0,vy:0,t:0,life:rnd(0.3,0.6),k:'st',w:rnd(2.5,5.5),col:Math.random()<0.25?'#ffe9a8':'#ffffff'});}
     if(s.thrust&&s.t<RP_IMP&&s.t>RP_IMP*0.4)for(let i=0;i<3;i++){const q=Math.random(),[bx,by]=at(H+8*sc-55*sc*q,dr*(4+72*q)*sc);parts.push({x:bx,y:by,vx:rnd(-20,20),vy:rnd(-20,20),t:0,life:rnd(0.4,0.7),k:'as',n:true,w:rnd(8,13),o:[[rnd(-.5,.5),rnd(-.5,.5)],[rnd(-.5,.5),rnd(-.5,.5)],[rnd(-.5,.5),rnd(-.5,.5)]],fr:2.5});}
     if(s.thrust&&!s.au){s.au=1;const c0=Math.cos(s.a),s0=Math.sin(s.a),L=s.range;// dark smoke aura along hit line (timing cue)
-      for(let i=0;i<44;i++){const q=Math.pow(Math.random(),0.6),side=rnd(-1,1),px=x+c0*L*q-s0*side*16,py=y+s0*L*q+c0*side*16,dv=rnd(10,35);
-        parts.push({x:px,y:py,vx:-s0*side*dv+c0*rnd(5,30),vy:c0*side*dv+s0*rnd(5,30)-8,t:-q*0.07,life:rnd(0.6,1),k:'as',n:true,w:rnd(15,24)*(0.7+0.5*q),o:[[rnd(-.5,.5),rnd(-.5,.5)],[rnd(-.5,.5),rnd(-.5,.5)],[rnd(-.5,.5),rnd(-.5,.5)]],fr:1.5});}}
+      for(let i=0;i<44;i++){const q=Math.pow(Math.random(),0.6),side=rnd(-1,1),px=x+c0*L*q-s0*side*8,py=y+s0*L*q+c0*side*8,dv=rnd(5,18);
+        parts.push({x:px,y:py,vx:-s0*side*dv+c0*rnd(5,30),vy:c0*side*dv+s0*rnd(5,30)-8,t:-q*0.07,life:rnd(0.6,1),k:'as',n:true,w:rnd(10,16)*(0.7+0.5*q),o:[[rnd(-.5,.5),rnd(-.5,.5)],[rnd(-.5,.5),rnd(-.5,.5)],[rnd(-.5,.5),rnd(-.5,.5)]],fr:1.5});}}
     if(s.thrust&&!s.hit&&s.t>=RP_IMP){s.hit=1;const tx=x+Math.cos(s.a)*88.6*sc,ty=y+Math.sin(s.a)*88.6*sc;
       for(let i=0;i<7;i++)reaperCrack(parts,tx,ty,s.a+TAU*i/7+rnd(-0.3,0.3),rnd(40,85)*sc/1.6,3,0);
       for(let i=0;i<20;i++){const aa=rnd(0,TAU),v=rnd(60,240);parts.push({x:tx,y:ty,vx:Math.cos(aa)*v,vy:Math.sin(aa)*v,t:0,life:rnd(0.3,0.6),col:'#46325f',w:rnd(1.2,2.6),k:'d',n:true,fr:5});}
