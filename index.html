@@ -108,11 +108,12 @@ function vib(p){try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}}
 /* ---------- state ---------- */
 let state='title',P,enemies,bullets,parts,slashes,texts,markers,lines;
 let wave,waveQueue,waveT,spawnT,score,combo,comboT,maxCombo,kills,flashes,swingHit=false,waveHurt=false;const COMBO_T=1.5;
+let xmas=false,evUI={back:null,cards:[]},snow=[];for(let i=0;i<70;i++)snow.push({x:Math.random(),y:Math.random(),r:0.8+Math.random()*2,s:18+Math.random()*30,w:Math.random()*6});
 let rush=false,rushT=0,rChain=0,rChainT=0,rMax=0,rushSpawnT=0,rushElite={},rushBest=0;try{rushBest=+localStorage.getItem('flash_rbest')||0}catch(e){}
 let hc=0,hcQueue=[],hcSpawnT=0,hcCap=2,hcSpd=1,hcNew=false,hcEarn=0,hcSelUI={back:null,tiles:[]},hcBtns=[];
 const RUSH_LEN=60,RCHAIN_KEEP=2.5,rMul=()=>1+0.25*Math.min(rChain,12);
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1127.36';
+const VERSION='1127.37';
 const WCOIN=60,RCOIN_N=3,RCOIN_MAX=600;const today=()=>{const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();};const rcLeft=()=>{const r=META.rd||{};return r.d===today()?Math.max(0,RCOIN_N-(r.n||0)):RCOIN_N;};let overBtns=null,quitRun=false,rcUsed=false;let hitSrc='',runT=0,endless=false,clearBonus=0,clrW=0,clrK=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
 let ult=null,mines=[];const ultMax=()=>U.ultFast?75:100,ultN=()=>rush?4:U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#8a6cff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
@@ -128,7 +129,7 @@ let rankList=null,rankErr='',rankLoading=false,pendRec=null,recMsg='',clearTimeR
 const rankOn=()=>!!(RANK.url&&RANK.key);
 function cleanNick(v){return String(v||'').replace(/[\u0000-\u001f\u007f<>]/g,'').trim().slice(0,12);}
 function rankHdr(){const h={'apikey':RANK.key,'Content-Type':'application/json'};if(!RANK.key.startsWith('sb_'))h.Authorization='Bearer '+RANK.key;return h;}
-function postRec(r){nickTaken=false;if(!rankOn()||!nick){pendRec=r;recMsg=rankOn()?'':'';return;}pendRec=null;recMsg='랭킹 등록 중...';
+function postRec(r){nickTaken=false;if(xmas){pendRec=null;recMsg='이벤트 모드는 랭킹에 기록되지 않아요';return;}if(!rankOn()||!nick){pendRec=r;recMsg=rankOn()?'':'';return;}pendRec=null;recMsg='랭킹 등록 중...';
   const send=b=>fetch(RANK.url+'/rest/v1/scores',{method:'POST',headers:Object.assign(rankHdr(),{'Prefer':'return=minimal'}),body:JSON.stringify(b)});
   const body=Object.assign({nickname:nick},r);if(pid&&pidOk)body.pid=pid;
   send(body).then(async x=>{if(!x.ok&&body.pid&&x.status===400){const t=await x.clone().text();if(!t.includes('nick_taken')){delete body.pid;return send(body);}}return x;})
@@ -202,7 +203,8 @@ function menuTap(x,y){
   if(state==='help'){helpTap(x,y);return;}
   if(state==='inst'){if(x===undefined||inR(x,y,instBack))state='title';return;}
   if(state==='rank'){if(x===undefined||inR(x,y,rankUI.back)){state='title';return;}if(inR(x,y,rankUI.nick)){askNick(()=>{});return;}for(let i=0;i<rankUI.tabs.length;i++)if(inR(x,y,rankUI.tabs[i])&&rankTab!==i){rankTab=i;rankList=null;rankErr='';loadRank();}return;}
-  if(state==='title'){for(const r of voteR)if(inR(x,y,r)){voteScarf(r.v);return;}if(inR(x,y,shopBtnR)){openShop();return;}if(hcBtnR&&inR(x,y,hcBtnR)){state='hcsel';return;}if(inR(x,y,rankBtnR)){openRank();return;}if(inR(x,y,helpBtnR)){state='help';helpPage=0;return;}if(iosBtnR&&inR(x,y,iosBtnR)){instKind='ios';state='inst';return;}if(andBtnR&&inR(x,y,andBtnR)){instKind='and';state='inst';return;}const isRush=x!==undefined&&rushBtnR&&inR(x,y,rushBtnR);if(x!==undefined&&!inR(x,y,startBtnR)&&!isRush)return;if(rankOn()&&!nick&&!nickAsked){nickAsked=true;askNick(()=>{});return;}rush=!!isRush;hc=0;reset();state='play';goFS();if(rush)banner('섬광 러시 · 1분');}
+  if(state==='title'){for(const r of voteR)if(inR(x,y,r)){voteScarf(r.v);return;}if(inR(x,y,shopBtnR)){openShop();return;}if(hcBtnR&&inR(x,y,hcBtnR)){state='hcsel';return;}if(inR(x,y,rankBtnR)){openRank();return;}if(inR(x,y,helpBtnR)){state='help';helpPage=0;return;}if(iosBtnR&&inR(x,y,iosBtnR)){instKind='ios';state='inst';return;}if(andBtnR&&inR(x,y,andBtnR)){instKind='and';state='inst';return;}if(x!==undefined&&rushBtnR&&inR(x,y,rushBtnR)){state='evsel';return;}if(x!==undefined&&!inR(x,y,startBtnR))return;startMode('main');}
+  else if(state==='evsel'){if(x===undefined||inR(x,y,evUI.back)){state='title';return;}for(const c of evUI.cards)if(inR(x,y,c)){startMode(c.id);return;}}
   else if(state==='over'&&overT>1.0){if(x!==undefined&&overRankBtn&&inR(x,y,overRankBtn)){askNick(()=>{if(pendRec)postRec(pendRec);});return;}if(x!==undefined){if(overBtns&&inR(x,y,overBtns[1])){reset();state='title';return;}if(!overBtns||!inR(x,y,overBtns[0]))return;}reset();state='play';}
   else if(state==='clear'&&overT>1.0&&x!==undefined){const rs=clearRects();if(inR(x,y,rs[0])){endless=true;state='play';last=performance.now();banner('무한 모드');}
     else if(inR(x,y,rs[1])){lastEarn=wave*WCOIN+kills;META.coins+=lastEarn;saveMeta();if(score>best){best=score;try{localStorage.setItem('flash_best',best)}catch(e){}}reset();state='title';}}
@@ -283,7 +285,7 @@ function swingCore(){
     const tl=[];for(const e of enemies){if(e.dead||e.spawnT>0)continue;if(segDist(e.x,e.y,p.x,p.y,ex,ey)<e.r+w){tl.push(e);}}
     tl.sort((a,b)=>Math.hypot(a.x-p.x,a.y-p.y)-Math.hypot(b.x-p.x,b.y-p.y));
     tl.forEach((e,i)=>{hitEnemy(e,3*U.thrust*(U.chain?1+0.5*i:1),Math.atan2(e.y-p.y,e.x-p.x),620,false,true);hit++;});addUlt(2*hit);
-    for(const b of bullets){if(!b.dead&&segDist(b.x,b.y,p.x,p.y,ex,ey)<b.r+w){b.dead=true;sparks(b.x,b.y,a,6,'#ffd27a',300);SFX.tink();score+=10;}}
+    for(const b of bullets){if(!b.dead&&segDist(b.x,b.y,p.x,p.y,ex,ey)<b.r+w){b.dead=true;sparks(b.x,b.y,a,6,xmas?'#e8f6ff':'#ffd27a',300);SFX.tink();score+=10;}}
     if(hit){hitstop=Math.max(hitstop,0.1);trauma=Math.min(1,trauma+0.4);vib(30);}
     else{sparks(ex,ey,a,4,'#ffe9a0',200);}
     return;
@@ -377,7 +379,7 @@ function flashStrike(){
   const ex=clamp(sx+Math.cos(a)*len,p.r,AW-p.r),ey=clamp(sy+Math.sin(a)*len,p.r,AH-p.r);
   let n=0;
   for(const e of enemies){if(e.dead||e.spawnT>0)continue;if(segDist(e.x,e.y,sx,sy,ex,ey)<e.r+38){hitEnemy(e,6*U.strike*cm,a,560+p.chain*80,true);n++;}}
-  for(const b of bullets){if(!b.dead&&segDist(b.x,b.y,sx,sy,ex,ey)<40){b.dead=true;sparks(b.x,b.y,a,5,'#ffd27a',300);}}
+  for(const b of bullets){if(!b.dead&&segDist(b.x,b.y,sx,sy,ex,ey)<40){b.dead=true;sparks(b.x,b.y,a,5,xmas?'#e8f6ff':'#ffd27a',300);}}
   for(let i=0;i<=12;i++){const k=i/12;sparks(sx+(ex-sx)*k,sy+(ey-sy)*k,a,2,'#bff',500);}
   p.x=ex;p.y=ey;p.vx=Math.cos(a)*220;p.vy=Math.sin(a)*220;p.face=a;p.inv=Math.max(p.inv,0.5);p.atkCD=0.28;p.comboWin=0;
   lines.push({x1:sx,y1:sy,x2:ex,y2:ey,t:0,dur:0.45});p.grace=GRACE;
@@ -400,7 +402,7 @@ function ultDash(){
   const sx=p.x,sy=p.y,ex=clamp(sx+Math.cos(a)*len,p.r,AW-p.r),ey=clamp(sy+Math.sin(a)*len,p.r,AH-p.r);
   let n=0;
   hitSrc='ult';for(const e of enemies){if(e.dead||e.spawnT>0)continue;if(segDist(e.x,e.y,sx,sy,ex,ey)<e.r+(rush?90:38)){hitEnemy(e,4*U.strike*(last?1.5:1),a,last?700:380,true);n++;}}hitSrc='';
-  for(const b of bullets){if(!b.dead&&segDist(b.x,b.y,sx,sy,ex,ey)<40){b.dead=true;sparks(b.x,b.y,a,5,'#ffd27a',300);}}
+  for(const b of bullets){if(!b.dead&&segDist(b.x,b.y,sx,sy,ex,ey)<40){b.dead=true;sparks(b.x,b.y,a,5,xmas?'#e8f6ff':'#ffd27a',300);}}
   for(let i=0;i<=10;i++){const k=i/10;sparks(sx+(ex-sx)*k,sy+(ey-sy)*k,a,2,i%2?'#ffe066':'#fff',520);}
   lines.push({x1:sx,y1:sy,x2:ex,y2:ey,t:0,dur:0.4,c:'255,214,90'});
   p.x=ex;p.y=ey;p.vx=0;p.vy=0;p.face=a;p.inv=Math.max(p.inv,1);if(ult)ult.last=t;
@@ -453,7 +455,8 @@ function hcBuild(n){const d=HC[n],R=hcRng(n*7919+13),q=[];
   const arr=[];for(const t in d.list)for(let i=0;i<d.list[t];i++)arr.push(t);
   for(let i=arr.length-1;i>0;i--){const j=Math.floor(R()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];}
   for(const t of arr){const[x,y]=pos();q.push({type:t,x,y});}return q;}
-function hcStart(n){hc=n;rush=false;reset();state='play';goFS();banner('하드코어 '+n+'단계');}
+function startMode(m){if(rankOn()&&!nick&&!nickAsked&&m!=='xmas'){nickAsked=true;askNick(()=>{});return;}rush=m==='rush';xmas=m==='xmas';hc=0;reset();state='play';goFS();if(rush)banner('섬광 러시 · 1분');if(xmas)banner('🎄 메리 크리스마스!');}
+function hcStart(n){hc=n;rush=false;xmas=false;reset();state='play';goFS();banner('하드코어 '+n+'단계');}
 function hcOnScreen(e){const hw=W/(2*S)-10,hh=H/(2*S)-10;return Math.abs(e.x-camX)<hw&&Math.abs(e.y-camY)<hh;}
 function updateHC(dt){hcSpawnT-=dt;
   const alive=enemies.filter(e=>!e.dead).length;
@@ -808,7 +811,7 @@ function drawPause(){
 function poly(x,y,r,n,rot){ctx.beginPath();for(let i=0;i<n;i++){const a=rot+i*TAU/n;const px=x+Math.cos(a)*r,py=y+Math.sin(a)*r;i?ctx.lineTo(px,py):ctx.moveTo(px,py);}ctx.closePath();}
 function drawArena(){
   const vw=W/S,vh=H/S,x0=camX-vw/2-60,x1=camX+vw/2+60,y0=camY-vh/2-60,y1=camY+vh/2+60;
-  ctx.fillStyle='#0a0f1f';ctx.fillRect(0,0,AW,AH);
+  ctx.fillStyle=xmas?'#0c1628':'#0a0f1f';ctx.fillRect(0,0,AW,AH);
   ctx.strokeStyle='rgba(90,140,255,0.08)';ctx.lineWidth=1;ctx.beginPath();
   for(let x=0;x<=AW;x+=60){if(x<x0||x>x1)continue;ctx.moveTo(x,Math.max(0,y0));ctx.lineTo(x,Math.min(AH,y1));}
   for(let y=0;y<=AH;y+=60){if(y<y0||y>y1)continue;ctx.moveTo(Math.max(0,x0),y);ctx.lineTo(Math.min(AW,x1),y);}
@@ -864,8 +867,11 @@ function drawEnemies(){
       if(e.state==='wind'||e.state==='act'){ctx.strokeStyle='rgba(220,190,255,0.8)';ctx.lineWidth=2;poly(e.x,e.y,r*1.45,6,-e.rot);ctx.stroke();}
       if(e.hp<e.maxHp){const w=44;ctx.fillStyle='rgba(0,0,0,0.5)';ctx.fillRect(e.x-w/2,e.y-r-16,w,5);ctx.fillStyle='#d9a0ff';ctx.fillRect(e.x-w/2,e.y-r-16,w*Math.max(0,e.hp/e.maxHp),5);}
     }
+    if(xmas&&e.spawnT<=0)santaHat(e.x,e.y-r*0.55,r);
   }
 }
+function santaHat(x,y,r){const hw=r*0.95,hh=r*1.05,ga=ctx.globalAlpha;ctx.globalAlpha=1;ctx.fillStyle='#e23b4a';ctx.beginPath();ctx.moveTo(x-hw,y);ctx.quadraticCurveTo(x-hw*0.2,y-hh*0.9,x+hw*0.55,y-hh);ctx.quadraticCurveTo(x+hw*0.3,y-hh*0.4,x+hw,y);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#f4fbff';rrect(x-hw*1.08,y-r*0.12,hw*2.16,r*0.34,r*0.17);ctx.fill();ctx.beginPath();ctx.arc(x+hw*0.58,y-hh,r*0.22,0,TAU);ctx.fill();ctx.globalAlpha=ga;}
 function drawBossBody(e,r){
   ctx.strokeStyle=e.ph2?'rgba(255,120,120,0.9)':'rgba(255,200,200,0.5)';ctx.lineWidth=3;poly(e.x,e.y,r*1.45,8,-e.rot*1.5);ctx.stroke();
   ctx.fillStyle='#070a14';poly(e.x,e.y,r*0.45,4,e.rot*2);ctx.fill();
@@ -1175,6 +1181,7 @@ function shopTap(x,y){
     else{SFX.hurt();pv.msg='코인이 '+(k.price-META.coins).toLocaleString()+' 부족해요';pv.msgT=1.6;}}
 }
 function rrect(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+function drawSnow(){ctx.fillStyle='rgba(235,245,255,0.75)';for(const f of snow){const y=((f.y*H+time*f.s)%(H+10))-5,x=((f.x*W+Math.sin(time*0.8+f.w)*12)%W+W)%W;ctx.beginPath();ctx.arc(x,y,f.r,0,TAU);ctx.fill();}}
 function drawBg(){ctx.fillStyle='#070a14';ctx.fillRect(0,0,W,H);
   ctx.strokeStyle='rgba(90,140,255,0.07)';ctx.lineWidth=1;ctx.beginPath();const off=(time*20)%40;
   for(let x=-40+off;x<W;x+=40){ctx.moveTo(x,0);ctx.lineTo(x,H);}for(let y=0;y<H;y+=40){ctx.moveTo(0,y);ctx.lineTo(W,y);}ctx.stroke();}
@@ -1295,7 +1302,7 @@ function drawTitle(){
   {const bw=Math.max(170,fs*10),bh=Math.max(44,fs*2.6),g=14,bx=W/2-bw-g/2,by=Math.min(H-bh-8,y+fs*1.4);startBtnR={x:bx,y:by,w:bw,h:bh};rushBtnR={x:W/2+g/2,y:by,w:bw,h:bh};const pu=0.5+0.5*Math.sin(time*4);
     rrect(bx,by,bw,bh,12);ctx.fillStyle=`rgba(90,240,255,${0.18+0.12*pu})`;ctx.fill();ctx.strokeStyle='#5ff4ff';ctx.lineWidth=2;ctx.stroke();txt('시작',bx+bw/2,by+bh/2,Math.round(fs*1.25),'#fff',900);
     const rb2=rushBtnR;rrect(rb2.x,rb2.y,bw,bh,12);ctx.fillStyle=`rgba(255,154,106,${0.14+0.1*pu})`;ctx.fill();ctx.strokeStyle='#ff9a6a';ctx.lineWidth=2;ctx.stroke();
-    txt('섬광 러시',rb2.x+bw/2,by+bh/2-7,Math.round(fs*1.15),'#fff',900);txt((rushBest?'최고 '+rushBest.toLocaleString()+' · ':'')+'코인 보상 '+rcLeft()+'/'+RCOIN_N,rb2.x+bw/2,by+bh/2+12,11,'rgba(255,224,150,0.85)',700);}
+    txt('이벤트 스테이지',rb2.x+bw/2,by+bh/2-7,Math.round(fs*1.1),'#fff',900);txt('섬광 러시 · 🎄 크리스마스',rb2.x+bw/2,by+bh/2+12,11,'rgba(255,224,150,0.85)',700);}
   if(best)txt('최고 '+best.toLocaleString(),W-16,20,13,'rgba(255,255,255,0.5)',600,'right');
   txt('v'+VERSION,16,20,11,'rgba(255,255,255,0.3)',600,'left');
   const hb={x:14,y:34,w:136,h:40};helpBtnR=hb;rrect(hb.x,hb.y,hb.w,hb.h,10);ctx.fillStyle='rgba(90,240,255,0.1)';ctx.fill();ctx.strokeStyle='rgba(90,240,255,0.6)';ctx.lineWidth=1.5;ctx.stroke();
@@ -1359,6 +1366,15 @@ function drawHcClear(){ctx.fillStyle=`rgba(5,7,15,${Math.min(0.8,overT)})`;ctx.f
   if(hcEarn)txt('첫 클리어 보너스 +'+hcEarn+' 코인',W/2,H*0.48,Math.round(H*0.04),'#ffe066',800);
   if(hc===10)txt('하드코어 완전 정복',W/2,H*0.57,Math.round(H*0.045),'#ff8da6',900);
   if(overT>0.8)hcButtons(hc<10?(hc+1)+'단계 도전':'단계 선택','단계 선택');}
+function drawEvSel(){drawBg();ctx.fillStyle='rgba(5,7,15,0.55)';ctx.fillRect(0,0,W,H);
+  const bk={x:14,y:14,w:96,h:38};evUI.back=bk;rrect(bk.x,bk.y,bk.w,bk.h,10);ctx.fillStyle='rgba(255,255,255,0.06)';ctx.fill();ctx.strokeStyle='rgba(255,255,255,0.3)';ctx.lineWidth=1.5;ctx.stroke();txt('← 뒤로',bk.x+bk.w/2,bk.y+bk.h/2,14,'#fff',800);
+  txt('이벤트 스테이지',W/2,34,22,'#ffe066',900);
+  const g=18,cw=Math.min(300,(W-60-g)/2),ch=Math.min(230,H-110),x0=W/2-cw-g/2,y0=Math.max(70,(H-ch)/2+16);evUI.cards=[];const pu=0.5+0.5*Math.sin(time*4);
+  [['rush','섬광 러시','#ff9a6a','255,154,106',['1분 동안 섬광 연쇄로 최대한 처치','랭킹: 섬광 러시 탭',(rushBest?'최고 '+rushBest.toLocaleString():'기록 없음'),'코인 보상 '+rcLeft()+'/'+RCOIN_N+' (하루)']],
+   ['xmas','🎄 크리스마스','#7fe0a0','127,224,160',['일반 모드와 같은 규칙','적들이 눈덩이를 던져요','코인은 일반 모드와 같아요','랭킹에는 기록되지 않아요']]].forEach(([id,t,c,rgb,ls],i)=>{
+    const r={id,x:x0+i*(cw+g),y:y0,w:cw,h:ch};evUI.cards.push(r);rrect(r.x,r.y,r.w,r.h,14);ctx.fillStyle=`rgba(${rgb},${0.1+0.06*pu})`;ctx.fill();ctx.strokeStyle=c;ctx.lineWidth=2;ctx.stroke();
+    txt(t,r.x+r.w/2,r.y+34,22,'#fff',900);ls.forEach((l,k)=>txt(l,r.x+r.w/2,r.y+74+k*24,13,k>=2?c:'rgba(255,255,255,0.8)',700));
+    txt('플레이',r.x+r.w/2,r.y+r.h-22,16,c,900);});}
 function drawHcSel(){drawBg();ctx.fillStyle='rgba(5,7,15,0.6)';ctx.fillRect(0,0,W,H);
   const bk={x:14,y:14,w:96,h:38};hcSelUI.back=bk;rrect(bk.x,bk.y,bk.w,bk.h,10);ctx.fillStyle='rgba(255,255,255,0.06)';ctx.fill();ctx.strokeStyle='rgba(255,255,255,0.3)';ctx.lineWidth=1.5;ctx.stroke();txt('← 뒤로',bk.x+bk.w/2,bk.y+bk.h/2,14,'#fff',800);
   txt('하드코어',W/2,34,22,'#ff8da6',900);txt('한 대도 맞지 않고 모든 적을 처치하세요 · 공격·섬광 Lv3 고정',W/2,62,13,'rgba(255,255,255,0.6)',600);
@@ -1393,14 +1409,16 @@ function render(){
   else if(state==='inst'){drawInst();}
   else if(state==='rank'){drawRank();drawRenMsg();}
   else if(state==='hcsel'){drawHcSel();}
+  else if(state==='evsel'){drawEvSel();}
   else{
     ctx.fillStyle='#05070f';ctx.fillRect(0,0,W,H);
     const sh=trauma*trauma*18,ox=(Math.random()*2-1)*sh,oy=(Math.random()*2-1)*sh;
     ctx.save();ctx.translate(W/2+ox,H/2+oy);ctx.scale(S,S);ctx.translate(-camX,-camY);
     drawArena();drawMarkers();drawTelegraphs();
-    for(const b of bullets){ctx.fillStyle='rgba(255,170,40,0.25)';ctx.beginPath();ctx.arc(b.x,b.y,b.r*2.2,0,TAU);ctx.fill();ctx.fillStyle='#ffd27a';ctx.beginPath();ctx.arc(b.x,b.y,b.r,0,TAU);ctx.fill();}
+    if(xmas)for(const b of bullets){ctx.fillStyle='rgba(120,200,255,0.22)';ctx.beginPath();ctx.arc(b.x,b.y,b.r*2.1,0,TAU);ctx.fill();ctx.fillStyle='rgba(0,0,0,0.35)';ctx.beginPath();ctx.arc(b.x+1.5,b.y+2.5,b.r*1.05,0,TAU);ctx.fill();ctx.fillStyle='#f4fbff';ctx.beginPath();ctx.arc(b.x,b.y,b.r*1.1,0,TAU);ctx.fill();ctx.strokeStyle='#6cc4ff';ctx.lineWidth=2;ctx.stroke();ctx.fillStyle='#cfe8ff';ctx.beginPath();ctx.arc(b.x+b.r*0.3,b.y+b.r*0.35,b.r*0.45,0,TAU);ctx.fill();}
+    else for(const b of bullets){ctx.fillStyle='rgba(255,170,40,0.25)';ctx.beginPath();ctx.arc(b.x,b.y,b.r*2.2,0,TAU);ctx.fill();ctx.fillStyle='#ffd27a';ctx.beginPath();ctx.arc(b.x,b.y,b.r,0,TAU);ctx.fill();}
     drawWalkTrail(P.wtr,META.eqT,P.r);drawDashTrail(P.trail,META.eqT,P.r);drawEnemies();drawPlayer();drawComboGauge();drawFlashReady();drawAim();drawSlashes();drawSwordWaves();drawLines();drawParts();drawTexts();
-    ctx.restore();
+    ctx.restore();if(xmas)drawSnow();
     if(flashT>0){const g=ctx.createRadialGradient(W/2,H/2,H*0.3,W/2,H/2,W*0.7);g.addColorStop(0,'rgba(40,120,160,0.05)');g.addColorStop(1,'rgba(40,200,255,0.28)');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);}
     if(strikeFlash>0){ctx.fillStyle=`rgba(220,255,255,${strikeFlash*0.35})`;ctx.fillRect(0,0,W,H);}
     if(hurtFlash>0){const g=ctx.createRadialGradient(W/2,H/2,H*0.35,W/2,H/2,W*0.65);g.addColorStop(0,'rgba(255,0,60,0)');g.addColorStop(1,`rgba(255,0,60,${hurtFlash*0.45})`);ctx.fillStyle=g;ctx.fillRect(0,0,W,H);}
