@@ -35,7 +35,7 @@ canvas{position:fixed;left:0;top:0;display:block;touch-action:none}
 'use strict';
 // installed main-game app must never stay on this test page: send it back to the game
 try{if((matchMedia('(display-mode: standalone)').matches||navigator.standalone)&&!/[?&]app=1/.test(location.search)){location.replace('../');}}catch(e){}
-const PVER='p11';document.getElementById('pv').textContent=PVER;
+const PVER='p12';document.getElementById('pv').textContent=PVER;
 /* ---------- setup ---------- */
 const cvs=document.getElementById('c'),ctx=cvs.getContext('2d');
 const AW=900,AH=520,TAU=Math.PI*2,FONT='system-ui,-apple-system,"Noto Sans KR",sans-serif';
@@ -161,7 +161,7 @@ function onResult(m){if(!me)return;
 /* ---------- my player ---------- */
 function triggerFlash(sx,sy){const p=me;
   if(p.charge<1){p.justUsed=true;p.dashCD=0;addText(p.x,p.y-36,'회피!','#cff',16,0.6);sparks(sx,sy,Math.atan2(p.y-sy,p.x-sx),6,'#cff',300);SFX.tink();vib(12);return false;}
-  p.charge-=1;p.justUsed=true;flashT=FLASH_DUR;inp.dash=0;p.inv=Math.max(p.inv,0.6);p.dashCD=0;
+  p.charge-=1;p.justUsed=true;flashT=FLASH_DUR;inp.dash=0;p.inv=Math.max(p.inv,0.6);
   burstT=0.45;trauma=Math.min(1,trauma+0.5);ring(p.x,p.y,10,320,'#fff',0.45,6);ring(p.x,p.y,10,220,'#5ff4ff',0.6,4);SFX.flash();vib([15,25,15]);ring(p.x,p.y,10,140,'#9ff',0.5,4);ring(sx,sy,5,60,'#fff',0.35,2);hitstop=Math.max(hitstop,0.06);return true;}
 function aimAt(range,a0,cone){const p=me,dx=op.x-p.x,dy=op.y-p.y,d=Math.hypot(dx,dy),a=Math.atan2(dy,dx);if(d<=range&&Math.abs(angDiff(a0,a))<=cone)return a;return null;}
 function swing(){const p=me,mm=Math.hypot(inp.jx,inp.jy);const step=p.comboWin>0?(p.comboStep%3)+1:1;p.comboStep=step;const fin=step===3;let a;
