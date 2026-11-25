@@ -108,7 +108,7 @@ let rush=false,rushT=0,rChain=0,rChainT=0,rMax=0,rushSpawnT=0,rushElite={},rushB
 let hc=0,hcQueue=[],hcSpawnT=0,hcCap=2,hcSpd=1,hcNew=false,hcEarn=0,hcSelUI={back:null,tiles:[]},hcBtns=[];
 const RUSH_LEN=60,RCHAIN_KEEP=2.5,rMul=()=>1+0.25*Math.min(rChain,12);
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1127.34';
+const VERSION='1127.35';
 const WCOIN=60,RCOIN_N=3,RCOIN_MAX=600;const today=()=>{const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();};const rcLeft=()=>{const r=META.rd||{};return r.d===today()?Math.max(0,RCOIN_N-(r.n||0)):RCOIN_N;};let overBtns=null,quitRun=false,rcUsed=false;let hitSrc='',runT=0,endless=false,clearBonus=0,clrW=0,clrK=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
 let ult=null,mines=[];const ultMax=()=>U.ultFast?75:100,ultN=()=>rush?4:U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#8a6cff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
@@ -1240,7 +1240,7 @@ const HELP=[
 let instKind='ios',instBack=null,iosBtnR=null,andBtnR=null,voteR=[],voteMsg='',voteBusy=false,myVote=0;try{myVote=+(localStorage.getItem('flash_sv')||0);}catch(e){}
 function voteScarf(v){if(voteBusy||!rankOn()||!ptok)return;voteBusy=true;voteMsg='보내는 중…';fetch(RANK.url+'/rest/v1/rpc/vote_scarf',{method:'POST',headers:rankHdr(),body:JSON.stringify({p_tok:ptok,p_v:v})}).then(x=>x.ok?x.json():'err').catch(()=>'err').then(r=>{voteBusy=false;if(r==='ok'){myVote=v;try{localStorage.setItem('flash_sv',v);}catch(e){}voteMsg='투표 완료! 고마워요';}else voteMsg='투표 실패, 다시 눌러주세요';});}
 const INST={ios:{t:'아이폰 앱 설치',col:'#d9e4ff',steps:['반드시 Safari(사파리)로 게임 링크 열기 (카톡·크롬 X)','아래쪽 공유 버튼(네모에 위쪽 화살표) 누르기','목록을 내려서 "홈 화면에 추가" 누르기','오른쪽 위 "추가" 누르기','홈 화면에 생긴 섬광 아이콘으로 실행'],
-  notes:['Safari와 홈 화면 앱은 저장 기록이 따로예요. 앱으로만 플레이하세요.','Safari에서만 하면 7일 정도 안 들어갔을 때 기록이 지워질 수 있어요.']},
+  notes:['홈 화면 아이콘을 지우면 코인·스킨·기록·닉네임이 모두 사라져요.','Safari와 홈 화면 앱은 저장 기록이 따로예요. 앱으로만 플레이하세요.','Safari에서만 하면 7일 정도 안 들어갔을 때 기록이 지워질 수 있어요.']},
  and:{t:'안드로이드 앱 설치',col:'#b8ffcf',steps:['크롬(Chrome)으로 게임 링크 열기 (카톡 안에서 열지 말기)','오른쪽 위 ⋮ 메뉴 누르기','"앱 설치" 또는 "홈 화면에 추가" 누르기','"설치" 누르기','홈 화면에 생긴 섬광 아이콘으로 실행'],
   notes:['크롬·삼성 인터넷·카톡 브라우저는 저장 기록이 서로 따로예요.','설치한 앱은 크롬과 기록을 같이 써요. 한 곳에서만 플레이하세요.']}};
 function drawInst(){drawBg();const I=INST[instKind];
