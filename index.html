@@ -133,7 +133,7 @@ let rush=false,rushT=0,rChain=0,rChainT=0,rMax=0,rushSpawnT=0,rushElite={},rushB
 let hc=0,hcQueue=[],hcSpawnT=0,hcCap=2,hcSpd=1,hcNew=false,hcEarn=0,hcSelUI={back:null,tiles:[]},hcBtns=[];
 const RUSH_LEN=60,RCHAIN_KEEP=2.5,rMul=()=>1+0.25*Math.min(rChain,12);
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1127.55';
+const VERSION='1127.56';
 const WCOIN=60,RCOIN_N=3,RCOIN_MAX=600;const today=()=>{const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();};const rcLeft=()=>{const r=META.rd||{};return r.d===today()?Math.max(0,RCOIN_N-(r.n||0)):RCOIN_N;};let overBtns=null,quitRun=false,rcUsed=false;let hitSrc='',runT=0,endless=false,clearBonus=0,clrW=0,clrK=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
 let ult=null,mines=[];const ultMax=()=>U.ultFast?75:100,ultN=()=>rush?4:U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#8a6cff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
@@ -1067,9 +1067,9 @@ function scythe(x,y,a,dir,al,sc,ghost){
   sc=sc||1;const H=96*sc,d=dir;ctx.save();ctx.translate(x,y);ctx.rotate(a);ctx.globalAlpha=al;ctx.lineCap='round';
   if(!ghost){ctx.strokeStyle='#1a0f2a';ctx.lineWidth=6*sc;ctx.beginPath();ctx.moveTo(-14*sc,0);ctx.lineTo(H,0);ctx.stroke();}
   ctx.strokeStyle=ghost?'#7a4cc0':'#7a4cc0';ctx.lineWidth=2.4*sc;ctx.beginPath();ctx.moveTo(-14*sc,0);ctx.lineTo(H,0);ctx.stroke();
+  if(!ghost){ctx.fillStyle='#c9a8ff';ctx.beginPath();ctx.arc(H,0,4*sc,0,TAU);ctx.fill();}
   ctx.beginPath();ctx.moveTo(H+2*sc,-d*4*sc);ctx.bezierCurveTo(H+22*sc,-d*2*sc,H+20*sc,d*58*sc,H-58*sc,d*80*sc);ctx.bezierCurveTo(H-14*sc,d*58*sc,H-2*sc,d*30*sc,H-8*sc,d*8*sc);ctx.closePath();
   if(ghost){ctx.fillStyle='rgb(120,70,230)';ctx.fill();ctx.restore();return;}
-  ctx.fillStyle='#c9a8ff';ctx.save();ctx.beginPath();ctx.arc(H,0,4*sc,0,TAU);ctx.fill();ctx.restore();
   const g=ctx.createLinearGradient(H+10*sc,0,H-50*sc,d*80*sc);g.addColorStop(0,'#1c0a33');g.addColorStop(0.55,'#5a24b0');g.addColorStop(1,'#d8c2ff');
   ctx.shadowColor='rgba(180,120,255,0.9)';ctx.shadowBlur=10*sc;ctx.fillStyle=g;ctx.fill();ctx.shadowBlur=0;
   ctx.save();ctx.clip();
@@ -1092,7 +1092,7 @@ function reaperPose(s,t){
   return [ca-s.dir*0.12,s.dir,s.range/108,fade];}
 function reaperDraw(s,x,y,wide){const t=s.t;
   if(s.thrust){if(t<RP_IMP){const [ang,dr,sc]=reaperPose(s,t),[a0]=reaperPose(s,Math.max(0,t-0.05));const u=Math.max(0,(t-RP_IMP*0.45)/(RP_IMP*0.55));
-      if(u>0){ctx.save();ctx.beginPath();ctx.arc(x,y,92*sc,Math.min(a0,ang),Math.max(a0,ang)+0.001);ctx.strokeStyle=`rgba(150,100,240,${0.4*u})`;ctx.lineWidth=24;ctx.stroke();ctx.strokeStyle=`rgba(240,230,255,${0.6*u})`;ctx.lineWidth=2;ctx.stroke();ctx.restore();}}
+}
     else if(t-RP_IMP<0.06){ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.fillStyle=`rgba(230,215,255,${0.22*(1-(t-RP_IMP)/0.06)})`;ctx.fillRect(0,0,cvs.width,cvs.height);ctx.restore();}}
   else{const pr=Math.min(1,t/s.dur),k=1-Math.pow(1-Math.min(1,pr*1.5),3),a0=s.a-s.dir*s.arc/2,ca=a0+s.dir*s.arc*k,lag=Math.min(s.arc*k,1.6),fade=pr<0.72?1:Math.max(0,1-(pr-0.72)/0.28);
     const R=s.range,r=R*0.45,N=10;
@@ -1110,6 +1110,7 @@ function reaperTick(list,x,y,game){
     if(Math.random()<0.8){const q=Math.random(),[bx,by]=at(H+10*sc-50*sc*q,dr*(6+70*q)*sc);parts.push({x:bx,y:by,vx:rnd(-25,25),vy:rnd(-25,10),t:0,life:rnd(0.45,0.8),k:'sm',n:true,w:rnd(5,10),fr:2});}
     if(Math.random()<0.25){const q=Math.random(),[bx,by]=at(H-40*sc*q,dr*(10+60*q)*sc);parts.push({x:bx,y:by,vx:rnd(-40,40),vy:rnd(-20,30),t:0,life:rnd(0.7,1.1),k:'fe',n:true,w:rnd(5,8),rot:rnd(0,TAU),vr:rnd(-5,5),g:20,fr:2,col:Math.random()<0.5?'58,14,52':'40,12,78'});}
     for(let i=0;i<2;i++)if(Math.random()<0.7){const q=Math.random(),[bx,by]=at(H+12*sc-55*sc*q,dr*(4+74*q)*sc+rnd(-12,12));parts.push({x:bx,y:by,vx:0,vy:0,t:0,life:rnd(0.3,0.6),k:'st',w:rnd(2.5,5.5),col:Math.random()<0.25?'#ffe9a8':'#ffffff'});}
+    if(s.thrust&&s.t<RP_IMP&&s.t>RP_IMP*0.4)for(let i=0;i<3;i++){const q=Math.random(),[bx,by]=at(H+8*sc-55*sc*q,dr*(4+72*q)*sc);parts.push({x:bx,y:by,vx:rnd(-20,20),vy:rnd(-20,20),t:0,life:rnd(0.4,0.7),k:'as',n:true,w:rnd(8,13),o:[[rnd(-.5,.5),rnd(-.5,.5)],[rnd(-.5,.5),rnd(-.5,.5)],[rnd(-.5,.5),rnd(-.5,.5)]],fr:2.5});}
     if(s.thrust&&!s.au){s.au=1;const c0=Math.cos(s.a),s0=Math.sin(s.a),L=s.range;// dark smoke aura along hit line (timing cue)
       for(let i=0;i<44;i++){const q=Math.pow(Math.random(),0.6),side=rnd(-1,1),px=x+c0*L*q-s0*side*16,py=y+s0*L*q+c0*side*16,dv=rnd(10,35);
         parts.push({x:px,y:py,vx:-s0*side*dv+c0*rnd(5,30),vy:c0*side*dv+s0*rnd(5,30)-8,t:-q*0.07,life:rnd(0.6,1),k:'as',n:true,w:rnd(15,24)*(0.7+0.5*q),o:[[rnd(-.5,.5),rnd(-.5,.5)],[rnd(-.5,.5),rnd(-.5,.5)],[rnd(-.5,.5),rnd(-.5,.5)]],fr:1.5});}}
@@ -1117,7 +1118,7 @@ function reaperTick(list,x,y,game){
       for(let i=0;i<7;i++)reaperCrack(parts,tx,ty,s.a+TAU*i/7+rnd(-0.3,0.3),rnd(40,85)*sc/1.6,3,0);
       for(let i=0;i<20;i++){const aa=rnd(0,TAU),v=rnd(60,240);parts.push({x:tx,y:ty,vx:Math.cos(aa)*v,vy:Math.sin(aa)*v,t:0,life:rnd(0.3,0.6),col:'#46325f',w:rnd(1.2,2.6),k:'d',n:true,fr:5});}
       for(let i=0;i<8;i++){const aa=rnd(0,TAU),v=rnd(20,70);parts.push({x:tx+Math.cos(aa)*20,y:ty+Math.sin(aa)*20,vx:Math.cos(aa)*v,vy:Math.sin(aa)*v,t:0,life:rnd(0.6,1),k:'sm',n:true,w:rnd(10,18),fr:2});}
-      parts.push({x:tx,y:ty,vx:0,vy:0,t:0,life:0.35,col:'#7a3cd2',w:4,k:'r',r0:20,r1:110});
+      for(let i=0;i<22;i++){const aa=TAU*i/22+rnd(-0.15,0.15),v=rnd(110,170);parts.push({x:tx+Math.cos(aa)*12,y:ty+Math.sin(aa)*12,vx:Math.cos(aa)*v,vy:Math.sin(aa)*v,t:0,life:rnd(0.55,0.85),k:'as',n:true,w:rnd(12,18),o:[[rnd(-.5,.5),rnd(-.5,.5)],[rnd(-.5,.5),rnd(-.5,.5)],[rnd(-.5,.5),rnd(-.5,.5)]],fr:3.2});}
       if(game)trauma=Math.min(1,trauma+0.35);SFX.reaperHit();}}}
 function drawReaperPart(q){const qa=q.t/q.life;
   if(q.k==='as'){if(q.t<0)return;const al=(qa<0.12?qa/0.12:1-(qa-0.12)/0.88),rr=q.w*(0.8+1.4*qa);ctx.globalAlpha=1;
