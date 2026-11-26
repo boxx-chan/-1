@@ -130,7 +130,7 @@ let rush=false,rushT=0,rChain=0,rChainT=0,rMax=0,rushSpawnT=0,rushElite={},rushB
 let hc=0,hcQueue=[],hcSpawnT=0,hcCap=2,hcSpd=1,hcNew=false,hcEarn=0,hcSelUI={back:null,tiles:[]},hcBtns=[];
 const RUSH_LEN=60,RCHAIN_KEEP=2.5,rMul=()=>1+0.25*Math.min(rChain,12);
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1127.73';
+const VERSION='1127.74';
 const WCOIN=60,RCOIN_N=3,RCOIN_MAX=600;const today=()=>{const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();};const rcLeft=()=>{const r=META.rd||{};return r.d===today()?Math.max(0,RCOIN_N-(r.n||0)):RCOIN_N;};let overBtns=null,quitRun=false,rcUsed=false;let hitSrc='',runT=0,endless=false,clearBonus=0,clrW=0,clrK=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
 let ult=null,mines=[];const ultMax=()=>U.ultFast?75:100,ultN=()=>rush?4:U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#8a6cff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
@@ -1573,6 +1573,7 @@ function drawTitle(){
   drawBg();
   const cy=H*0.26;ctx.fillStyle='rgba(80,240,255,0.12)';ctx.beginPath();ctx.arc(W/2,cy,H*0.16,0,TAU);ctx.fill();
   txt('섬광',W/2,cy,Math.round(H*0.17),'#5ff4ff',900);
+  {const tf=Math.round(H*0.17);ctx.font=`900 ${tf}px ${FONT}`;const tw=ctx.measureText('섬광').width;txt('제작자: 박승찬',W/2+tw/2+14,cy+tf*0.3,Math.round(clamp(H*0.034,11,16)),'rgba(200,240,255,0.7)',700,'left');}
   txt(META.cleared?'클리어 ✓  최고 '+fmtT(META.bestClear):'목표: 웨이브 15 보스 처치',W/2,cy+H*0.17,Math.round(H*0.032),META.cleared?'#ffe066':'rgba(255,224,102,0.8)',800);
   txt('FLASH COUNTER',W/2,cy+H*0.12,Math.round(H*0.035),'rgba(200,240,255,0.6)',700);
   const fs=Math.round(clamp(H*0.036,12,17));let y=H*0.485;
