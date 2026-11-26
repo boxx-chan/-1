@@ -18,7 +18,7 @@ canvas{position:fixed;left:0;top:0;display:block;touch-action:none}
 #nickBox input{width:100%;box-sizing:border-box;font-size:18px;padding:8px;border-radius:8px;border:1px solid #3a4a66;background:#070a14;color:#fff;margin:8px 0;text-align:center;user-select:text;-webkit-user-select:text}
 #nickBox button{font-size:16px;font-weight:800;padding:10px 18px;border-radius:8px;border:1.5px solid #5ff4ff;background:rgba(90,240,255,0.2);color:#fff;margin:0 4px}
 #nickBox button.c{border-color:#556;background:transparent}
-</style></head><body><canvas id="c"></canvas><div id="sat" style="position:fixed;left:0;top:0;width:0;height:env(safe-area-inset-top,0px);visibility:hidden;pointer-events:none"></div><div id="nickBox"><div class="card"><div style="font-weight:900;font-size:17px">랭킹 닉네임</div><div id="nickSub" style="font-size:13px;opacity:.7;margin-top:6px">1~12자 · 랭킹에 표시돼요 · 취소하면 기록이 안 올라가요</div><input id="nickIn" maxlength="12" autocomplete="off"><div id="nickNote" style="font-size:13px;color:#ffe066;margin-top:6px"></div><div id="nickErr" style="font-size:13px;color:#ff8da6;min-height:16px;margin-top:4px"></div><div><button class="c" id="nickNo">취소</button><button id="nickOk">확인</button></div></div></div><script>
+</style></head><body><canvas id="c"></canvas><div id="sat" style="position:fixed;left:0;top:0;width:0;height:env(safe-area-inset-top,0px);visibility:hidden;pointer-events:none"></div><div id="nickBox"><div class="card"><div style="font-weight:900;font-size:17px">랭킹 닉네임</div><div id="nickSub" style="font-size:13px;opacity:.7;margin-top:6px">1~12자 · 랭킹에 표시돼요 · 취소하면 기록이 안 올라가요</div><input id="nickIn" maxlength="12" autocomplete="off"><div id="nickNote" style="font-size:13px;color:#ffe066;margin-top:6px"></div><div id="nickErr" style="font-size:13px;color:#ff8da6;min-height:16px;margin-top:4px"></div><div><button class="c" id="nickNo">취소</button><button id="nickOk">확인</button></div><div id="nickG" style="display:none;margin-top:10px;font-size:13px"><span style="opacity:.7">예전에 구글로 저장했다면 </span><a href="#" id="nickGa" style="color:#8ff;font-weight:800">구글로 불러오기</a></div></div></div><script>
 'use strict';
 const cvs=document.getElementById('c'),ctx=cvs.getContext('2d');
 let W=0,H=0,DPR=1,S=1,TOP=0,lastVW=0,lastVH=0;
@@ -136,7 +136,7 @@ let rush=false,rushT=0,rChain=0,rChainT=0,rMax=0,rushSpawnT=0,rushElite={},rushB
 let hc=0,hcQueue=[],hcSpawnT=0,hcCap=2,hcSpd=1,hcNew=false,hcEarn=0,hcSelUI={back:null,tiles:[]},hcBtns=[];
 const RUSH_LEN=60,RCHAIN_KEEP=2.5,rMul=()=>1+0.25*Math.min(rChain,12);
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1127.74';
+const VERSION='1127.75';
 const WCOIN=60,RCOIN_N=3,RCOIN_MAX=600;const today=()=>{const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();};const rcLeft=()=>{const r=META.rd||{};return r.d===today()?Math.max(0,RCOIN_N-(r.n||0)):RCOIN_N;};let overBtns=null,quitRun=false,rcUsed=false;let hitSrc='',runT=0,endless=false,clearBonus=0,clrW=0,clrK=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
 let ult=null,mines=[];const ultMax=()=>U.ultFast?75:100,ultN=()=>rush?4:U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#8a6cff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
@@ -148,6 +148,63 @@ let ptok='',pid='',pidOk=true;try{ptok=localStorage.getItem('flash_tok')||'';if(
 (async()=>{try{if(ptok&&crypto.subtle)pid=[...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(ptok)))].map(b=>b.toString(16).padStart(2,'0')).join('');}catch(e){}})();
 function renameRemote(){if(!rankOn()||!ptok||!nick)return;recMsg='';fetch(RANK.url+'/rest/v1/rpc/rename_player',{method:'POST',headers:rankHdr(),body:JSON.stringify({p_tok:ptok,p_nick:nick})}).then(async x=>{const t=x.ok?'':await x.text();renMsg=x.ok?'이름 변경 반영 완료':t.includes('nick_taken')?'이미 다른 사람이 쓰는 닉네임이에요':'이름 변경 실패 ('+x.status+')';renUntil=time+4;rankList=null;if(state==='rank')loadRank();}).catch(()=>{renMsg='이름 변경 실패 (인터넷 확인)';renUntil=time+4;});}
 let renMsg='',renUntil=0;
+// ---- 구글 계정 저장 ----
+const ACK=['flash_meta','flash_best','flash_rbest','flash_tok','flash_nick','flash_nk2','flash_clan','flash_joyfix'];
+const lsg=k=>{try{return localStorage.getItem(k)}catch(e){return null}},lss=(k,v)=>{try{if(v===null||v===undefined)localStorage.removeItem(k);else localStorage.setItem(k,String(v))}catch(e){}};
+let acct=null,acctMsg='',acctMsgT=0,acctBusy=false,acctSyncing=false,acctUpT=null,acctUI={},acctBtnR=null;
+try{acct=JSON.parse(lsg('flash_auth')||'null')}catch(e){acct=null}
+function acctNote(m){acctMsg=m;acctMsgT=time+5;}
+function jwtSub(t){try{return JSON.parse(atob(t.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')))}catch(e){return{}}}
+function acctSet(d){const j=jwtSub(d.access_token);acct={at:d.access_token,rt:d.refresh_token,exp:Date.now()/1000+(+d.expires_in||3600),uid:j.sub,email:j.email||(d.user&&d.user.email)||''};lss('flash_auth',JSON.stringify(acct));}
+const acctPending=(()=>{const h=location.hash;if(!h.includes('access_token='))return false;const q=new URLSearchParams(h.slice(1));if(q.get('access_token')){acctSet({access_token:q.get('access_token'),refresh_token:q.get('refresh_token'),expires_in:q.get('expires_in')});try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}return true;}return false;})();
+if(location.hash.includes('error_description')){const q=new URLSearchParams(location.hash.slice(1));setTimeout(()=>acctNote('로그인 실패: '+(q.get('error_description')||'').slice(0,40)),500);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
+function acctLogin(){const u=location.origin+location.pathname;location.href=RANK.url+'/auth/v1/authorize?provider=google&prompt=select_account&redirect_to='+encodeURIComponent(u);}
+function acctLogout(){acct=null;lss('flash_auth',null);lss('flash_acct',null);acctNote('로그아웃했어요 (이 기기 진행은 그대로)');}
+async function acctTok(){if(!acct)return null;if(acct.exp>Date.now()/1000+60)return acct.at;
+  const x=await fetch(RANK.url+'/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:{apikey:RANK.key,'Content-Type':'application/json'},body:JSON.stringify({refresh_token:acct.rt})});
+  if(!x.ok){if(x.status===400||x.status===401){acctLogout();acctNote('로그인이 만료됐어요. 다시 로그인해 주세요');}return null;}acctSet(await x.json());return acct.at;}
+function acctHdr(t){return{apikey:RANK.key,Authorization:'Bearer '+t,'Content-Type':'application/json'};}
+let acctReady=false;function acctPack(){const o={};for(const k of ACK)o[k]=lsg(k);return{v:1,t:Date.now(),ls:o};}
+async function acctUpload(){const t=await acctTok();if(!t)return false;const d=acctPack();
+  const x=await fetch(RANK.url+'/rest/v1/saves',{method:'POST',headers:Object.assign(acctHdr(t),{Prefer:'resolution=merge-duplicates,return=minimal'}),body:JSON.stringify({uid:acct.uid,data:d,updated_at:new Date().toISOString()})});
+  if(!x.ok){acctNote('계정 저장 실패 ('+x.status+')');return false;}lss('flash_base',d.t);lss('flash_dirty',null);return true;}
+function acctDirty(){if(!acctReady)return;lss('flash_dirty','1');if(!acct||acctSyncing)return;clearTimeout(acctUpT);acctUpT=setTimeout(()=>{acctUpload().catch(()=>{});},3000);}
+function acctMerge(sv){// 처음 연결하는 기기: 이 기기 진행과 계정 진행을 합침
+  let a={},b={};try{a=JSON.parse(lsg('flash_meta')||'{}')||{}}catch(e){}try{b=JSON.parse(sv.flash_meta||'{}')||{}}catch(e){}
+  const m=Object.assign({},a,b);m.coins=Math.max(+a.coins||0,+b.coins||0);m.own=Object.assign({},a.own||{},b.own||{});m.ownT=Object.assign({},a.ownT||{},b.ownT||{});
+  m.cleared=Math.max(+a.cleared||0,+b.cleared||0);const bc=[+a.bestClear||0,+b.bestClear||0].filter(v=>v>0);m.bestClear=bc.length?Math.min(...bc):0;
+  m.hc=Math.max(+a.hc||0,+b.hc||0);m.hcBest=Object.assign({},a.hcBest||{});for(const k in (b.hcBest||{}))m.hcBest[k]=Math.max(+m.hcBest[k]||0,+b.hcBest[k]||0);
+  const out=Object.assign({},sv);out.flash_meta=JSON.stringify(m);
+  out.flash_best=String(Math.max(+lsg('flash_best')||0,+sv.flash_best||0));out.flash_rbest=String(Math.max(+lsg('flash_rbest')||0,+sv.flash_rbest||0));
+  if(!sv.flash_tok){out.flash_tok=lsg('flash_tok');out.flash_nick=lsg('flash_nick');out.flash_nk2=lsg('flash_nk2');out.flash_clan=lsg('flash_clan');}
+  return out;}
+async function acctSync(first){if(!acct||acctBusy)return;acctBusy=true;acctSyncing=true;
+  try{const t=await acctTok();if(!t)return;
+    const x=await fetch(RANK.url+'/rest/v1/saves?select=data&uid=eq.'+acct.uid,{headers:acctHdr(t),cache:'no-store'});
+    if(!x.ok){acctNote(x.status===404?'계정 저장소가 아직 준비 안 됐어요':'계정 불러오기 실패 ('+x.status+')');return;}
+    const rows=await x.json(),sv=rows[0]&&rows[0].data,linked=lsg('flash_acct')===acct.uid,base=+(lsg('flash_base')||0),dirty=!!lsg('flash_dirty');
+    if(!sv){lss('flash_acct',acct.uid);acctSyncing=false;if(await acctUpload())acctNote('구글 계정에 저장했어요');return;}
+    let apply=null;
+    if(!linked||((+sv.t||0)!==base&&dirty))apply=acctMerge(sv.ls||{});else if((+sv.t||0)!==base)apply=sv.ls||{};
+    if(apply){for(const k of ACK)lss(k,apply[k]===undefined?null:apply[k]);lss('flash_acct',acct.uid);acctSyncing=false;if(apply!==sv.ls){await acctUpload();}else{lss('flash_base',+sv.t||0);lss('flash_dirty',null);}lss('flash_reloadmsg',linked?'다른 기기 진행을 불러왔어요':'구글 계정 진행을 불러왔어요');location.reload();return;}
+    lss('flash_acct',acct.uid);acctSyncing=false;if(dirty)await acctUpload();if(first)acctNote('구글 계정 연결됨');
+  }catch(e){acctNote('계정 동기화 실패 (인터넷 확인)');}finally{acctBusy=false;acctSyncing=false;if(!nick&&rankOn()&&document.getElementById('nickBox').style.display!=='flex'){askNick(()=>{},true);document.getElementById('nickNote').textContent='처음 오셨네요! 닉네임부터 정해주세요';}}}
+{const m=lsg('flash_reloadmsg');if(m){lss('flash_reloadmsg',null);setTimeout(()=>acctNote(m),300);}}
+addEventListener('load',()=>{acctReady=true;if(acct)acctSync(acctPending);else lss('flash_dirty','1');});
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'&&acct&&acctUpT){clearTimeout(acctUpT);acctUpT=null;acctUpload().catch(()=>{});}});
+function drawAcct(){const cw=Math.min(W-40,440),cx=W/2;txt('구글 계정 저장',cx,46,22,'#fff',900);
+  const b=(k,l,y,col)=>{const r={x:cx-cw/2,y,w:cw,h:46};acctUI[k]=r;rrect(r.x,r.y,r.w,r.h,10);ctx.fillStyle='rgba(255,255,255,0.06)';ctx.fill();ctx.strokeStyle=col;ctx.lineWidth=1.5;ctx.stroke();txt(l,cx,y+23,15,'#fff',800);};
+  acctUI={};
+  if(!acct){txt('코인·스킨·기록·닉네임을 구글 계정에 저장해요. 폰을 바꾸거나 앱을 지워도 이어져요.',cx,84,13,'rgba(255,255,255,0.75)',700);
+    txt('다른 사람 계정이 떠 있으면 "다른 계정 사용"을 골라주세요',cx,106,12,'rgba(255,224,102,0.8)',700);b('login','G  구글로 로그인',130,'rgba(255,255,255,0.5)');}
+  else{txt('연결됨: '+(acct.email||'구글 계정'),cx,90,15,'#8ff',800);txt('판이 끝나거나 상점에서 살 때 자동 저장돼요',cx,114,12,'rgba(255,255,255,0.6)',700);
+    b('sync',acctBusy?'저장 중...':'지금 저장',136,'rgba(90,240,255,0.6)');b('out','로그아웃',192,'rgba(255,255,255,0.3)');}
+  b('back','← 뒤로',H-62,'rgba(255,255,255,0.3)');}
+function acctTap(x,y){const r=acctUI;if(x===undefined||(r.back&&inR(x,y,r.back))){state='title';return;}
+  if(r.login&&inR(x,y,r.login)){acctLogin();return;}
+  if(r.sync&&inR(x,y,r.sync)&&!acctBusy){acctBusy=true;acctUpload().then(ok=>{acctBusy=false;if(ok)acctNote('저장 완료');}).catch(()=>{acctBusy=false;acctNote('저장 실패 (인터넷 확인)');});return;}
+  if(r.out&&inR(x,y,r.out)){acctLogout();state='title';}}
+function drawAcctMsg(){if(time<acctMsgT)txt(acctMsg,W/2,H-30,13,/실패|만료/.test(acctMsg)?'#ff8da6':'#8ff',800);}
 const CLANS=['안곡고','저동고','정발고'];let myClan=(()=>{try{return localStorage.getItem('flash_clan')||'';}catch(e){return '';}})(),clanMap=null,clanMsg='',clanMsgT=0,clanBusy=false,clanUI={back:null,opts:[]},clanBtnR=null;
 function loadClans(cb){if(!rankOn())return;fetch(RANK.url+'/rest/v1/rpc/clan_board',{method:'POST',headers:rankHdr(),body:'{}',cache:'no-store'}).then(x=>x.ok?x.json():[]).catch(()=>[]).then(d=>{const m={};for(const r of d)if(r.clan)m[r.pid]=r.clan;clanMap=m;if(cb)cb();});}
 function setClan(v){if(clanBusy||!rankOn()||!ptok)return;if(v===myClan){clanMsg='이미 '+(v||'선택 안 함')+'이에요';clanMsgT=time+2.5;return;}clanBusy=true;clanMsg='저장 중...';clanMsgT=time+9;
@@ -184,7 +241,7 @@ let rkDrag=null;addEventListener('wheel',e=>{if(state==='rank')rankScroll+=e.del
 let clanView=null,rankScroll=0,nickCb=null,nickAsked=false,rankTab=0;
 function fitNick(){const b=document.getElementById('nickBox'),vv=window.visualViewport;if(!b||b.style.display!=='flex'||!vv)return;b.style.top=vv.offsetTop+'px';b.style.height=vv.height+'px';}
 if(window.visualViewport){visualViewport.addEventListener('resize',fitNick);visualViewport.addEventListener('scroll',fitNick);}
-let nickForce=false;function askNick(cb,force){nickForce=!!force;document.getElementById('nickSub').textContent=nickForce?'1~12자 · 랭킹과 학교 명단에 표시돼요':'1~12자 · 랭킹에 표시돼요 · 취소하면 기록이 안 올라가요';document.getElementById('nickNo').style.display=nickForce?'none':'';nickCb=cb;const b=document.getElementById('nickBox'),i=document.getElementById('nickIn');i.value=nick;b.style.display='flex';fitNick();setTimeout(()=>{try{i.focus()}catch(e){}fitNick();},50);}
+let nickForce=false;function askNick(cb,force){nickForce=!!force;document.getElementById('nickSub').textContent=nickForce?'1~12자 · 랭킹과 학교 명단에 표시돼요':'1~12자 · 랭킹에 표시돼요 · 취소하면 기록이 안 올라가요';document.getElementById('nickNo').style.display=nickForce?'none':'';document.getElementById('nickG').style.display=nickForce?'':'none';nickCb=cb;const b=document.getElementById('nickBox'),i=document.getElementById('nickIn');i.value=nick;b.style.display='flex';fitNick();setTimeout(()=>{try{i.focus()}catch(e){}fitNick();},50);}
 let nickBusy=false,nickTaken=false;
 function closeNick(ok){const v=cleanNick(document.getElementById('nickIn').value),er=document.getElementById('nickErr');if(ok&&!v)return;
   if(ok&&rankOn()&&ptok){if(nickBusy)return;nickBusy=true;er.textContent='확인 중...';
@@ -195,8 +252,8 @@ function closeNick(ok){const v=cleanNick(document.getElementById('nickIn').value
   if(!ok&&nickForce)return;er.textContent='';finishNick(ok?v:null);}
 function finishNick(v,claimed){const b=document.getElementById('nickBox'),ok=v!==null;b.style.display='none';document.getElementById('nickNote').textContent='';
   if(ok){const ch=nick&&nick!==v;nick=v;try{localStorage.setItem('flash_nick',nick)}catch(e){}if(ch&&!claimed)renameRemote();if(nickCb)nickCb();}nickCb=null;}
-addEventListener('load',()=>{let nk2=null;try{nk2=localStorage.getItem('flash_nk2')}catch(e){}if(rankOn()&&!nick){setTimeout(()=>{askNick(()=>{},true);document.getElementById('nickNote').textContent='처음 오셨네요! 닉네임부터 정해주세요';},300);}else if(rankOn()&&!nk2&&nick){setTimeout(()=>{if(state==='title'){askNick(()=>{});document.getElementById('nickNote').textContent='랭킹 정리를 위해 닉네임을 다시 입력해 주세요 (같은 이름은 먼저 등록한 사람 것)';}},600);}
-  document.getElementById('nickOk').onclick=()=>closeNick(true);document.getElementById('nickNo').onclick=()=>closeNick(false);
+addEventListener('load',()=>{let nk2=null;try{nk2=localStorage.getItem('flash_nk2')}catch(e){}if(rankOn()&&!nick&&!acctPending){setTimeout(()=>{askNick(()=>{},true);document.getElementById('nickNote').textContent='처음 오셨네요! 닉네임부터 정해주세요';},300);}else if(rankOn()&&!nk2&&nick){setTimeout(()=>{if(state==='title'){askNick(()=>{});document.getElementById('nickNote').textContent='랭킹 정리를 위해 닉네임을 다시 입력해 주세요 (같은 이름은 먼저 등록한 사람 것)';}},600);}
+  document.getElementById('nickOk').onclick=()=>closeNick(true);document.getElementById('nickGa').onclick=e=>{e.preventDefault();acctLogin();};document.getElementById('nickNo').onclick=()=>closeNick(false);
   document.getElementById('nickIn').addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Enter')closeNick(true);if(e.key==='Escape')closeNick(false);});});
 try{const m=JSON.parse(localStorage.getItem('flash_meta')||'null');if(m&&typeof m==='object'){META.coins=Math.max(0,+m.coins||0);META.own=Object.assign({flash:1},m.own||{});if(SKINS.some(k=>k.id===m.eq)&&META.own[m.eq])META.eq=m.eq;META.cleared=m.cleared||0;META.bestClear=m.bestClear||0;META.hc=Math.min(10,Math.max(0,+m.hc||0));META.hcBest=(m.hcBest&&typeof m.hcBest==='object')?m.hcBest:{};META.ownT=Object.assign({},m.ownT||{});META.rd=(m.rd&&typeof m.rd==='object')?m.rd:{};if(!m.tv)delete META.ownT.flash;if(SKINS.some(k=>k.id===m.eqT)&&META.ownT[m.eqT])META.eqT=m.eqT;if(META.eq==='reaper')META.eqT='reaper';else if(META.eqT==='reaper')META.eqT='none';}}catch(e){}
 const RP_EV='2026-11-26',rpDay=()=>new Date(Date.now()+9*3600e3).toISOString().slice(0,10)===RP_EV,rpTrial=()=>rpDay()&&!META.own.reaper,ownS=id=>!!META.own[id]||(id==='reaper'&&rpTrial());
@@ -215,7 +272,8 @@ const TPRICES={flash:5000,ghost:10000,ink:10000,bolt:13000,fire:13000,sakura:130
   history.replaceState(null,'',location.pathname);if(h!=='41c64ab096a2b90401c785d60ddf7c8677d551fc8c49fbb5b6f06e7ad0b99b08')return;
   for(const k of SKINS){META.own[k.id]=1;META.ownT[k.id]=1;}saveMeta();
   const d=document.createElement('div');d.textContent='개발자 모드: 스킨·트레일 전부 해금';d.style.cssText='position:fixed;left:50%;top:12px;transform:translateX(-50%);background:#5ff4ff;color:#070a14;font:800 15px sans-serif;padding:8px 14px;border-radius:8px;z-index:99';document.body.appendChild(d);setTimeout(()=>d.remove(),3000);}catch(e){}})();
-function saveMeta(){try{localStorage.setItem('flash_meta',JSON.stringify(META))}catch(e){}}
+function saveMeta(){try{localStorage.setItem('flash_meta',JSON.stringify(META))}catch(e){}acctDirty();}
+
 const skinById=id=>SKINS.find(k=>k.id===id)||SKINS[0];
 const CHAIN_MUL=[1,1.5,2],CHAIN_KEEP=2,MAX_CHARGE=3,GRACE=0.25,FLASH_CD=3,THRUST_L=175,FLASH_DUR=1.6;
 let DASH_CD=0.95,COMBO_WIN=1.2,POW_DUR=3,POW_MUL=2;
@@ -258,11 +316,12 @@ function menuTap(x,y){
   if(state==='inst'){if(x===undefined||inR(x,y,instBack))state='title';return;}
   if(state==='rank'){if(x===undefined||inR(x,y,rankUI.back)){state='title';return;}if(inR(x,y,rankUI.nick)){askNick(()=>{});return;}for(let i=0;i<rankUI.tabs.length;i++)if(inR(x,y,rankUI.tabs[i])&&(rankTab!==i||clanView)){const keep=i===3&&rankTab===3&&rankList;rankTab=i;clanView=null;if(!keep)rankList=null;rankScroll=0;rankErr='';if(!rankList)loadRank();return;}
     if(rankTab===3&&rankList){if(clanView){if(rankUI.clanBack&&inR(x,y,rankUI.clanBack)){clanView=null;rankScroll=0;}}else if(rankUI.clanRows)for(const r of rankUI.clanRows)if(inR(x,y,r)){clanView=r.clan;rankScroll=0;break;}}return;}
-  if(state==='title'){if(qaBtnR&&inR(x,y,qaBtnR)){qaPend=true;return;}if(raidBtnR&&x!==undefined&&inR(x,y,raidBtnR)){location.href='raid/';return;}if(clanBtnR&&x!==undefined&&inR(x,y,clanBtnR)){state='clansel';clanMsg='';return;}for(const r of voteR)if(inR(x,y,r)){voteScarf(r.v);return;}if(inR(x,y,shopBtnR)){openShop();return;}if(hcBtnR&&inR(x,y,hcBtnR)){state='hcsel';return;}if(inR(x,y,rankBtnR)){openRank();return;}if(inR(x,y,helpBtnR)){state='help';helpPage=0;return;}if(iosBtnR&&inR(x,y,iosBtnR)){instKind='ios';state='inst';return;}if(andBtnR&&inR(x,y,andBtnR)){instKind='and';state='inst';return;}if(x!==undefined&&rushBtnR&&inR(x,y,rushBtnR)){state='evsel';return;}if(x!==undefined&&!inR(x,y,startBtnR))return;startMode('main');}
+  if(state==='acct'){acctTap(x,y);return;}
+  if(state==='title'){if(qaBtnR&&inR(x,y,qaBtnR)){qaPend=true;return;}if(acctBtnR&&x!==undefined&&inR(x,y,acctBtnR)){state='acct';return;}if(raidBtnR&&x!==undefined&&inR(x,y,raidBtnR)){location.href='raid/';return;}if(clanBtnR&&x!==undefined&&inR(x,y,clanBtnR)){state='clansel';clanMsg='';return;}for(const r of voteR)if(inR(x,y,r)){voteScarf(r.v);return;}if(inR(x,y,shopBtnR)){openShop();return;}if(hcBtnR&&inR(x,y,hcBtnR)){state='hcsel';return;}if(inR(x,y,rankBtnR)){openRank();return;}if(inR(x,y,helpBtnR)){state='help';helpPage=0;return;}if(iosBtnR&&inR(x,y,iosBtnR)){instKind='ios';state='inst';return;}if(andBtnR&&inR(x,y,andBtnR)){instKind='and';state='inst';return;}if(x!==undefined&&rushBtnR&&inR(x,y,rushBtnR)){state='evsel';return;}if(x!==undefined&&!inR(x,y,startBtnR))return;startMode('main');}
   else if(state==='evsel'){if(x===undefined||inR(x,y,evUI.back)){state='title';return;}for(const c of evUI.cards)if(inR(x,y,c)){startMode(c.id);return;}}
   else if(state==='over'&&overT>1.0){if(x!==undefined&&overRankBtn&&inR(x,y,overRankBtn)){askNick(()=>{if(pendRec)postRec(pendRec);});return;}if(x!==undefined){if(overBtns&&inR(x,y,overBtns[1])){reset();state='title';return;}if(!overBtns||!inR(x,y,overBtns[0]))return;}reset();state='play';}
   else if(state==='clear'&&overT>1.0&&x!==undefined){const rs=clearRects();if(inR(x,y,rs[0])){endless=true;state='play';last=performance.now();banner('무한 모드');}
-    else if(inR(x,y,rs[1])){lastEarn=wave*WCOIN+kills;META.coins+=lastEarn;saveMeta();if(score>best){best=score;try{localStorage.setItem('flash_best',best)}catch(e){}}reset();state='title';}}
+    else if(inR(x,y,rs[1])){lastEarn=wave*WCOIN+kills;META.coins+=lastEarn;saveMeta();if(score>best){best=score;try{localStorage.setItem('flash_best',best)}catch(e){}acctDirty();}reset();state='title';}}
 }
 cvs.addEventListener('pointerdown',e=>{
   e.preventDefault();initAudio();
@@ -479,7 +538,7 @@ function dmgMul(){const w=Math.max(1,wave);return w<=15?1+DMG_W*(w-1):(1+DMG_W*1
 function heal(v){if(rush)return;const p=P,h=Math.min(p.maxHp-p.hp,Math.round(v));if(h<=0)return;p.hp+=h;addText(p.x,p.y-36,'+'+h,'#7fffa8',17,1);}
 function endRun(){state='over';overT=0;flashT=0;ult=null;ts=1;recMsg='';if(hc){lastEarn=0;return;}postRec(makeRec());
   if(rush){lastEarn=0;rcUsed=false;if(rcLeft()>0){lastEarn=Math.min(RCOIN_MAX,Math.round(kills*2.5));if(lastEarn>0){const t=today();if(!META.rd||META.rd.d!==t)META.rd={d:t,n:0};META.rd.n++;rcUsed=true;}}if(score>rushBest){rushBest=score;try{localStorage.setItem('flash_rbest',rushBest)}catch(e){}}}
-  else{lastEarn=endless?clrW*WCOIN+clrK+Math.floor(((wave-clrW)*WCOIN+(kills-clrK))/2):wave*WCOIN+kills;if(score>best){best=score;try{localStorage.setItem('flash_best',best)}catch(e){}}}
+  else{lastEarn=endless?clrW*WCOIN+clrK+Math.floor(((wave-clrW)*WCOIN+(kills-clrK))/2):wave*WCOIN+kills;if(score>best){best=score;try{localStorage.setItem('flash_best',best)}catch(e){}acctDirty();}}
   META.coins+=lastEarn;saveMeta();}
 function rushFlash(p){rChain=rChainT>0?rChain+1:1;rChainT=RCHAIN_KEEP;if(rChain>rMax)rMax=rChain;const pts=Math.round(300*rMul());score+=pts;
   if(rChain>=2)addText(p.x,p.y-64,rChain+' 연쇄  x'+rMul().toFixed(2).replace(/0$/,''),rChain>=12?'#ffe066':rChain>=5?'#ff9a6a':'#8ff',16+Math.min(rChain,12),0.9);
@@ -1595,6 +1654,7 @@ function drawTitle(){
   txt('v'+VERSION,16,20,11,'rgba(255,255,255,0.3)',600,'left');bgmUI=null;drawBgmBtn(14,H-44);drawJoyBtn(14,H-82);
   const hb={x:14,y:34,w:136,h:40};helpBtnR=hb;rrect(hb.x,hb.y,hb.w,hb.h,10);ctx.fillStyle='rgba(90,240,255,0.1)';ctx.fill();ctx.strokeStyle='rgba(90,240,255,0.6)';ctx.lineWidth=1.5;ctx.stroke();
   txt('게임 방법',hb.x+hb.w/2,hb.y+hb.h/2,14,'#8ff',800);
+  {const r={x:14,y:234,w:136,h:40};acctBtnR=r;rrect(r.x,r.y,r.w,r.h,10);ctx.fillStyle=acct?'rgba(90,240,255,0.08)':'rgba(255,255,255,0.08)';ctx.fill();ctx.strokeStyle=acct?'rgba(90,240,255,0.55)':'rgba(255,255,255,0.55)';ctx.lineWidth=1.5;ctx.stroke();txt(acct?'☁ 계정 저장됨':'G 구글로 저장',r.x+r.w/2,r.y+r.h/2,13,acct?'#8ff':'#fff',800);}
   voteR=[];{const r={x:14,y:184,w:136,h:40};qaBtnR=r;rrect(r.x,r.y,r.w,r.h,10);ctx.fillStyle='rgba(255,90,170,0.1)';ctx.fill();ctx.strokeStyle='rgba(255,110,180,0.6)';ctx.lineWidth=1.5;ctx.stroke();txt('문의하기 (인스타)',r.x+r.w/2,r.y+r.h/2,13,'#ff9ccf',800);}
   [['아이폰 앱 설치','ios',84],['안드로이드 앱 설치','and',134]].forEach(([lb,k,yy])=>{const r={x:14,y:yy,w:136,h:40};if(k==='ios')iosBtnR=r;else andBtnR=r;rrect(r.x,r.y,r.w,r.h,10);ctx.fillStyle='rgba(255,255,255,0.05)';ctx.fill();ctx.strokeStyle='rgba(255,255,255,0.3)';ctx.lineWidth=1.5;ctx.stroke();txt(lb,r.x+r.w/2,r.y+r.h/2,13,'rgba(255,255,255,0.85)',800);});
   const sb={x:W-150,y:34,w:136,h:40};shopBtnR=sb;rrect(sb.x,sb.y,sb.w,sb.h,10);ctx.fillStyle='rgba(255,224,102,0.12)';ctx.fill();ctx.strokeStyle='rgba(255,224,102,0.6)';ctx.lineWidth=1.5;ctx.stroke();
@@ -1722,7 +1782,8 @@ function drawOver(){
 }
 function render(){
   ctx.setTransform(DPR,0,0,DPR,0,0);
-  if(state==='title'){drawTitle();drawRenMsg();}
+  if(state==='title'){drawTitle();drawRenMsg();drawAcctMsg();}
+  else if(state==='acct'){drawBg();drawAcct();drawAcctMsg();}
   else if(state==='shop'){drawShop();}
   else if(state==='help'){drawHelp();}
   else if(state==='inst'){drawInst();}
