@@ -137,7 +137,7 @@ let rush=false,rushT=0,rChain=0,rChainT=0,rMax=0,rushSpawnT=0,rushElite={},rushB
 let hc=0,hcQueue=[],hcSpawnT=0,hcCap=2,hcSpd=1,hcNew=false,hcEarn=0,hcSelUI={back:null,tiles:[]},hcBtns=[];
 const RUSH_LEN=60,RCHAIN_KEEP=2.5,rMul=()=>1+0.25*Math.min(rChain,12);
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1127.82';
+const VERSION='1127.83';
 const WCOIN=60,RCOIN_N=3,RCOIN_MAX=600;const today=()=>{const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();};const rcLeft=()=>{const r=META.rd||{};return r.d===today()?Math.max(0,RCOIN_N-(r.n||0)):RCOIN_N;};let overBtns=null,quitRun=false,rcUsed=false;let hitSrc='',runT=0,endless=false,clearBonus=0,clrW=0,clrK=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
 let ult=null,mines=[];const ultMax=()=>U.ultFast?75:100,ultN=()=>rush?4:U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#8a6cff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
@@ -1535,6 +1535,12 @@ function drawSnow(){ctx.fillStyle='rgba(235,245,255,0.75)';for(const f of snow){
 function drawBg(){ctx.fillStyle='#070a14';ctx.fillRect(0,0,W,H);
   ctx.strokeStyle='rgba(90,140,255,0.07)';ctx.lineWidth=1;ctx.beginPath();const off=(time*20)%40;
   for(let x=-40+off;x<W;x+=40){ctx.moveTo(x,0);ctx.lineTo(x,H);}for(let y=0;y<H;y+=40){ctx.moveTo(0,y);ctx.lineTo(W,y);}ctx.stroke();}
+let rpOwners=null,rpOwnT=-1e9,rpOwnBusy=false;
+function loadRpOwners(){if(rpOwnBusy||!rankOn()||performance.now()-rpOwnT<60000)return;rpOwnBusy=true;rpOwnT=performance.now();fetch(RANK.url+'/rest/v1/rpc/reaper_owners',{method:'POST',headers:rankHdr(),body:'{}',cache:'no-store'}).then(x=>x.ok?x.json():null).then(d=>{if(Array.isArray(d))rpOwners=d.map(r=>r.nickname||'이름없음');rpOwnBusy=false;}).catch(()=>{rpOwnBusy=false;});}
+function drawRpOwners(cx,y,maxW){loadRpOwners();if(!rpOwners)return;const n=rpOwners.length;let line;
+  if(!n)line='💀 아직 주인이 없어요 · 첫 번째 주인이 되어보세요';
+  else{const head='💀 단 '+n+'명만 보유 · ';ctx.font=`800 12px ${FONT}`;let names='',i=0;for(;i<n;i++){const nx=names+(i?', ':'')+rpOwners[i],rest=n-i-1,tail=rest>0?' 외 '+rest+'명':'';if(ctx.measureText(head+nx+tail).width>maxW&&i>0)break;names=nx;}line=head+names+(i<n?' 외 '+(n-i)+'명':'');}
+  txt(line,cx,y,12,'#c9a8ff',800);}
 function drawShop(){
   drawBg();const top=58;
   const back={x:14,y:12,w:84,h:34};shopUI.back=back;rrect(back.x,back.y,back.w,back.h,8);ctx.fillStyle='rgba(255,255,255,0.08)';ctx.fill();ctx.strokeStyle='rgba(255,255,255,0.25)';ctx.lineWidth=1;ctx.stroke();
@@ -1557,6 +1563,7 @@ function drawShop(){
   ctx.strokeStyle=eq?'rgba(255,255,255,0.2)':own?'#8ff':can?'#ffe066':'rgba(255,255,255,0.2)';ctx.lineWidth=2;ctx.stroke();
   txt(eq?(T?'장착중 (탭: 해제)':'장착중'):own?'장착하기':'구매  ◆ '+kp.toLocaleString(),act.x+act.w/2,act.y+act.h/2,17,eq?'rgba(255,255,255,0.5)':own?'#cff':can?'#ffe066':'rgba(255,255,255,0.45)',800);
   if(!T&&k.orig&&!own&&rpSale()&&!(pv.msgT>0)){const a1='◆ '+k.orig.toLocaleString(),a2='🔥 65% 파격 할인 · 12/5까지 D-'+rpDLeft();ctx.font=`700 13px ${FONT}`;const w1=ctx.measureText(a1).width;ctx.font=`900 14px ${FONT}`;const w2=ctx.measureText(a2).width,x0=px0+pw/2-(w1+12+w2)/2,yy=py0+20;strikeTxt(a1,x0+w1/2,yy,13,'rgba(255,255,255,0.55)');txt(a2,x0+w1+12+w2/2,yy,14,'#ff8da6',900);}
+  if(!T&&k.id==='reaper')drawRpOwners(px0+pw/2,py0+40,pw-20);
   if(!T&&pv.sel==='sakura')txt('✿ 특수효과 적용 (처치 시 꽃잎)',px0+pw/2,py0+ph-16,13,'#ffb3d6',800);
   if(!T&&k.set){txt('세트: 낫 + 전용 트레일 · ☠ 처치 시 해골',px0+pw/2,py0+ph-30,13,'#c9a8ff',800);txt('다른 베기·트레일 스킨과 함께 착용 불가',px0+pw/2,py0+ph-13,11,'rgba(201,168,255,0.7)',700);}
   if(pv.msgT>0){ctx.globalAlpha=Math.min(1,pv.msgT*3);txt(pv.msg,px0+pw/2,py0+20,14,'#fff',800);ctx.globalAlpha=1;}
