@@ -133,7 +133,7 @@ let rush=false,rushT=0,rChain=0,rChainT=0,rMax=0,rushSpawnT=0,rushElite={},rushB
 let hc=0,hcQueue=[],hcSpawnT=0,hcCap=2,hcSpd=1,hcNew=false,hcEarn=0,hcSelUI={back:null,tiles:[]},hcBtns=[];
 const RUSH_LEN=60,RCHAIN_KEEP=2.5,rMul=()=>1+0.25*Math.min(rChain,12);
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1127.68';
+const VERSION='1127.69';
 const WCOIN=60,RCOIN_N=3,RCOIN_MAX=600;const today=()=>{const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();};const rcLeft=()=>{const r=META.rd||{};return r.d===today()?Math.max(0,RCOIN_N-(r.n||0)):RCOIN_N;};let overBtns=null,quitRun=false,rcUsed=false;let hitSrc='',runT=0,endless=false,clearBonus=0,clrW=0,clrK=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
 let ult=null,mines=[];const ultMax=()=>U.ultFast?75:100,ultN=()=>rush?4:U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#8a6cff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
@@ -237,7 +237,7 @@ function menuTap(x,y){
   if(state==='help'){helpTap(x,y);return;}
   if(state==='inst'){if(x===undefined||inR(x,y,instBack))state='title';return;}
   if(state==='rank'){if(x===undefined||inR(x,y,rankUI.back)){state='title';return;}if(inR(x,y,rankUI.nick)){askNick(()=>{});return;}for(let i=0;i<rankUI.tabs.length;i++)if(inR(x,y,rankUI.tabs[i])&&rankTab!==i){rankTab=i;rankList=null;rankScroll=0;rankErr='';loadRank();}return;}
-  if(state==='title'){if(qaBtnR&&inR(x,y,qaBtnR)){qaPend=true;return;}for(const r of voteR)if(inR(x,y,r)){voteScarf(r.v);return;}if(inR(x,y,shopBtnR)){openShop();return;}if(hcBtnR&&inR(x,y,hcBtnR)){state='hcsel';return;}if(inR(x,y,rankBtnR)){openRank();return;}if(inR(x,y,helpBtnR)){state='help';helpPage=0;return;}if(iosBtnR&&inR(x,y,iosBtnR)){instKind='ios';state='inst';return;}if(andBtnR&&inR(x,y,andBtnR)){instKind='and';state='inst';return;}if(x!==undefined&&rushBtnR&&inR(x,y,rushBtnR)){state='evsel';return;}if(x!==undefined&&!inR(x,y,startBtnR))return;startMode('main');}
+  if(state==='title'){if(qaBtnR&&inR(x,y,qaBtnR)){qaPend=true;return;}if(raidBtnR&&x!==undefined&&inR(x,y,raidBtnR)){location.href='raid/';return;}for(const r of voteR)if(inR(x,y,r)){voteScarf(r.v);return;}if(inR(x,y,shopBtnR)){openShop();return;}if(hcBtnR&&inR(x,y,hcBtnR)){state='hcsel';return;}if(inR(x,y,rankBtnR)){openRank();return;}if(inR(x,y,helpBtnR)){state='help';helpPage=0;return;}if(iosBtnR&&inR(x,y,iosBtnR)){instKind='ios';state='inst';return;}if(andBtnR&&inR(x,y,andBtnR)){instKind='and';state='inst';return;}if(x!==undefined&&rushBtnR&&inR(x,y,rushBtnR)){state='evsel';return;}if(x!==undefined&&!inR(x,y,startBtnR))return;startMode('main');}
   else if(state==='evsel'){if(x===undefined||inR(x,y,evUI.back)){state='title';return;}for(const c of evUI.cards)if(inR(x,y,c)){startMode(c.id);return;}}
   else if(state==='over'&&overT>1.0){if(x!==undefined&&overRankBtn&&inR(x,y,overRankBtn)){askNick(()=>{if(pendRec)postRec(pendRec);});return;}if(x!==undefined){if(overBtns&&inR(x,y,overBtns[1])){reset();state='title';return;}if(!overBtns||!inR(x,y,overBtns[0]))return;}reset();state='play';}
   else if(state==='clear'&&overT>1.0&&x!==undefined){const rs=clearRects();if(inR(x,y,rs[0])){endless=true;state='play';last=performance.now();banner('무한 모드');}
@@ -1561,7 +1561,7 @@ function drawTitle(){
   txt(META.cleared?'클리어 ✓  최고 '+fmtT(META.bestClear):'목표: 웨이브 15 보스 처치',W/2,cy+H*0.17,Math.round(H*0.032),META.cleared?'#ffe066':'rgba(255,224,102,0.8)',800);
   txt('FLASH COUNTER',W/2,cy+H*0.12,Math.round(H*0.035),'rgba(200,240,255,0.6)',700);
   const fs=Math.round(clamp(H*0.036,12,17));let y=H*0.485;
-  {const NOTE=[...(rpDay()?['💀 11/26 하루 한정: 사신 세트 무료 체험 (자동 장착)']:[]),'웨이브 15 이후: 적 체력 증가 절반 · 적 수와 등장 속도 증가','한 대 피해 상한: 최대 체력의 35% (최소 3대는 버팀)','체력 강화 회복량 30 → 최대 체력의 30%','일시정지 → 나가기도 랭킹에 기록돼요','닉네임을 바꾸면 이 기기의 랭킹 기록 이름도 함께 바뀌어요','섬광 러시 코인: 처치×2.5 (판당 최대 600) · 하루 3번','웨이브 코인 20 → 60 (15웨이브 클리어 시 약 2,000)'].slice(0,7);
+  {const NOTE=[...(rpDay()?['💀 11/26 하루 한정: 사신 세트 무료 체험 (자동 장착)']:[]),'🤝 2인전 추가 (테스트): 둘이 같이 웨이브 15까지 · 오른쪽 위 버튼','웨이브 15 이후: 적 체력 증가 절반 · 적 수와 등장 속도 증가','한 대 피해 상한: 최대 체력의 35% (최소 3대는 버팀)','체력 강화 회복량 30 → 최대 체력의 30%','일시정지 → 나가기도 랭킹에 기록돼요','닉네임을 바꾸면 이 기기의 랭킹 기록 이름도 함께 바뀌어요','섬광 러시 코인: 처치×2.5 (판당 최대 600) · 하루 3번','웨이브 코인 20 → 60 (15웨이브 클리어 시 약 2,000)'].slice(0,7);
     const bw=Math.min(W-40,fs*26),bh=fs*1.28*NOTE.length+fs*2.1,bx=W/2-bw/2;rrect(bx,y-fs*0.6,bw,bh,10);ctx.fillStyle='rgba(255,224,102,0.07)';ctx.fill();ctx.strokeStyle='rgba(255,224,102,0.35)';ctx.lineWidth=1;ctx.stroke();
     txt('업데이트 공지',W/2,y+fs*0.3,fs,'#ffe066',900);y+=fs*1.7;
     for(const l of NOTE){txt('· '+l,bx+fs,y,Math.round(fs*0.82),'rgba(255,255,255,0.85)',600,'left');y+=fs*1.28;}y=y-fs*0.4;}
@@ -1581,7 +1581,9 @@ function drawTitle(){
   txt('랭킹',rb.x+rb.w/2,rb.y+rb.h/2,14,'#d9b8ff',800);
   const hb2={x:W-150,y:134,w:136,h:40};hcBtnR=hb2;rrect(hb2.x,hb2.y,hb2.w,hb2.h,10);ctx.fillStyle='rgba(255,77,125,0.12)';ctx.fill();ctx.strokeStyle='rgba(255,77,125,0.65)';ctx.lineWidth=1.5;ctx.stroke();
   txt('하드코어 '+(META.hc||0)+'/10',hb2.x+hb2.w/2,hb2.y+hb2.h/2,14,'#ff8da6',800);
+  {const r={x:W-150,y:184,w:136,h:40};raidBtnR=r;rrect(r.x,r.y,r.w,r.h,10);ctx.fillStyle='rgba(127,255,168,0.12)';ctx.fill();ctx.strokeStyle='rgba(127,255,168,0.6)';ctx.lineWidth=1.5;ctx.stroke();txt('2인전',r.x+r.w/2,r.y+r.h/2,14,'#a8ffc4',800);}
 }
+let raidBtnR=null;
 function drawRenMsg(){if(time<renUntil)txt(renMsg,W/2,H-14,13,renMsg.includes('실패')?'#ff8da6':'#8ff',800);}
 function drawRank(){
   drawBg();ctx.fillStyle='rgba(5,7,15,0.7)';ctx.fillRect(0,0,W,H);
