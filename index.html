@@ -133,7 +133,7 @@ let rush=false,rushT=0,rChain=0,rChainT=0,rMax=0,rushSpawnT=0,rushElite={},rushB
 let hc=0,hcQueue=[],hcSpawnT=0,hcCap=2,hcSpd=1,hcNew=false,hcEarn=0,hcSelUI={back:null,tiles:[]},hcBtns=[];
 const RUSH_LEN=60,RCHAIN_KEEP=2.5,rMul=()=>1+0.25*Math.min(rChain,12);
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1127.65';
+const VERSION='1127.66';
 const WCOIN=60,RCOIN_N=3,RCOIN_MAX=600;const today=()=>{const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();};const rcLeft=()=>{const r=META.rd||{};return r.d===today()?Math.max(0,RCOIN_N-(r.n||0)):RCOIN_N;};let overBtns=null,quitRun=false,rcUsed=false;let hitSrc='',runT=0,endless=false,clearBonus=0,clrW=0,clrK=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
 let ult=null,mines=[];const ultMax=()=>U.ultFast?75:100,ultN=()=>rush?4:U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#8a6cff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
@@ -1137,7 +1137,7 @@ function reaperCrack(arr,x,y,a,len,w,depth){const pts=[[x,y]];let cx=x,cy=y,ca=a
   for(let i=0;i<n;i++){ca+=rnd(-0.45,0.45);cx+=Math.cos(ca)*len/n;cy+=Math.sin(ca)*len/n;pts.push([cx,cy]);if(depth<1&&Math.random()<0.28)reaperCrack(arr,cx,cy,ca+rnd(-1.2,1.2),len*rnd(0.3,0.5),w*0.6,depth+1);}
   arr.push({x,y,vx:0,vy:0,t:0,life:1.3,k:'ck',n:true,pts,w});}
 // ---- 3타 alternatives: 'a' = smoky purple afterimage thrust, 'b' = skeleton hands from ground (both instant, along the real hit line)
-let RP3=(()=>{try{const q=new URLSearchParams(location.search).get('rp3');if(q==='a'||q==='b'){localStorage.setItem('flash_rp3',q);return q;}return localStorage.getItem('flash_rp3')||'';}catch(e){return '';}})();
+let RP3=(()=>{try{const q=new URLSearchParams(location.search).get('rp3');if(q==='a'||q==='b'){localStorage.setItem('flash_rp3',q);return q;}if(q==='off'){localStorage.removeItem('flash_rp3');return '';}return localStorage.getItem('flash_rp3')||'';}catch(e){return '';}})();
 const rpO=()=>[[rnd(-.5,.5),rnd(-.5,.5)],[rnd(-.5,.5),rnd(-.5,.5)],[rnd(-.5,.5),rnd(-.5,.5)]];
 function rp3Tick(s,x,y,game){if(s.au)return;s.au=1;s.ox=x;s.oy=y;s.sd=rnd(0,99);const c=Math.cos(s.a),sn=Math.sin(s.a),L=s.range;
   if(RP3==='a'){for(let i=0;i<30;i++){const q=Math.pow(Math.random(),0.6),side=rnd(-1,1);parts.push({x:x+c*L*q-sn*side*7,y:y+sn*L*q+c*side*7,vx:c*rnd(20,90)-sn*side*rnd(5,20),vy:sn*rnd(20,90)+c*side*rnd(5,20),t:-q*0.05,life:rnd(0.45,0.8),k:'as',n:true,w:rnd(8,14),o:rpO(),fr:2});}
