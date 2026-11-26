@@ -137,7 +137,7 @@ let rush=false,rushT=0,rChain=0,rChainT=0,rMax=0,rushSpawnT=0,rushElite={},rushB
 let hc=0,hcQueue=[],hcSpawnT=0,hcCap=2,hcSpd=1,hcNew=false,hcEarn=0,hcSelUI={back:null,tiles:[]},hcBtns=[];
 const RUSH_LEN=60,RCHAIN_KEEP=2.5,rMul=()=>1+0.25*Math.min(rChain,12);
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1127.84';
+const VERSION='1127.85';
 const WCOIN=60,RCOIN_N=3,RCOIN_MAX=600;const today=()=>{const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();};const rcLeft=()=>{const r=META.rd||{};return r.d===today()?Math.max(0,RCOIN_N-(r.n||0)):RCOIN_N;};let overBtns=null,quitRun=false,rcUsed=false;let hitSrc='',runT=0,endless=false,clearBonus=0,clrW=0,clrK=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
 let ult=null,mines=[];const ultMax=()=>U.ultFast?75:100,ultN=()=>rush?4:U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#8a6cff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
@@ -205,10 +205,10 @@ function drawAcct(){const cw=Math.min(W-40,440),cx=W/2;txt('구글 계정 저장
   else{txt('연결됨: '+(acct.email||'구글 계정'),cx,90,15,'#8ff',800);txt('판이 끝나거나 상점에서 살 때 자동 저장돼요',cx,114,12,'rgba(255,255,255,0.6)',700);
     b('sync',acctBusy?'저장 중...':'지금 저장',136,'rgba(90,240,255,0.6)');b('out','로그아웃',192,'rgba(255,255,255,0.3)');}
   b('back','← 뒤로',H-62,'rgba(255,255,255,0.3)');}
-function acctTap(x,y){const r=acctUI;if(x===undefined||(r.back&&inR(x,y,r.back))){state='title';return;}
+function acctTap(x,y){const r=acctUI;if(x===undefined||(r.back&&inR(x,y,r.back))){state='settings';return;}
   if(r.login&&inR(x,y,r.login)){acctLogin();return;}
   if(r.sync&&inR(x,y,r.sync)&&!acctBusy){acctBusy=true;acctUpload().then(ok=>{acctBusy=false;if(ok)acctNote('저장 완료');}).catch(()=>{acctBusy=false;acctNote('저장 실패 (인터넷 확인)');});return;}
-  if(r.out&&inR(x,y,r.out)){acctLogout();state='title';}}
+  if(r.out&&inR(x,y,r.out)){acctLogout();state='settings';}}
 function promoShow(){if(acct||acctPending||!rankOn())return;const t=new Date(Date.now()+9*3600e3).toISOString().slice(0,10);if(lsg('flash_promo_off')===t)return;const b=document.getElementById('promoBox');if(b)b.style.display='flex';}
 function promoClose(off){document.getElementById('promoBox').style.display='none';if(off)lss('flash_promo_off',new Date(Date.now()+9*3600e3).toISOString().slice(0,10));}
 addEventListener('load',()=>{document.getElementById('promoX').onclick=()=>promoClose(false);document.getElementById('promoNo').onclick=()=>promoClose(true);document.getElementById('promoGo').onclick=()=>{promoClose(false);acctLogin();};if(nick)setTimeout(promoShow,500);});
@@ -311,8 +311,8 @@ function goFS(){
     if(p&&p.then)p.then(()=>{try{screen.orientation.lock('landscape').catch(()=>{})}catch(e){}}).catch(()=>{});}catch(e){}
 }
 function menuTap(x,y){
-  if((state==='pause'||state==='title')&&x!==undefined&&joyUI&&inR(x,y,joyUI)){toggleJoy();tapHit=true;return;}
-  if((state==='pause'||state==='title')&&x!==undefined&&bgmUI){if(inR(x,y,bgmUI.m)){setBgm(-1);return;}if(inR(x,y,bgmUI.p)){setBgm(1);return;}}
+  if((state==='pause'||state==='settings')&&x!==undefined&&joyUI&&inR(x,y,joyUI)){toggleJoy();tapHit=true;return;}
+  if((state==='pause'||state==='settings')&&x!==undefined&&bgmUI){if(inR(x,y,bgmUI.m)){setBgm(-1);return;}if(inR(x,y,bgmUI.p)){setBgm(1);return;}}
   if(state==='pause'){const i=pauseHit(x,y);if(i===0)resumeGame();else if(i===1){reset();state='play';}else if(i===2){quitRun=true;if(hc){P.hp=0;}endRun();}return;}
   if(state==='pick'){if(pickT<0.35)return;const i=pickHit(x,y);if(i>=0)choose(i);return;}
   if(state==='shop'){shopTap(x,y);return;}
@@ -321,11 +321,12 @@ function menuTap(x,y){
   if(state==='hcclear'){if(overT<0.8)return;if(x===undefined){state='hcsel';return;}if(hcBtns[0]&&inR(x,y,hcBtns[0])){if(hc<10)hcStart(hc+1);else{state='hcsel';}return;}if(hcBtns[1]&&inR(x,y,hcBtns[1])){state='hcsel';return;}return;}
   if(state==='over'&&hc&&overT>0.8){if(x!==undefined&&hcBtns[1]&&inR(x,y,hcBtns[1])){state='hcsel';return;}hcStart(hc);return;}
   if(state==='help'){helpTap(x,y);return;}
-  if(state==='inst'){if(x===undefined||inR(x,y,instBack))state='title';return;}
+  if(state==='inst'){if(x===undefined||inR(x,y,instBack))state='settings';return;}
   if(state==='rank'){if(x===undefined||inR(x,y,rankUI.back)){state='title';return;}if(inR(x,y,rankUI.nick)){askNick(()=>{});return;}for(let i=0;i<rankUI.tabs.length;i++)if(inR(x,y,rankUI.tabs[i])&&(rankTab!==i||clanView)){const keep=i===3&&rankTab===3&&rankList;rankTab=i;clanView=null;if(!keep)rankList=null;rankScroll=0;rankErr='';if(!rankList)loadRank();return;}
     if(rankTab===3&&rankList){if(clanView){if(rankUI.clanBack&&inR(x,y,rankUI.clanBack)){clanView=null;rankScroll=0;}}else if(rankUI.clanRows)for(const r of rankUI.clanRows)if(inR(x,y,r)){clanView=r.clan;rankScroll=0;break;}}return;}
   if(state==='acct'){acctTap(x,y);return;}
-  if(state==='title'){if(qaBtnR&&inR(x,y,qaBtnR)){qaPend=true;return;}if(acctBtnR&&x!==undefined&&inR(x,y,acctBtnR)){state='acct';return;}if(raidBtnR&&x!==undefined&&inR(x,y,raidBtnR)){location.href='raid/';return;}if(clanBtnR&&x!==undefined&&inR(x,y,clanBtnR)){state='clansel';clanMsg='';return;}for(const r of voteR)if(inR(x,y,r)){voteScarf(r.v);return;}if(inR(x,y,shopBtnR)){openShop();return;}if(hcBtnR&&inR(x,y,hcBtnR)){state='hcsel';return;}if(inR(x,y,rankBtnR)){openRank();return;}if(inR(x,y,helpBtnR)){state='help';helpPage=0;return;}if(iosBtnR&&inR(x,y,iosBtnR)){instKind='ios';state='inst';return;}if(andBtnR&&inR(x,y,andBtnR)){instKind='and';state='inst';return;}if(x!==undefined&&rushBtnR&&inR(x,y,rushBtnR)){state='evsel';return;}if(x!==undefined&&!inR(x,y,startBtnR))return;startMode('main');}
+  if(state==='settings'){if(x===undefined||inR(x,y,setUI.back)){state='title';return;}if(inR(x,y,helpBtnR)){state='help';helpPage=0;return;}if(inR(x,y,acctBtnR)){state='acct';return;}if(inR(x,y,iosBtnR)){instKind='ios';state='inst';return;}if(inR(x,y,andBtnR)){instKind='and';state='inst';return;}if(inR(x,y,qaBtnR)){qaPend=true;return;}return;}
+  if(state==='title'){if(setBtnR&&x!==undefined&&inR(x,y,setBtnR)){state='settings';return;}if(raidBtnR&&x!==undefined&&inR(x,y,raidBtnR)){location.href='raid/';return;}if(clanBtnR&&x!==undefined&&inR(x,y,clanBtnR)){state='clansel';clanMsg='';return;}for(const r of voteR)if(inR(x,y,r)){voteScarf(r.v);return;}if(inR(x,y,shopBtnR)){openShop();return;}if(hcBtnR&&inR(x,y,hcBtnR)){state='hcsel';return;}if(inR(x,y,rankBtnR)){openRank();return;}if(x!==undefined&&rushBtnR&&inR(x,y,rushBtnR)){state='evsel';return;}if(x!==undefined&&!inR(x,y,startBtnR))return;startMode('main');}
   else if(state==='evsel'){if(x===undefined||inR(x,y,evUI.back)){state='title';return;}for(const c of evUI.cards)if(inR(x,y,c)){startMode(c.id);return;}}
   else if(state==='over'&&overT>1.0){if(x!==undefined&&overRankBtn&&inR(x,y,overRankBtn)){askNick(()=>{if(pendRec)postRec(pendRec);});return;}if(x!==undefined){if(overBtns&&inR(x,y,overBtns[1])){reset();state='title';return;}if(!overBtns||!inR(x,y,overBtns[0]))return;}reset();state='play';}
   else if(state==='clear'&&overT>1.0&&x!==undefined){const rs=clearRects();if(inR(x,y,rs[0])){endless=true;state='play';last=performance.now();banner('무한 모드');}
@@ -1627,9 +1628,9 @@ function drawInst(){drawBg();const I=INST[instKind];
   y+=fs*0.3;for(const n of I.notes){txt('※ '+n,lx,y,Math.round(fs*0.85),'#ffe066',600,'left');y+=fs*1.5;}}
 function helpTap(x,y){
   if(x===undefined){helpPage=(helpPage+1)%HELP.length;return;}
-  if(inR(x,y,helpUI.back)){state='title';return;}
+  if(inR(x,y,helpUI.back)){state='settings';return;}
   for(let i=0;i<helpUI.tabs.length;i++)if(inR(x,y,helpUI.tabs[i])){helpPage=i;return;}
-  if(inR(x,y,helpUI.next)){if(helpPage<HELP.length-1)helpPage++;else state='title';}
+  if(inR(x,y,helpUI.next)){if(helpPage<HELP.length-1)helpPage++;else state='settings';}
 }
 function drawHelp(){
   drawBg();
@@ -1652,6 +1653,17 @@ function drawHelp(){
   ctx.fillStyle='rgba(90,240,255,0.18)';ctx.fill();ctx.strokeStyle='#5ff4ff';ctx.lineWidth=1.5;ctx.stroke();
   txt(last?'닫기':'다음 ▶',nx.x+nx.w/2,nx.y+nx.h/2,15,'#fff',800);
 }
+function isStandalone(){try{return matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;}catch(e){return false;}}
+let setBtnR=null,setUI={};
+function drawSettings(){drawBg();setUI={};const bk={x:14,y:14,w:96,h:38};setUI.back=bk;rrect(bk.x,bk.y,bk.w,bk.h,10);ctx.fillStyle='rgba(255,255,255,0.06)';ctx.fill();ctx.strokeStyle='rgba(255,255,255,0.3)';ctx.lineWidth=1.5;ctx.stroke();txt('← 뒤로',bk.x+bk.w/2,bk.y+bk.h/2,14,'#fff',800);
+  txt('⚙ 설정',W/2,33,22,'#fff',900);const bw=Math.min(220,(W-60)/2),bh=44,gx=16,x1=W/2-bw-gx/2,x2=W/2+gx/2,y0=70,dy=Math.min(56,(H-y0-20)/5);
+  const b=(lb,x,y,col,fc,dot)=>{const r={x,y,w:bw,h:bh};rrect(x,y,bw,bh,10);ctx.fillStyle='rgba(255,255,255,0.05)';ctx.fill();ctx.strokeStyle=col;ctx.lineWidth=1.5;ctx.stroke();txt(lb,x+bw/2,y+bh/2,14,fc,800);if(dot){ctx.fillStyle='#ff3d6e';ctx.beginPath();ctx.arc(x+bw-9,y+9,5,0,TAU);ctx.fill();}return r;};
+  const inst=!isStandalone();
+  helpBtnR=b('게임 방법',x1,y0,'rgba(90,240,255,0.6)','#8ff');acctBtnR=b(acct?'☁ 계정 저장됨':'G 구글로 저장',x2,y0,acct?'rgba(90,240,255,0.55)':'rgba(255,255,255,0.55)',acct?'#8ff':'#fff');
+  iosBtnR=b('아이폰 앱 설치',x1,y0+dy,'rgba(255,255,255,0.3)','rgba(255,255,255,0.85)',inst);andBtnR=b('안드로이드 앱 설치',x2,y0+dy,'rgba(255,255,255,0.3)','rgba(255,255,255,0.85)',inst);
+  qaBtnR=b('문의하기 (인스타)',x1,y0+dy*2,'rgba(255,110,180,0.6)','#ff9ccf');
+  txt('조작',x1+bw/2,y0+dy*3+6,12,'rgba(255,255,255,0.5)',700);txt('음악',x2+bw/2,y0+dy*3+6,12,'rgba(255,255,255,0.5)',700);
+  bgmUI=null;drawJoyBtn(x1+bw/2-75,y0+dy*3+18);drawBgmBtn(x2+bw/2-75,y0+dy*3+18);}
 function drawTitle(){
   drawBg();
   const cy=H*0.26;ctx.fillStyle='rgba(80,240,255,0.12)';ctx.beginPath();ctx.arc(W/2,cy,H*0.16,0,TAU);ctx.fill();
@@ -1669,12 +1681,8 @@ function drawTitle(){
     const rb2=rushBtnR;rrect(rb2.x,rb2.y,bw,bh,12);ctx.fillStyle=`rgba(255,154,106,${0.14+0.1*pu})`;ctx.fill();ctx.strokeStyle='#ff9a6a';ctx.lineWidth=2;ctx.stroke();
     txt('이벤트 스테이지',rb2.x+bw/2,by+bh/2-7,Math.round(fs*1.1),'#fff',900);txt('섬광 러시 · 🎄 크리스마스',rb2.x+bw/2,by+bh/2+12,11,'rgba(255,224,150,0.85)',700);}
   if(best)txt('최고 '+best.toLocaleString(),W-16,20,13,'rgba(255,255,255,0.5)',600,'right');
-  txt('v'+VERSION,16,20,11,'rgba(255,255,255,0.3)',600,'left');bgmUI=null;drawBgmBtn(14,H-44);drawJoyBtn(14,H-82);
-  const hb={x:14,y:34,w:136,h:40};helpBtnR=hb;rrect(hb.x,hb.y,hb.w,hb.h,10);ctx.fillStyle='rgba(90,240,255,0.1)';ctx.fill();ctx.strokeStyle='rgba(90,240,255,0.6)';ctx.lineWidth=1.5;ctx.stroke();
-  txt('게임 방법',hb.x+hb.w/2,hb.y+hb.h/2,14,'#8ff',800);
-  {const r={x:14,y:234,w:136,h:40};acctBtnR=r;rrect(r.x,r.y,r.w,r.h,10);ctx.fillStyle=acct?'rgba(90,240,255,0.08)':'rgba(255,255,255,0.08)';ctx.fill();ctx.strokeStyle=acct?'rgba(90,240,255,0.55)':'rgba(255,255,255,0.55)';ctx.lineWidth=1.5;ctx.stroke();txt(acct?'☁ 계정 저장됨':'G 구글로 저장',r.x+r.w/2,r.y+r.h/2,13,acct?'#8ff':'#fff',800);}
-  voteR=[];{const r={x:14,y:184,w:136,h:40};qaBtnR=r;rrect(r.x,r.y,r.w,r.h,10);ctx.fillStyle='rgba(255,90,170,0.1)';ctx.fill();ctx.strokeStyle='rgba(255,110,180,0.6)';ctx.lineWidth=1.5;ctx.stroke();txt('문의하기 (인스타)',r.x+r.w/2,r.y+r.h/2,13,'#ff9ccf',800);}
-  [['아이폰 앱 설치','ios',84],['안드로이드 앱 설치','and',134]].forEach(([lb,k,yy])=>{const r={x:14,y:yy,w:136,h:40};if(k==='ios')iosBtnR=r;else andBtnR=r;rrect(r.x,r.y,r.w,r.h,10);ctx.fillStyle='rgba(255,255,255,0.05)';ctx.fill();ctx.strokeStyle='rgba(255,255,255,0.3)';ctx.lineWidth=1.5;ctx.stroke();txt(lb,r.x+r.w/2,r.y+r.h/2,13,'rgba(255,255,255,0.85)',800);});
+  txt('v'+VERSION,16,20,11,'rgba(255,255,255,0.3)',600,'left');bgmUI=null;joyUI=null;helpBtnR=null;iosBtnR=null;andBtnR=null;qaBtnR=null;acctBtnR=null;voteR=[];
+  {const r={x:14,y:34,w:136,h:44};setBtnR=r;rrect(r.x,r.y,r.w,r.h,10);ctx.fillStyle='rgba(255,255,255,0.07)';ctx.fill();ctx.strokeStyle='rgba(255,255,255,0.45)';ctx.lineWidth=1.5;ctx.stroke();txt('⚙ 설정',r.x+r.w/2,r.y+r.h/2,15,'#fff',800);if(!isStandalone()){ctx.fillStyle='#ff3d6e';ctx.beginPath();ctx.arc(r.x+r.w-8,r.y+8,5,0,TAU);ctx.fill();}}
   const sb={x:W-150,y:34,w:136,h:40};shopBtnR=sb;rrect(sb.x,sb.y,sb.w,sb.h,10);ctx.fillStyle='rgba(255,224,102,0.12)';ctx.fill();ctx.strokeStyle='rgba(255,224,102,0.6)';ctx.lineWidth=1.5;ctx.stroke();
   txt('상점  ◆ '+META.coins.toLocaleString(),sb.x+sb.w/2,sb.y+sb.h/2,14,'#ffe066',800);if(rpSale()&&!META.own.reaper)saleTag(sb.x+sb.w-24,sb.y-4,'SALE -65%',11);
   const rb={x:W-150,y:84,w:136,h:40};rankBtnR=rb;rrect(rb.x,rb.y,rb.w,rb.h,10);ctx.fillStyle='rgba(200,140,255,0.12)';ctx.fill();ctx.strokeStyle='rgba(200,140,255,0.6)';ctx.lineWidth=1.5;ctx.stroke();
@@ -1803,6 +1811,7 @@ function render(){
   if(state==='title'){drawTitle();drawRenMsg();drawAcctMsg();}
   else if(state==='acct'){drawBg();drawAcct();drawAcctMsg();}
   else if(state==='shop'){drawShop();}
+  else if(state==='settings'){drawSettings();drawAcctMsg();}
   else if(state==='help'){drawHelp();}
   else if(state==='inst'){drawInst();}
   else if(state==='rank'){drawRank();drawRenMsg();}
