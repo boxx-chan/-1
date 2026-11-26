@@ -136,7 +136,7 @@ let rush=false,rushT=0,rChain=0,rChainT=0,rMax=0,rushSpawnT=0,rushElite={},rushB
 let hc=0,hcQueue=[],hcSpawnT=0,hcCap=2,hcSpd=1,hcNew=false,hcEarn=0,hcSelUI={back:null,tiles:[]},hcBtns=[];
 const RUSH_LEN=60,RCHAIN_KEEP=2.5,rMul=()=>1+0.25*Math.min(rChain,12);
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1127.71';
+const VERSION='1127.72';
 const WCOIN=60,RCOIN_N=3,RCOIN_MAX=600;const today=()=>{const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();};const rcLeft=()=>{const r=META.rd||{};return r.d===today()?Math.max(0,RCOIN_N-(r.n||0)):RCOIN_N;};let overBtns=null,quitRun=false,rcUsed=false;let hitSrc='',runT=0,endless=false,clearBonus=0,clrW=0,clrK=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
 let ult=null,mines=[];const ultMax=()=>U.ultFast?75:100,ultN=()=>rush?4:U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#8a6cff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
@@ -166,9 +166,11 @@ function postRec(r){nickTaken=false;if(xmas){pendRec=null;recMsg='이벤트 모�
 function makeRec(){const cl=clearTimeRec!==null;return{season:SEASON,wave:Math.max(1,Math.min(999,wave)),cleared:cl,clear_time:cl?Math.max(60,Math.round(clearTimeRec)):null,score:Math.max(0,Math.round(score)),kills,mode:rush?'rush':'main'};}
 function loadRank(){if(!rankOn()||rankLoading)return;if(!clanMap)loadClans(()=>{if(rankTab===3){rankList=null;rankLoading=false;loadRank();}});
   if(rankTab===3){if(!clanMap){return;}rankLoading=true;rankErr='';
-    fetch(RANK.url+'/rest/v1/scores?select=nickname,score,pid&season=eq.'+SEASON+'&mode=eq.main&order=score.desc&limit=1000',{headers:rankHdr(),cache:'no-store'}).then(x=>x.ok?x.json():Promise.reject(x.status)).then(d=>{
-      const best={};for(const r of d){if(!r.pid||best[r.pid])continue;best[r.pid]=r;}
-      const S={};for(const c of CLANS)S[c]={clan:c,n:0,sc:[]};for(const pid in clanMap){const c=clanMap[pid];if(!S[c])S[c]={clan:c,n:0,sc:[]};S[c].n++;if(best[pid])S[c].sc.push(best[pid].score);}
+    const gj=u=>fetch(RANK.url+'/rest/v1/scores?'+u,{headers:rankHdr(),cache:'no-store'}).then(x=>x.ok?x.json():Promise.reject(x.status));
+    Promise.all([gj('select=nickname,score,pid&season=eq.'+SEASON+'&mode=eq.main&order=score.desc&limit=1000'),gj('select=pid,nickname&pid=not.is.null&limit=5000').catch(()=>[])]).then(([d,dn])=>{
+      const best={},nm={};for(const r of dn)if(r.pid&&r.nickname)nm[r.pid]=r.nickname;for(const r of d){if(!r.pid||best[r.pid])continue;best[r.pid]=r;nm[r.pid]=r.nickname;}
+      window.__myPid=pid;const S={};for(const c of CLANS)S[c]={clan:c,n:0,sc:[],m:[]};for(const pid in clanMap){const c=clanMap[pid];if(!S[c])S[c]={clan:c,n:0,sc:[],m:[]};S[c].n++;if(best[pid])S[c].sc.push(best[pid].score);S[c].m.push({nick:nm[pid]||'',score:best[pid]?best[pid].score:-1,me:pid===window.__myPid});}
+      for(const c in S)S[c].m.sort((a,b)=>b.score-a.score||(a.nick?0:1)-(b.nick?0:1)||a.nick.localeCompare(b.nick));
       const out=Object.values(S).map(o=>{o.sc.sort((a,b)=>b-a);const t=o.sc.slice(0,5);o.avg=t.length?Math.round(t.reduce((a,b)=>a+b,0)/t.length):0;o.k=t.length;return o;}).sort((a,b)=>b.avg-a.avg||b.n-a.n);
       if(rankTab===3)rankList=out;rankLoading=false;}).catch(e=>{rankErr='불러오기 실패: '+e;rankLoading=false;});return;}
   rankLoading=true;rankErr='';
@@ -179,7 +181,7 @@ function loadRank(){if(!rankOn()||rankLoading)return;if(!clanMap)loadClans(()=>{
    .catch(er=>{rankErr='불러오기 실패: '+(typeof er==='string'?er:'인터넷 연결');rankLoading=false;});}
 function openRank(){state='rank';rankList=null;rankScroll=0;clanMap=null;loadRank();}
 let rkDrag=null;addEventListener('wheel',e=>{if(state==='rank')rankScroll+=e.deltaY;},{passive:true});
-let rankScroll=0,nickCb=null,nickAsked=false,rankTab=0;
+let clanView=null,rankScroll=0,nickCb=null,nickAsked=false,rankTab=0;
 function fitNick(){const b=document.getElementById('nickBox'),vv=window.visualViewport;if(!b||b.style.display!=='flex'||!vv)return;b.style.top=vv.offsetTop+'px';b.style.height=vv.height+'px';}
 if(window.visualViewport){visualViewport.addEventListener('resize',fitNick);visualViewport.addEventListener('scroll',fitNick);}
 function askNick(cb){nickCb=cb;const b=document.getElementById('nickBox'),i=document.getElementById('nickIn');i.value=nick;b.style.display='flex';fitNick();setTimeout(()=>{try{i.focus()}catch(e){}fitNick();},50);}
@@ -254,7 +256,8 @@ function menuTap(x,y){
   if(state==='over'&&hc&&overT>0.8){if(x!==undefined&&hcBtns[1]&&inR(x,y,hcBtns[1])){state='hcsel';return;}hcStart(hc);return;}
   if(state==='help'){helpTap(x,y);return;}
   if(state==='inst'){if(x===undefined||inR(x,y,instBack))state='title';return;}
-  if(state==='rank'){if(x===undefined||inR(x,y,rankUI.back)){state='title';return;}if(inR(x,y,rankUI.nick)){askNick(()=>{});return;}for(let i=0;i<rankUI.tabs.length;i++)if(inR(x,y,rankUI.tabs[i])&&rankTab!==i){rankTab=i;rankList=null;rankScroll=0;rankErr='';loadRank();}return;}
+  if(state==='rank'){if(x===undefined||inR(x,y,rankUI.back)){state='title';return;}if(inR(x,y,rankUI.nick)){askNick(()=>{});return;}for(let i=0;i<rankUI.tabs.length;i++)if(inR(x,y,rankUI.tabs[i])&&(rankTab!==i||clanView)){const keep=i===3&&rankTab===3&&rankList;rankTab=i;clanView=null;if(!keep)rankList=null;rankScroll=0;rankErr='';if(!rankList)loadRank();return;}
+    if(rankTab===3&&rankList){if(clanView){if(rankUI.clanBack&&inR(x,y,rankUI.clanBack)){clanView=null;rankScroll=0;}}else if(rankUI.clanRows)for(const r of rankUI.clanRows)if(inR(x,y,r)){clanView=r.clan;rankScroll=0;break;}}return;}
   if(state==='title'){if(qaBtnR&&inR(x,y,qaBtnR)){qaPend=true;return;}if(raidBtnR&&x!==undefined&&inR(x,y,raidBtnR)){location.href='raid/';return;}if(clanBtnR&&x!==undefined&&inR(x,y,clanBtnR)){state='clansel';clanMsg='';return;}for(const r of voteR)if(inR(x,y,r)){voteScarf(r.v);return;}if(inR(x,y,shopBtnR)){openShop();return;}if(hcBtnR&&inR(x,y,hcBtnR)){state='hcsel';return;}if(inR(x,y,rankBtnR)){openRank();return;}if(inR(x,y,helpBtnR)){state='help';helpPage=0;return;}if(iosBtnR&&inR(x,y,iosBtnR)){instKind='ios';state='inst';return;}if(andBtnR&&inR(x,y,andBtnR)){instKind='and';state='inst';return;}if(x!==undefined&&rushBtnR&&inR(x,y,rushBtnR)){state='evsel';return;}if(x!==undefined&&!inR(x,y,startBtnR))return;startMode('main');}
   else if(state==='evsel'){if(x===undefined||inR(x,y,evUI.back)){state='title';return;}for(const c of evUI.cards)if(inR(x,y,c)){startMode(c.id);return;}}
   else if(state==='over'&&overT>1.0){if(x!==undefined&&overRankBtn&&inR(x,y,overRankBtn)){askNick(()=>{if(pendRec)postRec(pendRec);});return;}if(x!==undefined){if(overBtns&&inR(x,y,overBtns[1])){reset();state='title';return;}if(!overBtns||!inR(x,y,overBtns[0]))return;}reset();state='play';}
@@ -1625,10 +1628,22 @@ function drawRank(){
   if(!rankOn()){txt('랭킹 서버 준비 중',W/2,H/2,18,'rgba(255,255,255,0.7)',800);return;}
   if(rankErr){txt(rankErr,W/2,H/2,Math.min(16,W/rankErr.length*1.6),'#ff8da6',800);return;}
   if(!rankList){txt('불러오는 중...',W/2,H/2,16,'rgba(255,255,255,0.7)',700);return;}
-  if(rankTab===3){const top=66,rh=Math.max(30,Math.min(40,(H-top-60)/5)),cx=[W*0.12,W*0.22,W*0.55,W*0.82],hc='rgba(255,255,255,0.5)';
+  if(rankTab===3&&clanView){const o=rankList.find(q=>q.clan===clanView);if(!o){clanView=null;return;}
+    const bb={x:16,y:66,w:120,h:32};rankUI.clanBack=bb;rrect(bb.x,bb.y,bb.w,bb.h,9);ctx.fillStyle='rgba(255,255,255,0.06)';ctx.fill();ctx.strokeStyle='rgba(255,255,255,0.3)';ctx.lineWidth=1.2;ctx.stroke();txt('← 학교 목록',bb.x+bb.w/2,bb.y+bb.h/2,13,'#fff',800);
+    txt(o.clan+' · '+o.n+'명',W/2,82,18,'#b8d4ff',900);
+    const top=106,rh=Math.max(26,Math.min(32,(H-top-10)/9)),cx=[W*0.12,W*0.22,W*0.8],hc='rgba(255,255,255,0.5)',lt=top+rh,lh=H-lt-6;
+    txt('순위',cx[0],top+rh/2,12,hc,700);txt('닉네임',cx[1],top+rh/2,12,hc,700,'left');txt('최고 점수 (이번 시즌)',cx[2],top+rh/2,12,hc,700);
+    const L=o.m,maxS=Math.max(0,L.length*rh-lh);rankScroll=clamp(rankScroll,0,maxS);
+    ctx.save();ctx.beginPath();ctx.rect(0,lt,W,lh);ctx.clip();
+    L.forEach((r,i)=>{const y=lt+rh*(i+0.5)-rankScroll;if(y<lt-rh||y>H+rh)return;if(r.me){ctx.fillStyle='rgba(120,180,255,0.12)';ctx.fillRect(8,y-rh/2+2,W-16,rh-4);}
+      txt(r.score>=0?String(i+1):'-',cx[0],y,15,'#fff',900);txt(r.nick||'이름없음',cx[1],y,15,r.nick?(r.me?'#b8d4ff':'#fff'):'rgba(255,255,255,0.4)',800,'left');txt(r.score>=0?Number(r.score).toLocaleString():'-',cx[2],y,15,'#ffe066',800);});
+    ctx.restore();if(maxS>0){const bh=Math.max(30,lh*lh/(L.length*rh)),by=lt+(lh-bh)*(rankScroll/maxS);ctx.fillStyle='rgba(255,255,255,0.25)';ctx.fillRect(W-7,by,3,bh);}
+    return;}
+  if(rankTab===3){rankUI.clanRows=[];const top=66,rh=Math.max(30,Math.min(40,(H-top-60)/5)),cx=[W*0.12,W*0.22,W*0.55,W*0.82],hc='rgba(255,255,255,0.5)';
     txt('순위',cx[0],top+rh/2,12,hc,700);txt('학교',cx[1],top+rh/2,12,hc,700,'left');txt('인원',cx[2],top+rh/2,12,hc,700);txt('상위 5명 평균 점수',cx[3],top+rh/2,12,hc,700);
-    rankList.forEach((o,i)=>{const y=top+rh*(i+1.5),mine=o.clan===myClan,c=i===0?'#ffe066':i===1?'#e0e8f0':i===2?'#e8a878':'#fff';if(mine){ctx.fillStyle='rgba(120,180,255,0.12)';ctx.fillRect(8,y-rh/2+2,W-16,rh-4);}
-      txt(String(i+1),cx[0],y,17,c,900);txt(o.clan,cx[1],y,17,mine?'#b8d4ff':'#fff',900,'left');txt(o.n+'명',cx[2],y,16,'rgba(255,255,255,0.85)',800);txt(o.k?o.avg.toLocaleString()+(o.k<5?' ('+o.k+'명 기준)':''):'-',cx[3],y,16,'#ffe066',800);});
+    rankList.forEach((o,i)=>{const y=top+rh*(i+1.5),mine=o.clan===myClan,_r=rankUI.clanRows.push({x:8,y:y-rh/2,w:W-16,h:rh,clan:o.clan}),c=i===0?'#ffe066':i===1?'#e0e8f0':i===2?'#e8a878':'#fff';if(mine){ctx.fillStyle='rgba(120,180,255,0.12)';ctx.fillRect(8,y-rh/2+2,W-16,rh-4);}
+      txt(String(i+1),cx[0],y,17,c,900);txt(o.clan,cx[1],y,17,mine?'#b8d4ff':'#fff',900,'left');txt(o.n+'명',cx[2],y,16,'rgba(255,255,255,0.85)',800);txt(o.k?o.avg.toLocaleString()+(o.k<5?' ('+o.k+'명 기준)':''):'-',cx[3],y,16,'#ffe066',800);txt('›',W-22,y,18,'rgba(255,255,255,0.4)',900);});
+    txt('학교를 누르면 명단을 볼 수 있어요',W/2,H-38,12,'rgba(255,255,255,0.5)',700);
     txt(myClan?'내 학교: '+myClan+' · 타이틀 화면에서 바꿀 수 있어요':'타이틀 화면 오른쪽 "학교 선택"에서 학교를 골라주세요',W/2,H-18,12,'rgba(184,212,255,0.75)',700);return;}
   if(!rankList.length){txt(rankTab===0?'아직 웨이브 15를 클리어한 사람이 없어요':'아직 기록이 없어요. 첫 번째가 되어보세요!',W/2,H/2,16,'rgba(255,255,255,0.7)',700);return;}
   const top=66,rh=Math.max(26,Math.min(32,(H-top-10)/11)),cx=[W*0.1,W*0.18,W*0.6,W*0.86],hc='rgba(255,255,255,0.5)',lt=top+rh,lh=H-lt-6;
