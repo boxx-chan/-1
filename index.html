@@ -19,6 +19,7 @@ canvas{position:fixed;left:0;top:0;display:block;touch-action:none}
 #nickBox button{font-size:16px;font-weight:800;padding:10px 18px;border-radius:8px;border:1.5px solid #5ff4ff;background:rgba(90,240,255,0.2);color:#fff;margin:0 4px}
 #nickBox button.c{border-color:#556;background:transparent}
 #promoBox{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(5,7,15,0.78);z-index:9}#promoBox .card{position:relative;background:#101626;border:1.5px solid #8ff;border-radius:14px;padding:18px 22px 12px;width:min(400px,84vw);font-family:system-ui,sans-serif;color:#fff;text-align:center}#promoBox .x{position:absolute;right:6px;top:4px;background:none;border:none;color:#aab;font-size:24px;padding:4px 10px}#promoBox .go{font-size:16px;font-weight:800;padding:11px 0;width:100%;border-radius:9px;border:1.5px solid #fff;background:rgba(255,255,255,0.12);color:#fff;margin-top:12px}#promoBox .no{background:none;border:none;color:#99a;font-size:13px;margin-top:10px;padding:6px;text-decoration:underline}
+@font-face{font-family:'Do Hyeon';src:url('fonts/dohyeon.woff2') format('woff2');font-display:swap}
 </style></head><body><canvas id="c"></canvas><div id="sat" style="position:fixed;left:0;top:0;width:0;height:env(safe-area-inset-top,0px);visibility:hidden;pointer-events:none"></div><div id="promoBox"><div class="card"><button class="x" id="promoX">✕</button><div style="font-weight:900;font-size:18px">🆕 구글 로그인 생김</div><div style="font-size:14px;opacity:.85;margin-top:10px;line-height:1.5">코인·스킨·닉네임을 구글 계정에 저장해요.<br>폰을 바꾸거나 앱을 지워도 그대로 이어져요.</div><button class="go" id="promoGo">G  구글로 로그인</button><br><button class="no" id="promoNo">오늘 하루 보지 않기</button></div></div><div id="nickBox"><div class="card"><div style="font-weight:900;font-size:17px">랭킹 닉네임</div><div id="nickSub" style="font-size:13px;opacity:.7;margin-top:6px">1~12자 · 랭킹에 표시돼요 · 취소하면 기록이 안 올라가요</div><input id="nickIn" maxlength="12" autocomplete="off"><div id="nickNote" style="font-size:13px;color:#ffe066;margin-top:6px"></div><div id="nickErr" style="font-size:13px;color:#ff8da6;min-height:16px;margin-top:4px"></div><div><button class="c" id="nickNo">취소</button><button id="nickOk">확인</button></div><div id="nickG" style="display:none;margin-top:10px;font-size:13px"><span style="opacity:.7">예전에 구글로 저장했다면 </span><a href="#" id="nickGa" style="color:#8ff;font-weight:800">구글로 불러오기</a></div></div></div><script>
 'use strict';
 const cvs=document.getElementById('c'),ctx=cvs.getContext('2d');
@@ -137,7 +138,7 @@ let rush=false,rushT=0,rChain=0,rChainT=0,rMax=0,rushSpawnT=0,rushElite={},rushB
 let hc=0,hcQueue=[],hcSpawnT=0,hcCap=2,hcSpd=1,hcNew=false,hcEarn=0,hcSelUI={back:null,tiles:[]},hcBtns=[];
 const RUSH_LEN=60,RCHAIN_KEEP=2.5,rMul=()=>1+0.25*Math.min(rChain,12);
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1127.85';
+const VERSION='1127.86';
 const WCOIN=60,RCOIN_N=3,RCOIN_MAX=600;const today=()=>{const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();};const rcLeft=()=>{const r=META.rd||{};return r.d===today()?Math.max(0,RCOIN_N-(r.n||0)):RCOIN_N;};let overBtns=null,quitRun=false,rcUsed=false;let hitSrc='',runT=0,endless=false,clearBonus=0,clrW=0,clrK=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
 let ult=null,mines=[];const ultMax=()=>U.ultFast?75:100,ultN=()=>rush?4:U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#8a6cff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
@@ -1455,7 +1456,8 @@ function drawMarkers(){
     ctx.setLineDash([6,6]);ctx.beginPath();ctx.arc(m.x,m.y,40*(1-p)+ET[m.type].r,0,TAU);ctx.stroke();ctx.setLineDash([]);
     ctx.beginPath();ctx.moveTo(m.x-6,m.y);ctx.lineTo(m.x+6,m.y);ctx.moveTo(m.x,m.y-6);ctx.lineTo(m.x,m.y+6);ctx.stroke();ctx.globalAlpha=1;}
 }
-function txt(s,x,y,size,col,weight,align){ctx.font=`${weight||700} ${size}px ${FONT}`;ctx.textAlign=align||'center';ctx.textBaseline='middle';ctx.fillStyle=col;ctx.fillText(s,x,y);}
+let DISP_OK=false;try{document.fonts.load('20px "Do Hyeon"','섬광').then(f=>{if(f&&f.length)DISP_OK=true;}).catch(()=>{});}catch(e){}
+function txt(s,x,y,size,col,weight,align){ctx.font=DISP_OK&&size>=14?`400 ${size*1.05}px "Do Hyeon",${FONT}`:`${weight||700} ${size}px ${FONT}`;ctx.textAlign=align||'center';ctx.textBaseline='middle';ctx.fillStyle=col;ctx.fillText(s,x,y);}
 function drawButton(b,label,active,cd,glow,gl){
   const pr=btnAnim[label==='회피'?'dash':'atk'],r=b.r*(1-pr*0.08);
   if(glow){ctx.fillStyle=`rgba(${gl?'255,214,90':'120,255,255'},${0.25+0.15*Math.sin(time*16)})`;ctx.beginPath();ctx.arc(b.x,b.y,r*1.35,0,TAU);ctx.fill();}
