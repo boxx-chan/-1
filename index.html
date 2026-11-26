@@ -137,7 +137,7 @@ let rush=false,rushT=0,rChain=0,rChainT=0,rMax=0,rushSpawnT=0,rushElite={},rushB
 let hc=0,hcQueue=[],hcSpawnT=0,hcCap=2,hcSpd=1,hcNew=false,hcEarn=0,hcSelUI={back:null,tiles:[]},hcBtns=[];
 const RUSH_LEN=60,RCHAIN_KEEP=2.5,rMul=()=>1+0.25*Math.min(rChain,12);
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1127.81';
+const VERSION='1127.82';
 const WCOIN=60,RCOIN_N=3,RCOIN_MAX=600;const today=()=>{const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();};const rcLeft=()=>{const r=META.rd||{};return r.d===today()?Math.max(0,RCOIN_N-(r.n||0)):RCOIN_N;};let overBtns=null,quitRun=false,rcUsed=false;let hitSrc='',runT=0,endless=false,clearBonus=0,clrW=0,clrK=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
 let ult=null,mines=[];const ultMax=()=>U.ultFast?75:100,ultN=()=>rush?4:U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#8a6cff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
@@ -264,7 +264,7 @@ addEventListener('load',()=>{let nk2=null;try{nk2=localStorage.getItem('flash_nk
   document.getElementById('nickOk').onclick=()=>closeNick(true);document.getElementById('nickGa').onclick=e=>{e.preventDefault();acctLogin();};document.getElementById('nickNo').onclick=()=>closeNick(false);
   document.getElementById('nickIn').addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Enter')closeNick(true);if(e.key==='Escape')closeNick(false);});});
 try{const m=JSON.parse(localStorage.getItem('flash_meta')||'null');if(m&&typeof m==='object'){META.coins=Math.max(0,+m.coins||0);META.own=Object.assign({flash:1},m.own||{});if(SKINS.some(k=>k.id===m.eq)&&META.own[m.eq])META.eq=m.eq;META.cleared=m.cleared||0;META.bestClear=m.bestClear||0;META.hc=Math.min(10,Math.max(0,+m.hc||0));META.hcBest=(m.hcBest&&typeof m.hcBest==='object')?m.hcBest:{};META.ownT=Object.assign({},m.ownT||{});META.rd=(m.rd&&typeof m.rd==='object')?m.rd:{};if(!m.tv)delete META.ownT.flash;if(SKINS.some(k=>k.id===m.eqT)&&META.ownT[m.eqT])META.eqT=m.eqT;if(META.eq==='reaper')META.eqT='reaper';else if(META.eqT==='reaper')META.eqT='none';}}catch(e){}
-const RP_EV='2026-11-26',rpDay=()=>new Date(Date.now()+9*3600e3).toISOString().slice(0,10)===RP_EV,rpTrial=()=>rpDay()&&!META.own.reaper,ownS=id=>!!META.own[id]||(id==='reaper'&&rpTrial());
+const RP_EV='2026-11-26',rpDay=()=>false,rpTrial=()=>rpDay()&&!META.own.reaper,ownS=id=>!!META.own[id]||(id==='reaper'&&rpTrial());
 (function(){let m=null;try{m=JSON.parse(localStorage.getItem('flash_meta')||'null')}catch(e){}
   if(m&&m.rpT){META.rpT=1;META.rpPrev=Array.isArray(m.rpPrev)?m.rpPrev:null;}
   if(rpTrial()){if(!META.rpT){META.rpPrev=[META.eq,META.eqT];META.rpT=1;META.eq='reaper';META.eqT='reaper';saveMeta();}else if(m&&m.eq==='reaper'){META.eq='reaper';META.eqT='reaper';}}
