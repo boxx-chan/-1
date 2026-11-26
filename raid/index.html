@@ -1836,7 +1836,7 @@ function hostUpdate(rdt){runT+=rdt;commonTick(rdt);
   fxStep(rdt);hitstop=0;
   if(!rush&&enemies.some(e=>!e.dead&&e.spawnT<=0)){comboT-=rdt;if(comboT<=0)combo=0;}
   camFollow(rdt);
-  snapT-=rdt;if(remote()&&snapT<=0){snapT=netMode==='relay'?0.1:0.033;sendSnap();}}
+  snapT-=rdt;if(remote()&&snapT<=0){snapT=netMode==='relay'?0.2:0.033;sendSnap();}}
 function commonTick(rdt){trauma=Math.max(0,trauma-rdt*1.7);hurtFlash=Math.max(0,hurtFlash-rdt*2.2);bannerT-=rdt;strikeFlash=Math.max(0,strikeFlash-rdt*3);myFlashFx=Math.max(0,myFlashFx-rdt*2.5);
   for(const k in btnAnim)btnAnim[k]=Math.max(0,btnAnim[k]-rdt*6);hitstop=0;ts=1;}
 function camFollow(rdt){const f=(!me.dead?me:mate&&!mate.dead?mate:me).P;const vw=W/S,vh=H/S,tx=f.x+f.vx*0.12,ty=f.y+f.vy*0.12,k=1-Math.exp(-7*rdt);
@@ -1892,7 +1892,7 @@ function guestUpdate(rdt){runT+=rdt;commonTick(rdt);
   if(!me.dead&&hostState!=='pick'){readMove();plStep(me,rdt);}
   for(const pl of PL){use(pl);updateWavesProj(rdt);}use(me);
   fxStep(rdt);hitstop=0;camFollow(rdt);
-  pktT-=rdt;if(pktT<=0){pktT=netMode==='relay'?0.1:0.033;const p=me.P;send({t:'p',x:R1(p.x),y:R1(p.y),vx:R1(p.vx),vy:R1(p.vy),f:R1(p.face),dT:R1(p.dashT),dx:R1(p.dx),dy:R1(p.dy),jx:R1(inp.jx),jy:R1(inp.jy)});}}
+  pktT-=rdt;if(pktT<=0){pktT=netMode==='relay'?0.2:0.033;const p=me.P;send({t:'p',x:R1(p.x),y:R1(p.y),vx:R1(p.vx),vy:R1(p.vy),f:R1(p.face),dT:R1(p.dashT),dx:R1(p.dx),dy:R1(p.dy),jx:R1(inp.jx),jy:R1(inp.jy)});}}
 
 /* ---------- action hooks (send my actions; replay remote ones) ---------- */
 let replaying=false;
@@ -1933,7 +1933,7 @@ async function onSig2(ev,p){if(!p)return;
   else if(ev==='ice'&&p.from!==role&&pc){try{await pc.addIceCandidate(p.c);}catch(e){}}
   else if(ev==='relay'&&p.from!==role){if(!relay&&netMode!=='direct'){relay=true;netMode='relay';onConnected();}}
   else if(ev==='g'&&p.from!==role&&relay){onNet(p.m);}}
-function startConnTimer(){clearTimeout(connTimer);connTimer=setTimeout(()=>{if(netMode)return;relay=true;netMode='relay';sig.send('relay',{from:role});setMsg('직접 연결 실패 → 서버 경유 (느릴 수 있어요)');onConnected();},8000);}
+function startConnTimer(){clearTimeout(connTimer);connTimer=setTimeout(()=>{if(netMode)return;relay=true;netMode='relay';sig.send('relay',{from:role});setMsg('직접 연결 실패 → 서버 경유 (끊기고 느려요 · 같은 와이파이 권장)');onConnected();},8000);}
 function send(m){if(netMode==='direct'&&dc&&dc.readyState==='open'){try{dc.send(JSON.stringify(m));}catch(e){}}else if(relay&&sig)sig.send('g',{from:role,m});}
 function hostRoom(){role='host';const code=String(Math.floor(1000+Math.random()*9000));show('rHost');document.getElementById('rcode').textContent=code;setMsg('동료를 기다리는 중...');sig=makeSig(code,onSig,()=>{});}
 function joinRoom(code){if(!/^\d{4}$/.test(code)){setMsg('4자리 숫자를 입력하세요');return;}role='guest';setMsg('방 찾는 중...');
@@ -1993,7 +1993,7 @@ const oFR=drawFlashReady;drawFlashReady=function(){if(RON&&me.dead)return;oFR();
 const oCG=drawComboGauge;drawComboGauge=function(){if(RON&&me.dead)return;oCG();};
 const oHUD=drawHUD;drawHUD=function(){oHUD();if(!RON||!mate)return;
   {const p=mate.P,bw=116,f=Math.max(0,p.hp/p.maxHp);txt(mateName+(mate.dead?' (부활 대기)':''),18,104,11,'rgba(255,214,140,0.85)',800,'left');rrect(18,112,bw,8,3);ctx.fillStyle='rgba(255,255,255,0.1)';ctx.fill();if(f>0){rrect(18,112,Math.max(4,bw*f),8,3);ctx.fillStyle='#7fffa8';ctx.fill();}}
-  if(netMode&&netMode!=='bot')txt((netMode==='relay'?'서버 경유 · ':'')+Math.round(rtt)+'ms',W-14,H-10,10,'rgba(255,255,255,0.35)',600,'right');
+  if(netMode&&netMode!=='bot')txt((netMode==='relay'?'서버 경유 중 (같은 와이파이 권장) · ':'')+Math.round(rtt)+'ms',W-14,H-10,10,'rgba(255,255,255,0.35)',600,'right');
   if(me.dead)txt('쓰러짐 — 다음 웨이브 시작 때 부활',W/2,H*0.3,Math.round(clamp(H*0.04,14,20)),'#ff8da6',900);
   if(state==='wait'||(role==='guest'&&hostState==='pick'&&state==='play'))txt('동료가 강화를 고르는 중...',W/2,H*0.36,Math.round(clamp(H*0.04,14,20)),'#ffe066',900);};
 const oRender=render;render=function(){oRender();if(!RON)return;
@@ -2033,7 +2033,7 @@ const css=document.createElement('style');css.textContent=`#rlobby{position:fixe
 #rcode{font-size:44px;font-weight:900;letter-spacing:12px;color:#ffe066;margin:8px 0}#rmsg{font-size:13px;min-height:18px;margin-top:8px;color:#9fd8ff;line-height:1.5}.hide{display:none!important}`;
 document.head.appendChild(css);
 const lob=document.createElement('div');lob.id='rlobby';lob.innerHTML=`<div class="card"><h1>섬광 2인전</h1>
-<div class="sub">둘이 함께 웨이브 15 보스까지 · 같은 와이파이/핫스팟 권장<br>적이 2배로 많고 단단해요 · 쓰러지면 다음 웨이브에 부활<br>섬광 슬로모션 없음 · 코인·랭킹 없음 · ${RV}</div>
+<div class="sub">둘이 함께 웨이브 15 보스까지<br><b style="color:#ffe066">되도록 같은 와이파이나 핫스팟에서 해주세요</b><br>다른 곳이면 서버를 거쳐 끊기고 느려지며, 서버 사용량 제한이 있어요<br>적이 2배로 많고 단단해요 · 쓰러지면 다음 웨이브에 부활<br>섬광 슬로모션 없음 · 코인·랭킹 없음 · ${RV}</div>
 <div id="rMain"><button id="rbH">방 만들기</button><button id="rbJ" class="alt">코드로 참가</button><button id="rbB" class="c" style="border-color:#7fe0a0;color:#c8ffd8">봇과 같이 (연습)</button><button id="rbX" class="c">← 섬광으로</button></div>
 <div id="rHost" class="hide"><div style="font-size:13px;opacity:.75">동료에게 이 코드를 알려주세요</div><div id="rcode">----</div><button id="rbC1" class="c">취소</button></div>
 <div id="rJoin" class="hide"><input id="rin" inputmode="numeric" maxlength="4" placeholder="0000"><button id="rbGo" class="alt">참가</button><button id="rbC2" class="c">취소</button></div>
