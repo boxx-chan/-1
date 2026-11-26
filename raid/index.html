@@ -12,7 +12,7 @@ canvas{position:fixed;left:0;top:0;display:block;touch-action:none}
 #nickBox input{width:100%;box-sizing:border-box;font-size:18px;padding:8px;border-radius:8px;border:1px solid #3a4a66;background:#070a14;color:#fff;margin:8px 0;text-align:center;user-select:text;-webkit-user-select:text}
 #nickBox button{font-size:16px;font-weight:800;padding:10px 18px;border-radius:8px;border:1.5px solid #5ff4ff;background:rgba(90,240,255,0.2);color:#fff;margin:0 4px}
 #nickBox button.c{border-color:#556;background:transparent}
-</style></head><body><canvas id="c"></canvas><div id="sat" style="position:fixed;left:0;top:0;width:0;height:env(safe-area-inset-top,0px);visibility:hidden;pointer-events:none"></div><div id="nickBox"><div class="card"><div style="font-weight:900;font-size:17px">랭킹 닉네임</div><div style="font-size:13px;opacity:.7;margin-top:6px">1~12자 · 랭킹에 표시돼요 · 취소하면 기록이 안 올라가요</div><input id="nickIn" maxlength="12" autocomplete="off"><div id="nickNote" style="font-size:13px;color:#ffe066;margin-top:6px"></div><div id="nickErr" style="font-size:13px;color:#ff8da6;min-height:16px;margin-top:4px"></div><div><button class="c" id="nickNo">취소</button><button id="nickOk">확인</button></div></div></div><script>
+</style></head><body><canvas id="c"></canvas><div id="sat" style="position:fixed;left:0;top:0;width:0;height:env(safe-area-inset-top,0px);visibility:hidden;pointer-events:none"></div><div id="nickBox"><div class="card"><div style="font-weight:900;font-size:17px">랭킹 닉네임</div><div id="nickSub" style="font-size:13px;opacity:.7;margin-top:6px">1~12자 · 랭킹에 표시돼요 · 취소하면 기록이 안 올라가요</div><input id="nickIn" maxlength="12" autocomplete="off"><div id="nickNote" style="font-size:13px;color:#ffe066;margin-top:6px"></div><div id="nickErr" style="font-size:13px;color:#ff8da6;min-height:16px;margin-top:4px"></div><div><button class="c" id="nickNo">취소</button><button id="nickOk">확인</button></div></div></div><script>
 'use strict';
 const cvs=document.getElementById('c'),ctx=cvs.getContext('2d');
 let W=0,H=0,DPR=1,S=1,TOP=0,lastVW=0,lastVH=0;
@@ -130,7 +130,7 @@ let rush=false,rushT=0,rChain=0,rChainT=0,rMax=0,rushSpawnT=0,rushElite={},rushB
 let hc=0,hcQueue=[],hcSpawnT=0,hcCap=2,hcSpd=1,hcNew=false,hcEarn=0,hcSelUI={back:null,tiles:[]},hcBtns=[];
 const RUSH_LEN=60,RCHAIN_KEEP=2.5,rMul=()=>1+0.25*Math.min(rChain,12);
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1127.72';
+const VERSION='1127.73';
 const WCOIN=60,RCOIN_N=3,RCOIN_MAX=600;const today=()=>{const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();};const rcLeft=()=>{const r=META.rd||{};return r.d===today()?Math.max(0,RCOIN_N-(r.n||0)):RCOIN_N;};let overBtns=null,quitRun=false,rcUsed=false;let hitSrc='',runT=0,endless=false,clearBonus=0,clrW=0,clrK=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
 let ult=null,mines=[];const ultMax=()=>U.ultFast?75:100,ultN=()=>rush?4:U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#8a6cff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
@@ -161,7 +161,7 @@ function makeRec(){const cl=clearTimeRec!==null;return{season:SEASON,wave:Math.m
 function loadRank(){if(!rankOn()||rankLoading)return;if(!clanMap)loadClans(()=>{if(rankTab===3){rankList=null;rankLoading=false;loadRank();}});
   if(rankTab===3){if(!clanMap){return;}rankLoading=true;rankErr='';
     const gj=u=>fetch(RANK.url+'/rest/v1/scores?'+u,{headers:rankHdr(),cache:'no-store'}).then(x=>x.ok?x.json():Promise.reject(x.status));
-    Promise.all([gj('select=nickname,score,pid&season=eq.'+SEASON+'&mode=eq.main&order=score.desc&limit=1000'),gj('select=pid,nickname&pid=not.is.null&limit=5000').catch(()=>[])]).then(([d,dn])=>{
+    Promise.all([gj('select=nickname,score,pid&season=eq.'+SEASON+'&mode=eq.main&order=score.desc&limit=1000'),fetch(RANK.url+'/rest/v1/rpc/player_names',{method:'POST',headers:rankHdr(),body:'{}',cache:'no-store'}).then(x=>x.ok?x.json():gj('select=pid,nickname&pid=not.is.null&limit=5000')).catch(()=>[])]).then(([d,dn])=>{
       const best={},nm={};for(const r of dn)if(r.pid&&r.nickname)nm[r.pid]=r.nickname;for(const r of d){if(!r.pid||best[r.pid])continue;best[r.pid]=r;nm[r.pid]=r.nickname;}
       window.__myPid=pid;const S={};for(const c of CLANS)S[c]={clan:c,n:0,sc:[],m:[]};for(const pid in clanMap){const c=clanMap[pid];if(!S[c])S[c]={clan:c,n:0,sc:[],m:[]};S[c].n++;if(best[pid])S[c].sc.push(best[pid].score);S[c].m.push({nick:nm[pid]||'',score:best[pid]?best[pid].score:-1,me:pid===window.__myPid});}
       for(const c in S)S[c].m.sort((a,b)=>b.score-a.score||(a.nick?0:1)-(b.nick?0:1)||a.nick.localeCompare(b.nick));
@@ -178,7 +178,7 @@ let rkDrag=null;addEventListener('wheel',e=>{if(state==='rank')rankScroll+=e.del
 let clanView=null,rankScroll=0,nickCb=null,nickAsked=false,rankTab=0;
 function fitNick(){const b=document.getElementById('nickBox'),vv=window.visualViewport;if(!b||b.style.display!=='flex'||!vv)return;b.style.top=vv.offsetTop+'px';b.style.height=vv.height+'px';}
 if(window.visualViewport){visualViewport.addEventListener('resize',fitNick);visualViewport.addEventListener('scroll',fitNick);}
-function askNick(cb){nickCb=cb;const b=document.getElementById('nickBox'),i=document.getElementById('nickIn');i.value=nick;b.style.display='flex';fitNick();setTimeout(()=>{try{i.focus()}catch(e){}fitNick();},50);}
+let nickForce=false;function askNick(cb,force){nickForce=!!force;document.getElementById('nickSub').textContent=nickForce?'1~12자 · 랭킹과 학교 명단에 표시돼요':'1~12자 · 랭킹에 표시돼요 · 취소하면 기록이 안 올라가요';document.getElementById('nickNo').style.display=nickForce?'none':'';nickCb=cb;const b=document.getElementById('nickBox'),i=document.getElementById('nickIn');i.value=nick;b.style.display='flex';fitNick();setTimeout(()=>{try{i.focus()}catch(e){}fitNick();},50);}
 let nickBusy=false,nickTaken=false;
 function closeNick(ok){const v=cleanNick(document.getElementById('nickIn').value),er=document.getElementById('nickErr');if(ok&&!v)return;
   if(ok&&rankOn()&&ptok){if(nickBusy)return;nickBusy=true;er.textContent='확인 중...';
@@ -186,10 +186,10 @@ function closeNick(ok){const v=cleanNick(document.getElementById('nickIn').value
       if(res==='taken'){er.textContent='이미 다른 사람이 쓰는 닉네임이에요';return;}
       if(res==='ok'){try{localStorage.setItem('flash_nk2','1')}catch(e){}renMsg=nick&&nick!==v?'닉네임 등록 · 기록 이름 변경 완료':'닉네임 등록 완료';renUntil=time+4;rankList=null;if(state==='rank')loadRank();}
       er.textContent='';finishNick(v,res==='ok');});return;}
-  er.textContent='';finishNick(ok?v:null);}
+  if(!ok&&nickForce)return;er.textContent='';finishNick(ok?v:null);}
 function finishNick(v,claimed){const b=document.getElementById('nickBox'),ok=v!==null;b.style.display='none';document.getElementById('nickNote').textContent='';
   if(ok){const ch=nick&&nick!==v;nick=v;try{localStorage.setItem('flash_nick',nick)}catch(e){}if(ch&&!claimed)renameRemote();if(nickCb)nickCb();}nickCb=null;}
-addEventListener('load',()=>{let nk2=null;try{nk2=localStorage.getItem('flash_nk2')}catch(e){}if(rankOn()&&!nk2&&nick){setTimeout(()=>{if(state==='title'){askNick(()=>{});document.getElementById('nickNote').textContent='랭킹 정리를 위해 닉네임을 다시 입력해 주세요 (같은 이름은 먼저 등록한 사람 것)';}},600);}
+addEventListener('load',()=>{let nk2=null;try{nk2=localStorage.getItem('flash_nk2')}catch(e){}if(rankOn()&&!nick){setTimeout(()=>{askNick(()=>{},true);document.getElementById('nickNote').textContent='처음 오셨네요! 닉네임부터 정해주세요';},300);}else if(rankOn()&&!nk2&&nick){setTimeout(()=>{if(state==='title'){askNick(()=>{});document.getElementById('nickNote').textContent='랭킹 정리를 위해 닉네임을 다시 입력해 주세요 (같은 이름은 먼저 등록한 사람 것)';}},600);}
   document.getElementById('nickOk').onclick=()=>closeNick(true);document.getElementById('nickNo').onclick=()=>closeNick(false);
   document.getElementById('nickIn').addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Enter')closeNick(true);if(e.key==='Escape')closeNick(false);});});
 try{const m=JSON.parse(localStorage.getItem('flash_meta')||'null');if(m&&typeof m==='object'){META.coins=Math.max(0,+m.coins||0);META.own=Object.assign({flash:1},m.own||{});if(SKINS.some(k=>k.id===m.eq)&&META.own[m.eq])META.eq=m.eq;META.cleared=m.cleared||0;META.bestClear=m.bestClear||0;META.hc=Math.min(10,Math.max(0,+m.hc||0));META.hcBest=(m.hcBest&&typeof m.hcBest==='object')?m.hcBest:{};META.ownT=Object.assign({},m.ownT||{});META.rd=(m.rd&&typeof m.rd==='object')?m.rd:{};if(!m.tv)delete META.ownT.flash;if(SKINS.some(k=>k.id===m.eqT)&&META.ownT[m.eqT])META.eqT=m.eqT;if(META.eq==='reaper')META.eqT='reaper';else if(META.eqT==='reaper')META.eqT='none';}}catch(e){}
