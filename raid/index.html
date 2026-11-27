@@ -134,7 +134,7 @@ const RUSH_LEN=60,RCHAIN_KEEP=2.5,rMul=()=>1+0.25*Math.min(rChain,12);
 let tut=null,tutForce=false,tutSkipR=null;
 let dly=null,echoes=[],dSt=null,dRes=null,dBoard=null,dBoardDay='',dTag='',dLoading=false;
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1127.97';
+const VERSION='1127.98';
 const WCOIN=60,RCOIN_N=3,RCOIN_MAX=600;const today=()=>{const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();};const rcLeft=()=>{const r=META.rd||{};return r.d===today()?Math.max(0,RCOIN_N-(r.n||0)):RCOIN_N;};let overBtns=null,quitRun=false,rcUsed=false;let hitSrc='',runT=0,endless=false,clearBonus=0,clrW=0,clrK=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
 let ult=null,mines=[];const ultMax=()=>U.ultFast?75:100,ultN=()=>rush?4:U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#8a6cff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
@@ -324,7 +324,7 @@ function menuTap(x,y){
     if(rankTab===3&&rankList){if(clanView){if(rankUI.clanBack&&inR(x,y,rankUI.clanBack)){clanView=null;rankScroll=0;}}else if(rankUI.clanRows)for(const r of rankUI.clanRows)if(inR(x,y,r)){clanView=r.clan;rankScroll=0;break;}}return;}
   if(state==='acct'){acctTap(x,y);return;}
   if(state==='settings'){if(x===undefined||inR(x,y,setUI.back)){state='title';return;}if(inR(x,y,helpBtnR)){state='help';helpPage=0;return;}if(inR(x,y,acctBtnR)){state='acct';return;}if(inR(x,y,iosBtnR)){instKind='ios';state='inst';return;}if(inR(x,y,andBtnR)){instKind='and';state='inst';return;}if(inR(x,y,qaBtnR)){qaPend=true;return;}return;}
-  if(state==='title'){if(setBtnR&&x!==undefined&&inR(x,y,setBtnR)){state='settings';return;}if(raidBtnR&&x!==undefined&&inR(x,y,raidBtnR)){location.href='raid/';return;}if(clanBtnR&&x!==undefined&&inR(x,y,clanBtnR)){state='clansel';clanMsg='';return;}for(const r of voteR)if(inR(x,y,r)){voteScarf(r.v);return;}if(inR(x,y,shopBtnR)){openShop();return;}if(hcBtnR&&inR(x,y,hcBtnR)){state='hcsel';return;}if(inR(x,y,rankBtnR)){openRank();return;}if(x!==undefined&&rushBtnR&&inR(x,y,rushBtnR)){state='evsel';return;}if(x!==undefined&&!inR(x,y,startBtnR))return;startMode('main');}
+  if(state==='title'){if(setBtnR&&x!==undefined&&inR(x,y,setBtnR)){state='settings';return;}if(dlyBtnR&&x!==undefined&&inR(x,y,dlyBtnR)){if(todayBoss())startMode('daily');return;}if(raidBtnR&&x!==undefined&&inR(x,y,raidBtnR)){location.href='raid/';return;}if(clanBtnR&&x!==undefined&&inR(x,y,clanBtnR)){state='clansel';clanMsg='';return;}for(const r of voteR)if(inR(x,y,r)){voteScarf(r.v);return;}if(inR(x,y,shopBtnR)){openShop();return;}if(hcBtnR&&inR(x,y,hcBtnR)){state='hcsel';return;}if(inR(x,y,rankBtnR)){openRank();return;}if(x!==undefined&&rushBtnR&&inR(x,y,rushBtnR)){state='evsel';return;}if(x!==undefined&&!inR(x,y,startBtnR))return;startMode('main');}
   else if(state==='evsel'){if(x===undefined||inR(x,y,evUI.back)){state='title';return;}for(const c of evUI.cards)if(inR(x,y,c)){startMode(c.id);return;}}
   else if(state==='over'&&overT>1.0){if(x!==undefined&&overRankBtn&&inR(x,y,overRankBtn)){askNick(()=>{if(pendRec)postRec(pendRec);});return;}if(x!==undefined){if(overBtns&&inR(x,y,overBtns[1])){dly=null;reset();state='title';return;}if(!overBtns||!inR(x,y,overBtns[0]))return;}reset();state='play';}
   else if(state==='clear'&&overT>1.0&&x!==undefined){const rs=clearRects();if(inR(x,y,rs[0])){endless=true;state='play';last=performance.now();banner('무한 모드');}
@@ -1889,14 +1889,16 @@ function drawTitle(){
   {const r={x:14,y:34,w:136,h:44};setBtnR=r;rrect(r.x,r.y,r.w,r.h,10);ctx.fillStyle='rgba(255,255,255,0.07)';ctx.fill();ctx.strokeStyle='rgba(255,255,255,0.45)';ctx.lineWidth=1.5;ctx.stroke();txt('⚙ 설정',r.x+r.w/2,r.y+r.h/2,15,'#fff',800);if(!isStandalone()){ctx.fillStyle='#ff3d6e';ctx.beginPath();ctx.arc(r.x+r.w-8,r.y+8,5,0,TAU);ctx.fill();}}
   const sb={x:W-150,y:34,w:136,h:40};shopBtnR=sb;rrect(sb.x,sb.y,sb.w,sb.h,10);ctx.fillStyle='rgba(255,224,102,0.12)';ctx.fill();ctx.strokeStyle='rgba(255,224,102,0.6)';ctx.lineWidth=1.5;ctx.stroke();
   txt('상점  ◆ '+META.coins.toLocaleString(),sb.x+sb.w/2,sb.y+sb.h/2,14,'#ffe066',800);if(rpSale()&&!META.own.reaper)saleTag(sb.x+sb.w-24,sb.y-4,'SALE -65%',11);
-  const rb={x:W-150,y:84,w:136,h:40};rankBtnR=rb;rrect(rb.x,rb.y,rb.w,rb.h,10);ctx.fillStyle='rgba(200,140,255,0.12)';ctx.fill();ctx.strokeStyle='rgba(200,140,255,0.6)';ctx.lineWidth=1.5;ctx.stroke();
+  {const r={x:W-150,y:84,w:136,h:40};dlyBtnR=r;const tb=todayBoss(),pu=0.5+0.5*Math.sin(time*5);rrect(r.x,r.y,r.w,r.h,10);ctx.fillStyle=`rgba(200,150,255,${tb?0.16+0.14*pu:0.06})`;ctx.fill();ctx.strokeStyle=tb?`rgba(225,200,255,${0.6+0.4*pu})`:'rgba(200,150,255,0.35)';ctx.lineWidth=tb?2:1.5;ctx.stroke();
+    txt('오늘의 보스',r.x+r.w/2,r.y+r.h/2-7,14,'#fff',900);txt(tb?DAILY_NAME[tb]+' · 1등 3,000코인':'준비 중',r.x+r.w/2,r.y+r.h/2+10,10,'rgba(230,210,255,0.85)',700);}
+  const rb={x:W-150,y:134,w:136,h:40};rankBtnR=rb;rrect(rb.x,rb.y,rb.w,rb.h,10);ctx.fillStyle='rgba(200,140,255,0.12)';ctx.fill();ctx.strokeStyle='rgba(200,140,255,0.6)';ctx.lineWidth=1.5;ctx.stroke();
   txt('랭킹',rb.x+rb.w/2,rb.y+rb.h/2,14,'#d9b8ff',800);
-  const hb2={x:W-150,y:134,w:136,h:40};hcBtnR=hb2;rrect(hb2.x,hb2.y,hb2.w,hb2.h,10);ctx.fillStyle='rgba(255,77,125,0.12)';ctx.fill();ctx.strokeStyle='rgba(255,77,125,0.65)';ctx.lineWidth=1.5;ctx.stroke();
+  const hb2={x:W-150,y:184,w:136,h:40};hcBtnR=hb2;rrect(hb2.x,hb2.y,hb2.w,hb2.h,10);ctx.fillStyle='rgba(255,77,125,0.12)';ctx.fill();ctx.strokeStyle='rgba(255,77,125,0.65)';ctx.lineWidth=1.5;ctx.stroke();
   txt('하드코어 '+(META.hc||0)+'/10',hb2.x+hb2.w/2,hb2.y+hb2.h/2,14,'#ff8da6',800);
-  {const r={x:W-150,y:184,w:136,h:40};raidBtnR=r;rrect(r.x,r.y,r.w,r.h,10);ctx.fillStyle='rgba(127,255,168,0.12)';ctx.fill();ctx.strokeStyle='rgba(127,255,168,0.6)';ctx.lineWidth=1.5;ctx.stroke();txt('2인전',r.x+r.w/2,r.y+r.h/2,14,'#a8ffc4',800);}
-  {const r={x:W-150,y:234,w:136,h:40};clanBtnR=r;rrect(r.x,r.y,r.w,r.h,10);ctx.fillStyle='rgba(120,180,255,0.12)';ctx.fill();ctx.strokeStyle='rgba(140,190,255,0.6)';ctx.lineWidth=1.5;ctx.stroke();txt(myClan?'학교: '+myClan:'학교 선택',r.x+r.w/2,r.y+r.h/2,14,'#b8d4ff',800);}
+  {const r={x:W-150,y:234,w:136,h:40};raidBtnR=r;rrect(r.x,r.y,r.w,r.h,10);ctx.fillStyle='rgba(127,255,168,0.12)';ctx.fill();ctx.strokeStyle='rgba(127,255,168,0.6)';ctx.lineWidth=1.5;ctx.stroke();txt('2인전',r.x+r.w/2,r.y+r.h/2,14,'#a8ffc4',800);}
+  {const r={x:W-150,y:284,w:136,h:40};clanBtnR=r;rrect(r.x,r.y,r.w,r.h,10);ctx.fillStyle='rgba(120,180,255,0.12)';ctx.fill();ctx.strokeStyle='rgba(140,190,255,0.6)';ctx.lineWidth=1.5;ctx.stroke();txt(myClan?'학교: '+myClan:'학교 선택',r.x+r.w/2,r.y+r.h/2,14,'#b8d4ff',800);}
 }
-let raidBtnR=null;
+let raidBtnR=null,dlyBtnR=null;
 function drawClanSel(){drawBg();ctx.fillStyle='rgba(5,7,15,0.7)';ctx.fillRect(0,0,W,H);
   const bk={x:14,y:14,w:96,h:38};clanUI.back=bk;rrect(bk.x,bk.y,bk.w,bk.h,10);ctx.fillStyle='rgba(255,255,255,0.06)';ctx.fill();ctx.strokeStyle='rgba(255,255,255,0.3)';ctx.lineWidth=1.5;ctx.stroke();txt('← 뒤로',bk.x+bk.w/2,bk.y+bk.h/2,14,'#fff',800);
   txt('학교 선택',W/2,H*0.13,Math.round(clamp(H*0.065,20,30)),'#b8d4ff',900);
