@@ -140,7 +140,7 @@ const RUSH_LEN=60,RCHAIN_KEEP=2.5,rMul=()=>1+0.25*Math.min(rChain,12);
 let tut=null,tutForce=false,tutSkipR=null;
 let dly=null,echoes=[],dSt=null,dRes=null,dBoard=null,dBoardDay='',dTag='',dLoading=false;
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1127.99';
+const VERSION='1127.100';
 const WCOIN=60,RCOIN_N=3,RCOIN_MAX=600;const today=()=>{const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();};const rcLeft=()=>{const r=META.rd||{};return r.d===today()?Math.max(0,RCOIN_N-(r.n||0)):RCOIN_N;};let overBtns=null,quitRun=false,rcUsed=false;let hitSrc='',runT=0,endless=false,clearBonus=0,clrW=0,clrK=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
 let ult=null,mines=[];const ultMax=()=>U.ultFast?75:100,ultN=()=>rush?4:U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#8a6cff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
@@ -218,9 +218,10 @@ addEventListener('load',()=>{document.getElementById('promoX').onclick=()=>promo
 function drawAcctMsg(){if(time<acctMsgT)txt(acctMsg,W/2,H-30,13,/실패|만료/.test(acctMsg)?'#ff8da6':'#8ff',800);}
 const CLANS=['안곡고','저동고','정발고'];let myClan=(()=>{try{return localStorage.getItem('flash_clan')||'';}catch(e){return '';}})(),clanMap=null,clanMsg='',clanMsgT=0,clanBusy=false,clanUI={back:null,opts:[]},clanBtnR=null;
 function loadClans(cb){if(!rankOn())return;fetch(RANK.url+'/rest/v1/rpc/clan_board',{method:'POST',headers:rankHdr(),body:'{}',cache:'no-store'}).then(x=>x.ok?x.json():[]).catch(()=>[]).then(d=>{const m={};for(const r of d)if(r.clan)m[r.pid]=r.clan;clanMap=m;if(cb)cb();});}
+let clanPick=null;
 function setClan(v){if(clanBusy||!rankOn()||!ptok)return;if(v===myClan){clanMsg='이미 '+(v||'선택 안 함')+'이에요';clanMsgT=time+2.5;return;}clanBusy=true;clanMsg='저장 중...';clanMsgT=time+9;
   fetch(RANK.url+'/rest/v1/rpc/set_clan',{method:'POST',headers:rankHdr(),body:JSON.stringify({p_tok:ptok,p_clan:v})}).then(x=>x.ok?x.json():'err').catch(()=>'err').then(r=>{clanBusy=false;
-    if(r==='ok'){myClan=v;try{localStorage.setItem('flash_clan',v);}catch(e){}clanMsg=v?v+' 선택 완료!':'학교 선택을 해제했어요';clanMap=null;}
+    if(r==='ok'){myClan=v;clanPick=null;try{localStorage.setItem('flash_clan',v);}catch(e){}clanMsg=v?v+' 선택 완료!':'학교 선택을 해제했어요';clanMap=null;}
     else if(r==='wait')clanMsg='학교는 하루에 한 번만 바꿀 수 있어요';else clanMsg='저장 실패 (잠시 후 다시)';clanMsgT=time+3;});}
 let rankList=null,rankErr='',rankLoading=false,pendRec=null,recMsg='',clearTimeRec=null,rankUI={back:null,nick:null,tabs:[]},overRankBtn=null;
 const rankOn=()=>!!(RANK.url&&RANK.key);
@@ -321,7 +322,7 @@ function menuTap(x,y){
   if(state==='pick'){if(pickT<0.35)return;const i=pickHit(x,y);if(i>=0)choose(i);return;}
   if(state==='shop'){shopTap(x,y);return;}
   if(state==='hcsel'){if(x===undefined||inR(x,y,hcSelUI.back)){state='title';return;}for(let i=0;i<hcSelUI.tiles.length;i++){const t=hcSelUI.tiles[i];if(inR(x,y,t)&&i+1<=(META.hc||0)+1){hcStart(i+1);return;}}return;}
-  if(state==='clansel'){if(x===undefined||inR(x,y,clanUI.back)){state='title';return;}for(const o of clanUI.opts)if(inR(x,y,o)){if(o.v==='?'){qaPend=true;}else setClan(o.v);return;}return;}
+  if(state==='clansel'){if(x===undefined||inR(x,y,clanUI.back)){state='title';return;}if(clanUI.ok&&inR(x,y,clanUI.ok)){if(clanPick!==null)setClan(clanPick);return;}for(const o of clanUI.opts)if(inR(x,y,o)){if(o.v==='?'){qaPend=true;}else{clanPick=o.v===myClan?null:o.v;clanMsg='';tapHit=true;}return;}return;}
   if(state==='hcclear'){if(overT<0.8)return;if(x===undefined){state='hcsel';return;}if(hcBtns[0]&&inR(x,y,hcBtns[0])){if(hc<10)hcStart(hc+1);else{state='hcsel';}return;}if(hcBtns[1]&&inR(x,y,hcBtns[1])){state='hcsel';return;}return;}
   if(state==='over'&&hc&&overT>0.8){if(x!==undefined&&hcBtns[1]&&inR(x,y,hcBtns[1])){state='hcsel';return;}hcStart(hc);return;}
   if(state==='help'){helpTap(x,y);return;}
@@ -695,7 +696,7 @@ function drawDailyOver(){
   else{const b=dBestGet();txt(b?'오늘 내 최고 '+fmtMs(b):'처치해야 기록이 남아요',W/2,H*0.3,Math.round(H*0.04),'rgba(255,255,255,0.7)',700);}
   if(r.msg)txt(r.msg,W/2,H*0.365,12,'#d9b8ff',700);
   const L=dBoard,x0=W/2-150,y0=H*0.43,fs=Math.round(clamp(H*0.036,11,15));
-  txt('오늘 순위  (자정에 1등 3,000 · 2등 2,000 코인)',W/2,y0,fs,'#ffe066',800);
+  txt('오늘 순위  (자정에 1등 5,000 · 2등 4,000 코인)',W/2,y0,fs,'#ffe066',800);
   if(!L)txt('불러오는 중...',W/2,y0+fs*1.8,fs,'rgba(255,255,255,0.6)',600);
   else if(!L.length)txt('아직 기록이 없어요. 첫 1등을 노려보세요!',W/2,y0+fs*1.8,fs,'rgba(255,255,255,0.7)',600);
   else{const mi=L.findIndex(o=>o.pid===pid);const show=L.slice(0,5);if(mi>=5)show.push(L[mi]);
@@ -727,7 +728,7 @@ function drawDLobby(){drawBg();ctx.fillStyle='rgba(5,7,15,0.6)';ctx.fillRect(0,0
   const rx=lx+lw+24,rw=W-rx-24,cx=rx+rw/2;
   (DAILY_DESC[tb]||'').split(' · ').forEach((l,i)=>txt(l,cx,ly+fs*1.2+i*fs*1.4,Math.max(10,fs-1),'rgba(255,255,255,0.8)',700));
   txt('공격 Lv4 · 섬광 Lv3 고정 · 체력 60 · 목숨 1개',cx,ly+fs*4.2,Math.max(10,fs-2),'rgba(255,255,255,0.55)',600);
-  txt('자정에 1등 3,000 · 2등 2,000 코인',cx,ly+fs*6,fs,'#ffe066',800);
+  txt('자정에 1등 5,000 · 2등 4,000 코인',cx,ly+fs*6,fs,'#ffe066',800);
   const b=dBestGet();txt(b?'오늘 내 최고 '+fmtMs(b):'오늘 내 기록 없음',cx,ly+fs*7.8,fs,b?'#e6ccff':'rgba(255,255,255,0.55)',800);
   const gw=Math.min(240,rw-10),gh=Math.max(48,Math.min(60,H*0.14)),go={x:cx-gw/2,y:H-gh-24,w:gw,h:gh};dlUI.go=go;const pu=0.5+0.5*Math.sin(time*4);
   rrect(go.x,go.y,go.w,go.h,14);ctx.fillStyle=tb?`rgba(200,150,255,${0.2+0.14*pu})`:'rgba(255,255,255,0.05)';ctx.fill();ctx.strokeStyle=tb?'#e6ccff':'rgba(255,255,255,0.25)';ctx.lineWidth=2;ctx.stroke();
@@ -1925,7 +1926,7 @@ function drawTitle(){
   const sb={x:W-150,y:34,w:136,h:40};shopBtnR=sb;rrect(sb.x,sb.y,sb.w,sb.h,10);ctx.fillStyle='rgba(255,224,102,0.12)';ctx.fill();ctx.strokeStyle='rgba(255,224,102,0.6)';ctx.lineWidth=1.5;ctx.stroke();
   txt('상점  ◆ '+META.coins.toLocaleString(),sb.x+sb.w/2,sb.y+sb.h/2,14,'#ffe066',800);if(rpSale()&&!META.own.reaper)saleTag(sb.x+sb.w-24,sb.y-4,'SALE -65%',11);
   {const r={x:W-150,y:84,w:136,h:40};dlyBtnR=r;const tb=todayBoss(),pu=0.5+0.5*Math.sin(time*5);rrect(r.x,r.y,r.w,r.h,10);ctx.fillStyle=`rgba(200,150,255,${tb?0.16+0.14*pu:0.06})`;ctx.fill();ctx.strokeStyle=tb?`rgba(225,200,255,${0.6+0.4*pu})`:'rgba(200,150,255,0.35)';ctx.lineWidth=tb?2:1.5;ctx.stroke();
-    txt('오늘의 보스',r.x+r.w/2,r.y+r.h/2-7,14,'#fff',900);txt(tb?DAILY_NAME[tb]+' · 1등 3,000코인':'준비 중',r.x+r.w/2,r.y+r.h/2+10,10,'rgba(230,210,255,0.85)',700);}
+    txt('오늘의 보스',r.x+r.w/2,r.y+r.h/2-7,14,'#fff',900);txt(tb?DAILY_NAME[tb]+' · 1등 5,000코인':'준비 중',r.x+r.w/2,r.y+r.h/2+10,10,'rgba(230,210,255,0.85)',700);}
   const rb={x:W-150,y:134,w:136,h:40};rankBtnR=rb;rrect(rb.x,rb.y,rb.w,rb.h,10);ctx.fillStyle='rgba(200,140,255,0.12)';ctx.fill();ctx.strokeStyle='rgba(200,140,255,0.6)';ctx.lineWidth=1.5;ctx.stroke();
   txt('랭킹',rb.x+rb.w/2,rb.y+rb.h/2,14,'#d9b8ff',800);
   const hb2={x:W-150,y:184,w:136,h:40};hcBtnR=hb2;rrect(hb2.x,hb2.y,hb2.w,hb2.h,10);ctx.fillStyle='rgba(255,77,125,0.12)';ctx.fill();ctx.strokeStyle='rgba(255,77,125,0.65)';ctx.lineWidth=1.5;ctx.stroke();
@@ -1937,13 +1938,14 @@ let raidBtnR=null,dlyBtnR=null;
 function drawClanSel(){drawBg();ctx.fillStyle='rgba(5,7,15,0.7)';ctx.fillRect(0,0,W,H);
   const bk={x:14,y:14,w:96,h:38};clanUI.back=bk;rrect(bk.x,bk.y,bk.w,bk.h,10);ctx.fillStyle='rgba(255,255,255,0.06)';ctx.fill();ctx.strokeStyle='rgba(255,255,255,0.3)';ctx.lineWidth=1.5;ctx.stroke();txt('← 뒤로',bk.x+bk.w/2,bk.y+bk.h/2,14,'#fff',800);
   txt('학교 선택',W/2,H*0.13,Math.round(clamp(H*0.065,20,30)),'#b8d4ff',900);
-  txt('학교별 인원 파악용이에요 · 랭킹 닉네임 옆에 학교가 표시돼요 · 하루에 한 번 바꿀 수 있어요',W/2,H*0.13+28,Math.round(clamp(H*0.03,11,13)),'rgba(255,255,255,0.65)',600);
+  txt('학교별 인원 파악용이에요 · 랭킹 닉네임 옆에 학교가 표시돼요 · 확정하면 24시간 동안 못 바꿔요',W/2,H*0.13+28,Math.round(clamp(H*0.03,11,13)),'rgba(255,255,255,0.65)',600);
   const opts=[...CLANS.map(c=>({v:c,l:c})),{v:'',l:'선택 안 함'},{v:'?',l:'다른 학교 문의 (인스타)'}];
   const n=opts.length,gap=10,bw=Math.min(150,(W-40-gap*(n-1))/n),bh=Math.max(64,Math.min(90,H*0.2)),x0=W/2-(bw*n+gap*(n-1))/2,y0=H*0.36;clanUI.opts=[];
-  opts.forEach((o,i)=>{const r={x:x0+i*(bw+gap),y:y0,w:bw,h:bh,v:o.v};clanUI.opts.push(r);const on=o.v!=='?'&&o.v===myClan,q=o.v==='?';
-    rrect(r.x,r.y,r.w,r.h,12);ctx.fillStyle=on?'rgba(120,180,255,0.3)':q?'rgba(255,90,170,0.08)':'rgba(255,255,255,0.05)';ctx.fill();ctx.strokeStyle=on?'#b8d4ff':q?'rgba(255,110,180,0.6)':'rgba(255,255,255,0.25)';ctx.lineWidth=on?2.5:1.5;ctx.stroke();
+  opts.forEach((o,i)=>{const r={x:x0+i*(bw+gap),y:y0,w:bw,h:bh,v:o.v};clanUI.opts.push(r);const on=o.v!=='?'&&o.v===myClan,pk=clanPick!==null&&o.v===clanPick,q=o.v==='?';
+    rrect(r.x,r.y,r.w,r.h,12);ctx.fillStyle=pk?'rgba(255,224,102,0.22)':on?'rgba(120,180,255,0.3)':q?'rgba(255,90,170,0.08)':'rgba(255,255,255,0.05)';ctx.fill();ctx.strokeStyle=pk?'#ffe066':on?'#b8d4ff':q?'rgba(255,110,180,0.6)':'rgba(255,255,255,0.25)';ctx.lineWidth=on||pk?2.5:1.5;ctx.stroke();
     if(q){txt('다른 학교',r.x+r.w/2,r.y+r.h/2-14,Math.round(clamp(bw*0.12,12,17)),'#ff9ccf',900);txt('문의 (인스타)',r.x+r.w/2,r.y+r.h/2+6,Math.round(clamp(bw*0.09,10,13)),'#ff9ccf',800);txt('DM으로 학교 이름 보내기',r.x+r.w/2,r.y+r.h/2+24,Math.round(clamp(bw*0.07,9,11)),'rgba(255,180,220,0.75)',600);}
-    else{txt(o.l,r.x+r.w/2,r.y+r.h/2-(on?8:0),Math.round(clamp(bw*0.14,13,20)),on?'#fff':'rgba(255,255,255,0.85)',900);if(on)txt('선택됨',r.x+r.w/2,r.y+r.h/2+16,12,'#b8d4ff',800);}});
+    else{txt(o.l,r.x+r.w/2,r.y+r.h/2-(on?8:0),Math.round(clamp(bw*0.14,13,20)),on?'#fff':'rgba(255,255,255,0.85)',900);if(pk)txt('확정 대기',r.x+r.w/2,r.y+r.h/2+16,12,'#ffe066',800);else if(on)txt('현재 학교',r.x+r.w/2,r.y+r.h/2+16,12,'#b8d4ff',800);}});
+  clanUI.ok=null;if(clanPick!==null){const bw2=Math.min(260,W*0.4),bh2=40,ok={x:W/2-bw2/2,y:H-bh2-14,w:bw2,h:bh2};clanUI.ok=ok;const pu=0.5+0.5*Math.sin(time*5);rrect(ok.x,ok.y,ok.w,ok.h,10);ctx.fillStyle=`rgba(255,224,102,${0.18+0.12*pu})`;ctx.fill();ctx.strokeStyle='#ffe066';ctx.lineWidth=2;ctx.stroke();txt((clanPick||'선택 안 함')+' 확정하기',W/2,ok.y+ok.h/2,15,'#fff',900);}
   txt('목록에 없는 학교는 인스타 채팅(DM)으로 학교 이름을 보내주면 추가할게요',W/2,y0+bh+26,Math.round(clamp(H*0.03,11,13)),'rgba(255,180,220,0.8)',700);
   if(clanMsg&&time<clanMsgT)txt(clanMsg,W/2,y0+bh+54,15,clanMsg.includes('실패')||clanMsg.includes('한 번')?'#ff8da6':'#8ff',800);}
 function drawRenMsg(){if(time<renUntil)txt(renMsg,W/2,H-14,13,renMsg.includes('실패')?'#ff8da6':'#8ff',800);}
@@ -2016,7 +2018,7 @@ function drawEvSel(){drawBg();ctx.fillStyle='rgba(5,7,15,0.55)';ctx.fillRect(0,0
   const bk={x:14,y:14,w:96,h:38};evUI.back=bk;rrect(bk.x,bk.y,bk.w,bk.h,10);ctx.fillStyle='rgba(255,255,255,0.06)';ctx.fill();ctx.strokeStyle='rgba(255,255,255,0.3)';ctx.lineWidth=1.5;ctx.stroke();txt('← 뒤로',bk.x+bk.w/2,bk.y+bk.h/2,14,'#fff',800);
   txt('이벤트 스테이지',W/2,34,22,'#ffe066',900);
   const g=14,cw=Math.min(260,(W-40-2*g)/3),ch=Math.min(230,H-110),x0=W/2-cw*1.5-g,y0=Math.max(70,(H-ch)/2+16);evUI.cards=[];const pu=0.5+0.5*Math.sin(time*4);
-  {const tb=DAILY_BOSS[kstDay()],ok=!!todayBoss(),L=dBoard;loadDailyBoard();var dl=['오늘: '+(tb?DAILY_NAME[tb]:'없음')+(tb&&!ok?' (준비 중)':''),'가장 빨리 잡은 사람 순위','1등 3,000 · 2등 2,000 코인',L&&L.length?'1위 '+(L[0].nickname||'이름없음')+' '+fmtMs(L[0].ms):'아직 1위 없음'];}
+  {const tb=DAILY_BOSS[kstDay()],ok=!!todayBoss(),L=dBoard;loadDailyBoard();var dl=['오늘: '+(tb?DAILY_NAME[tb]:'없음')+(tb&&!ok?' (준비 중)':''),'가장 빨리 잡은 사람 순위','1등 5,000 · 2등 4,000 코인',L&&L.length?'1위 '+(L[0].nickname||'이름없음')+' '+fmtMs(L[0].ms):'아직 1위 없음'];}
   [['daily','오늘의 보스','#d9b8ff','217,184,255',dl],['rush','섬광 러시','#ff9a6a','255,154,106',['1분 동안 섬광 연쇄로 최대한 처치','랭킹: 섬광 러시 탭',(rushBest?'최고 '+rushBest.toLocaleString():'기록 없음'),'코인 보상 '+rcLeft()+'/'+RCOIN_N+' (하루)']],
    ['xmas','🎄 크리스마스','#7fe0a0','127,224,160',['일반 모드와 같은 규칙','적들이 눈덩이를 던져요','코인은 일반 모드와 같아요','랭킹에는 기록되지 않아요']]].forEach(([id,t,c,rgb,ls],i)=>{
     const r={id,x:x0+i*(cw+g),y:y0,w:cw,h:ch};evUI.cards.push(r);rrect(r.x,r.y,r.w,r.h,14);ctx.fillStyle=`rgba(${rgb},${0.1+0.06*pu})`;ctx.fill();ctx.strokeStyle=c;ctx.lineWidth=2;ctx.stroke();
