@@ -621,7 +621,7 @@ function drawTut(){tutSkipR=null;if(!tut)return;
   if(tut.done<=0){const b=flashT>0?btn.atk:tut.win?btn.dash:null;if(b){const pu=(time*2)%1;ctx.strokeStyle=`rgba(255,230,120,${1-pu})`;ctx.lineWidth=4;ctx.beginPath();ctx.arc(b.x,b.y,b.r*(1.15+pu*0.6),0,TAU);ctx.stroke();}}
   const sw=118,sh=32,sr={x:W/2-sw/2,y:H-sh-12,w:sw,h:sh};tutSkipR=sr;rrect(sr.x,sr.y,sw,sh,9);ctx.fillStyle='rgba(255,255,255,0.06)';ctx.fill();ctx.strokeStyle='rgba(255,255,255,0.3)';ctx.lineWidth=1;ctx.stroke();txt('연습 건너뛰기 ›',W/2,sr.y+sh/2,13,'rgba(255,255,255,0.8)',800);}
 
-function startMode(m){if(rankOn()&&!nick&&!nickAsked&&m!=='xmas'){nickAsked=true;askNick(()=>{});return;}rush=m==='rush';xmas=m==='xmas';hc=0;reset();state='play';goFS();if(rush)banner('섬광 러시 · 1분');if(xmas)banner('🎄 메리 크리스마스!');if(m==='main'&&(tutForce||tutNeeded())){tut={ok:0,spawnT:0.6,win:false,slow:false,done:0};banner('섬광 연습');}tutForce=false;}
+function startMode(m){if(rankOn()&&!nick&&!nickAsked&&m!=='xmas'){nickAsked=true;askNick(()=>startMode(m));return;}rush=m==='rush';xmas=m==='xmas';hc=0;reset();state='play';goFS();if(rush)banner('섬광 러시 · 1분');if(xmas)banner('🎄 메리 크리스마스!');if(m==='main'&&(tutForce||tutNeeded())){tut={ok:0,spawnT:0.6,win:false,slow:false,done:0};banner('섬광 연습');}tutForce=false;}
 function hcStart(n){hc=n;rush=false;xmas=false;reset();state='play';goFS();banner('하드코어 '+n+'단계');}
 function hcOnScreen(e){const hw=W/(2*S)-10,hh=H/(2*S)-10;return Math.abs(e.x-camX)<hw&&Math.abs(e.y-camY)<hh;}
 function updateHC(dt){hcSpawnT-=dt;
