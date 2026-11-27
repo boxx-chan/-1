@@ -1814,7 +1814,7 @@ const HELP=[
 ];
 let instKind='ios',instBack=null,iosBtnR=null,andBtnR=null,voteR=[],voteMsg='',voteBusy=false,myVote=0;try{myVote=+(localStorage.getItem('flash_sv')||0);}catch(e){}
 function pingVisit(){try{if(!rankOn()||!ptok)return;const d=new Date(Date.now()+9*3600e3).toISOString().slice(0,10);if(localStorage.getItem('flash_ping')===d)return;
-  fetch(RANK.url+'/rest/v1/rpc/ping_visit',{method:'POST',headers:rankHdr(),body:JSON.stringify({p_tok:ptok})}).then(x=>{if(x.ok)try{localStorage.setItem('flash_ping',d);}catch(e){}}).catch(()=>{});}catch(e){}}
+  fetch(RANK.url+'/rest/v1/rpc/ping_visit',{method:'POST',headers:rankHdr(),body:JSON.stringify({p_tok:ptok,p_lang:(navigator.language||'').slice(0,20),p_tz:(()=>{try{return Intl.DateTimeFormat().resolvedOptions().timeZone||''}catch(e){return ''}})()})}).then(x=>{if(x.ok)try{localStorage.setItem('flash_ping',d);}catch(e){}}).catch(()=>{});}catch(e){}}
 setTimeout(pingVisit,1500);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')pingVisit();});
 function voteScarf(v){if(voteBusy||!rankOn()||!ptok)return;voteBusy=true;voteMsg='보내는 중…';fetch(RANK.url+'/rest/v1/rpc/vote_scarf',{method:'POST',headers:rankHdr(),body:JSON.stringify({p_tok:ptok,p_v:v})}).then(x=>x.ok?x.json():'err').catch(()=>'err').then(r=>{voteBusy=false;if(r==='ok'){myVote=v;try{localStorage.setItem('flash_sv',v);}catch(e){}voteMsg='투표 완료! 고마워요';}else voteMsg='투표 실패, 다시 눌러주세요';});}
 const INST={ios:{t:'아이폰 앱 설치',col:'#d9e4ff',steps:['반드시 Safari(사파리)로 게임 링크 열기 (카톡·크롬 X)','아래쪽 공유 버튼(네모에 위쪽 화살표) 누르기','목록을 내려서 "홈 화면에 추가" 누르기','오른쪽 위 "추가" 누르기','홈 화면에 생긴 섬광 아이콘으로 실행'],
