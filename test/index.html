@@ -141,7 +141,7 @@ const RUSH_LEN=60,RCHAIN_KEEP=2.5,rMul=()=>1+0.25*Math.min(rChain,12);
 let tut=null,tutForce=false,tutSkipR=null;
 let spMet=[],spUltK=[];
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1127.87';
+const VERSION='1127.87-p2';
 const WCOIN=60,RCOIN_N=3,RCOIN_MAX=600;const today=()=>{const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();};const rcLeft=()=>{const r=META.rd||{};return r.d===today()?Math.max(0,RCOIN_N-(r.n||0)):RCOIN_N;};let overBtns=null,quitRun=false,rcUsed=false;let hitSrc='',runT=0,endless=false,clearBonus=0,clrW=0,clrK=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
 let ult=null,mines=[];const ultMax=()=>U.ultFast?75:100,ultN=()=>rush?4:U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#8a6cff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
