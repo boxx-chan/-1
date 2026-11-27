@@ -1602,13 +1602,13 @@ function drawWaveList(list,sk){
 const SD_T=0.13;
 function pearlStarOn(){return META.eq==='spear';}
 // 펄: 난무로 죽은 적 자리에 마지막에 푸른 별빛(유성)이 떨어짐 — 시각 효과만
-const SM_FALL=0.2,SM_LIFE=0.95,SM_DX=0.42,SM_DY=-1;
-function spMeteorGo(){if(!spUltK.length)return;spUltK.forEach((m,i)=>{const sd=[];for(let j=0;j<9;j++)sd.push([Math.random(),rnd(-5,5),rnd(0,TAU)]);spMet.push({x:m.x,y:m.y,big:Math.min(m.big,1.6),t:-0.06-i*0.05,L:rnd(300,380),sd,hit:0});});spUltK=[];}
+const SM_FALL=0.1,SM_LIFE=0.95,SM_DX=0.42,SM_DY=-1;
+function spMeteorGo(){if(!spUltK.length)return;spUltK.forEach((m,i)=>{const sd=[];for(let j=0;j<9;j++)sd.push([Math.random(),rnd(-5,5),rnd(0,TAU)]);spMet.push({x:m.x,y:m.y,big:Math.min(m.big,1.6),t:-0.04-i*0.035,L:rnd(300,380),sd,hit:0});});spUltK=[];}
 function spMetTick(dt){for(const m of spMet){m.t+=dt;if(!m.hit&&m.t>=SM_FALL){m.hit=1;spStarDust(m.x,m.y,9,20*m.big,1.1);for(let j=0;j<5;j++){const a=rnd(0,TAU),v=rnd(60,150);parts.push({x:m.x,y:m.y,vx:Math.cos(a)*v,vy:Math.sin(a)*v-30,t:0,life:rnd(0.35,0.6),k:'st',w:rnd(2,3.4),col:'#cfe8ff'});}if(spMet.filter(q=>q.hit).length<=1)SFX.tink();}}spMet=spMet.filter(m=>m.t<SM_LIFE);}
 function spSpark4(x,y,R,al){ctx.globalAlpha=al;ctx.fillStyle='#fff';ctx.beginPath();for(let i=0;i<4;i++){const a=i*Math.PI/2,b=a+Math.PI/4;ctx.lineTo(x+Math.cos(a)*R,y+Math.sin(a)*R);ctx.lineTo(x+Math.cos(b)*R*0.2,y+Math.sin(b)*R*0.2);}ctx.fill();
   const g=ctx.createRadialGradient(x,y,0,x,y,R*1.1);g.addColorStop(0,`rgba(200,225,255,${0.55*al})`);g.addColorStop(1,'rgba(120,170,255,0)');ctx.fillStyle=g;ctx.globalAlpha=1;ctx.beginPath();ctx.arc(x,y,R*1.1,0,TAU);ctx.fill();}
 function spMetDraw(){ctx.save();ctx.globalCompositeOperation='lighter';const n=Math.hypot(SM_DX,SM_DY),dx=SM_DX/n,dy=SM_DY/n,px=-dy,py=dx;
-  for(const m of spMet){if(m.t<=0)continue;const u=Math.min(1,m.t/SM_FALL),e=u*u,after=Math.max(0,m.t-SM_FALL),fd=after>0?Math.max(0,1-after/(SM_LIFE-SM_FALL)):1,B=m.big;
+  for(const m of spMet){if(m.t<=0)continue;const u=Math.min(1,m.t/SM_FALL),e=Math.pow(u,1.4),after=Math.max(0,m.t-SM_FALL),fd=after>0?Math.max(0,1-after/(SM_LIFE-SM_FALL)):1,B=m.big;
     const hx=m.x+dx*m.L*(1-e),hy=m.y+dy*m.L*(1-e),tl=Math.min(m.L,m.L*e+90)*(after>0?1-0.35*after/(SM_LIFE-SM_FALL):1),tx=hx+dx*tl,ty=hy+dy*tl;
     // tapered tail (glow + core), slightly wavy edge
     for(const [W,cl,am] of [[7*B,'90,140,255',0.38],[2.6*B,'190,220,255',0.8],[1*B,'255,255,255',0.9]]){ctx.beginPath();const N=22;
