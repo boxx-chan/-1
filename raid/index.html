@@ -134,7 +134,7 @@ const RUSH_LEN=60,RCHAIN_KEEP=2.5,rMul=()=>1+0.25*Math.min(rChain,12);
 let tut=null,tutForce=false,tutSkipR=null;
 let dly=null,echoes=[],dSt=null,dRes=null,dBoard=null,dBoardDay='',dTag='',dLoading=false;
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1127.96';
+const VERSION='1127.97';
 const WCOIN=60,RCOIN_N=3,RCOIN_MAX=600;const today=()=>{const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();};const rcLeft=()=>{const r=META.rd||{};return r.d===today()?Math.max(0,RCOIN_N-(r.n||0)):RCOIN_N;};let overBtns=null,quitRun=false,rcUsed=false;let hitSrc='',runT=0,endless=false,clearBonus=0,clrW=0,clrK=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
 let ult=null,mines=[];const ultMax=()=>U.ultFast?75:100,ultN=()=>rush?4:U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#8a6cff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
@@ -291,7 +291,7 @@ function reset(){quitRun=false;tut=null;
   runT=0;endless=false;clearTimeRec=null;bonusPick=0;wave=0;waveQueue=[];waveT=1.2;spawnT=0;score=0;combo=0;comboT=0;waveHurt=false;swingHit=false;maxCombo=0;kills=0;flashes=0;
   hitstop=0;trauma=0;ts=1;flashT=0;hurtFlash=0;overT=0;camX=P.x;camY=P.y;bannerT=0;strikeFlash=0;
   rushT=RUSH_LEN;rChain=0;rChainT=0;rMax=0;rushSpawnT=0.6;rushElite={};if(rush){wave=1;waveT=0;P.charge=MAX_CHARGE;}
-  echoes=[];dRes=null;dTag='';if(dly){wave=5;waveT=0;owned={atk:4,flash:3,hp:1};for(let lv=1;lv<=4;lv++)applyTrack('atk',lv);for(let lv=1;lv<=3;lv++)applyTrack('flash',lv);applyTrack('hp',1);P.hp=P.maxHp;applyU();P.charge=MAX_CHARGE;dSt={att:dAttempt(),hits:{},sp:false,spT:0.9,bt:0};}
+  echoes=[];dRes=null;dTag='';if(dly){wave=5;waveT=0;owned={atk:4,flash:3,hp:1};for(let lv=1;lv<=4;lv++)applyTrack('atk',lv);for(let lv=1;lv<=3;lv++)applyTrack('flash',lv);P.maxHp=P.hp=60;owned.hp=0;applyU();P.charge=MAX_CHARGE;dSt={att:dAttempt(),hits:{},sp:false,spT:0.9,bt:0};}
   hcSpd=1;if(hc){const d=HC[hc];wave=d.w;waveT=0;hcQueue=hcBuild(hc);hcSpawnT=0.8;hcCap=d.cap;hcSpd=d.spd;owned={atk:3,flash:3};for(let lv=1;lv<=3;lv++){applyTrack('atk',lv);applyTrack('flash',lv);}applyU();}
 }
 reset();
@@ -873,7 +873,7 @@ function bossAI(e,dt,d,ux,uy){
     else if(e.pat==='stance'){e.stance=e.ph2?2.0:1.6;e.state='rec';e.t=e.stance;addText(e.x,e.y-e.r-30,'거울 자세','#cfd6e6',15,0.8);SFX.tink();}
     else if(e.pat==='bolt'){const k=Math.floor(Math.random()*3);stormBolts(e,k);if(e.ph2)stormBolts(e,(k+1+Math.floor(Math.random()*2))%3);SFX.shoot();ring(e.x,e.y,e.r,e.r*2.5,'#9fb4ff',0.4,4);e.state='rec';e.t=1.1*tm;}
     else if(e.pat==='orbs'){stormOrbs(e,e.ph2?3:2);SFX.shoot();e.state='rec';e.t=1.0*tm;}
-    else if(e.pat==='smoke'){const n=e.ph2?4:3;for(let i=0;i<n;i++){const a=rnd(0,TAU),r=i===0?0:rnd(70,170),x=clamp(p.x+Math.cos(a)*r,40,AW-40),y=clamp(p.y+Math.sin(a)*r,40,AH-40);mines.push({x,y,r:70,t:1.0+i*0.1,T:1.0+i*0.1});if(i<(e.ph2?2:1))mines.push({x,y,r:70,t:1.6+i*0.1,T:1.6+i*0.1,eg:true});}
+    else if(e.pat==='smoke'){const n=e.ph2?7:5,a0=rnd(0,TAU);for(let i=0;i<n;i++){const a=a0+i*TAU/(n-1)+rnd(-0.3,0.3),r=i===0?0:rnd(150,330),x=clamp(p.x+Math.cos(a)*r,40,AW-40),y=clamp(p.y+Math.sin(a)*r,40,AH-40);mines.push({x,y,r:70,t:1.0+i*0.1,T:1.0+i*0.1});if(i<(e.ph2?2:1))mines.push({x,y,r:70,t:1.6+i*0.1,T:1.6+i*0.1,eg:true});}
       SFX.shoot();e.state='rec';e.t=0.9*tm;}
     else if(e.pat==='clone'){for(let i=0;i<2;i++){const a=rnd(0,TAU);markers.push({x:clamp(e.x+Math.cos(a)*120,60,AW-60),y:clamp(e.y+Math.sin(a)*120,60,AH-60),type:'shadow',t:0,dur:0.6});}
       e.cloneCD=12;banner('분신');e.state='rec';e.t=0.8;}
