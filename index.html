@@ -140,7 +140,7 @@ const RUSH_LEN=60,RCHAIN_KEEP=2.5,rMul=()=>1+0.25*Math.min(rChain,12);
 let tut=null,tutForce=false,tutSkipR=null;
 let dly=null,echoes=[],dSt=null,dRes=null,dBoard=null,dBoardDay='',dTag='',dLoading=false;
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1127.101';
+const VERSION='1127.102';
 const WCOIN=60,RCOIN_N=3,RCOIN_MAX=600;const today=()=>{const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();};const rcLeft=()=>{const r=META.rd||{};return r.d===today()?Math.max(0,RCOIN_N-(r.n||0)):RCOIN_N;};let overBtns=null,quitRun=false,rcUsed=false;let hitSrc='',runT=0,endless=false,clearBonus=0,clrW=0,clrK=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
 let ult=null,mines=[];const ultMax=()=>U.ultFast?75:100,ultN=()=>rush?4:U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#8a6cff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
@@ -693,8 +693,8 @@ function postDaily(res,ms){if(!rankOn()||!pid){dRes.msg='기록 서버에 연결
   fetch(RANK.url+'/rest/v1/daily_scores',{method:'POST',headers:Object.assign(rankHdr(),{Prefer:'return=minimal'}),body:JSON.stringify(body)}).then(x=>{
     if(res==='clear')dRes.msg=x.ok?'오늘 순위에 등록됐어요':'기록 등록 실패 ('+x.status+')';dBoard=null;loadDailyBoard(true);}).catch(()=>{if(res==='clear')dRes.msg='기록 등록 실패 (인터넷 확인)';});}
 function loadDailyBoard(force){if(!rankOn()||dLoading)return;const d=kstDay();if(!force&&dBoard&&dBoardDay===d)return;dLoading=true;
-  fetch(RANK.url+'/rest/v1/daily_scores?select=pid,nickname,ms&day=eq.'+d+'&result=eq.clear&order=ms.asc&limit=500',{headers:rankHdr(),cache:'no-store'}).then(x=>x.ok?x.json():[]).catch(()=>[]).then(rows=>{
-    const seen={},out=[];for(const r of rows){if(!r.pid||seen[r.pid])continue;seen[r.pid]=1;out.push(r);}dBoard=out;dBoardDay=d;dLoading=false;});}
+  Promise.all([fetch(RANK.url+'/rest/v1/daily_scores?select=pid,nickname,ms&day=eq.'+d+'&result=eq.clear&order=ms.asc&limit=500',{headers:rankHdr(),cache:'no-store'}).then(x=>x.ok?x.json():[]).catch(()=>[]),fetch(RANK.url+'/rest/v1/rpc/player_names',{method:'POST',headers:rankHdr(),body:'{}',cache:'no-store'}).then(x=>x.ok?x.json():[]).catch(()=>[])]).then(([rows,nm])=>{
+    const N={};for(const r of nm||[])if(r.pid&&r.nickname)N[r.pid]=r.nickname;const seen={},out=[];for(const r of rows){if(!r.pid||seen[r.pid])continue;seen[r.pid]=1;out.push(Object.assign({},r,{nickname:N[r.pid]||r.nickname}));}dBoard=out;dBoardDay=d;dLoading=false;});}
 function claimRewards(){if(!rankOn()||!ptok)return;fetch(RANK.url+'/rest/v1/rpc/claim_rewards',{method:'POST',headers:rankHdr(),body:JSON.stringify({p_tok:ptok}),cache:'no-store'}).then(x=>x.ok?x.json():0).catch(()=>0).then(n=>{
   n=+n||0;if(n>0){META.coins+=n;saveMeta();try{acctDirty();}catch(e){}renMsg='🏆 오늘의 보스 순위 보상 +'+n.toLocaleString()+' 코인!';renUntil=time+10;SFX.tink();}});}
 setTimeout(claimRewards,3000);
