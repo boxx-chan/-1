@@ -142,7 +142,7 @@ const RUSH_LEN=60,RCHAIN_KEEP=2.5,rMul=()=>1+0.25*Math.min(rChain,12);
 let tut=null,tutForce=false,tutSkipR=null;
 let dly=null,echoes=[],dSt=null,dRes=null,dBoard=null,dBoardDay='',dTag='',dLoading=false;
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1127.110';
+const VERSION='1127.111';
 const WCOIN=60,RCOIN_N=3,RCOIN_MAX=600;const today=()=>{const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();};const rcLeft=()=>{const r=META.rd||{};return r.d===today()?Math.max(0,RCOIN_N-(r.n||0)):RCOIN_N;};let overBtns=null,quitRun=false,rcUsed=false;let hitSrc='',runT=0,endless=false,clearBonus=0,clrW=0,clrK=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
 let ult=null,mines=[];const ultMax=()=>U.ultFast?75:100,ultN=()=>rush?4:U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#8a6cff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
@@ -230,7 +230,7 @@ addEventListener('load',()=>{document.getElementById('svX').onclick=()=>{documen
 function promoClose(off){document.getElementById('promoBox').style.display='none';setTimeout(svMaybe,400);if(off)lss('flash_promo_off',new Date(Date.now()+9*3600e3).toISOString().slice(0,10));}
 addEventListener('load',()=>{document.getElementById('promoX').onclick=()=>promoClose(false);document.getElementById('promoNo').onclick=()=>promoClose(true);document.getElementById('promoGo').onclick=()=>{promoClose(false);acctLogin();};if(nick)setTimeout(promoShow,500);});
 function drawAcctMsg(){if(time<acctMsgT)txt(acctMsg,W/2,H-30,13,/실패|만료/.test(acctMsg)?'#ff8da6':'#8ff',800);}
-const CLANS=['안곡고','저동고','정발고','경기영상과학고'];let myClan=(()=>{try{return localStorage.getItem('flash_clan')||'';}catch(e){return '';}})(),clanMap=null,clanMsg='',clanMsgT=0,clanBusy=false,clanUI={back:null,opts:[]},clanBtnR=null;
+const CLANS=['안곡고','저동고','정발고','경기영상과학고','가좌고','주엽고'];let myClan=(()=>{try{return localStorage.getItem('flash_clan')||'';}catch(e){return '';}})(),clanMap=null,clanMsg='',clanMsgT=0,clanBusy=false,clanUI={back:null,opts:[]},clanBtnR=null;
 function loadClans(cb){if(!rankOn())return;fetch(RANK.url+'/rest/v1/rpc/clan_board',{method:'POST',headers:rankHdr(),body:'{}',cache:'no-store'}).then(x=>x.ok?x.json():[]).catch(()=>[]).then(d=>{const m={};for(const r of d)if(r.clan)m[r.pid]=r.clan;clanMap=m;if(cb)cb();});}
 let clanPick=null;
 let schBusy=false;function openSch(){const b=document.getElementById('schBox'),i=document.getElementById('schIn');i.value='';document.getElementById('schErr').textContent='';b.style.display='flex';setTimeout(()=>{try{i.focus()}catch(e){}},50);}
