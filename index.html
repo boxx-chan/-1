@@ -142,7 +142,7 @@ const RUSH_LEN=60,RCHAIN_KEEP=2.5,rMul=()=>1+0.25*Math.min(rChain,12);
 let tut=null,tutForce=false,tutSkipR=null;
 let dly=null,echoes=[],dSt=null,dRes=null,dBoard=null,dBoardDay='',dTag='',dLoading=false;
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1127.107';
+const VERSION='1127.108';
 const WCOIN=60,RCOIN_N=3,RCOIN_MAX=600;const today=()=>{const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();};const rcLeft=()=>{const r=META.rd||{};return r.d===today()?Math.max(0,RCOIN_N-(r.n||0)):RCOIN_N;};let overBtns=null,quitRun=false,rcUsed=false;let hitSrc='',runT=0,endless=false,clearBonus=0,clrW=0,clrK=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
 let ult=null,mines=[];const ultMax=()=>U.ultFast?75:100,ultN=()=>rush?4:U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#8a6cff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
@@ -264,14 +264,14 @@ function loadRank(){if(!rankOn()||rankLoading)return;if(!clanMap)loadClans(()=>{
     const gj=u=>fetch(RANK.url+'/rest/v1/scores?'+u,{headers:rankHdr(),cache:'no-store'}).then(x=>x.ok?x.json():Promise.reject(x.status));
     Promise.all([gj('select=nickname,score,pid&season=eq.'+SEASON+'&mode=eq.main&order=score.desc&limit=1000'),fetch(RANK.url+'/rest/v1/rpc/player_names',{method:'POST',headers:rankHdr(),body:'{}',cache:'no-store'}).then(x=>x.ok?x.json():gj('select=pid,nickname&pid=not.is.null&limit=5000')).catch(()=>[])]).then(([d,dn])=>{
       const best={},nm={};for(const r of dn)if(r.pid&&r.nickname)nm[r.pid]=r.nickname;for(const r of d){if(!r.pid||best[r.pid])continue;best[r.pid]=r;nm[r.pid]=r.nickname;}
-      window.__myPid=pid;const S={};for(const c of CLANS)S[c]={clan:c,n:0,sc:[],m:[]};for(const pid in clanMap){const c=clanMap[pid];if(!S[c])S[c]={clan:c,n:0,sc:[],m:[]};S[c].n++;if(best[pid])S[c].sc.push(best[pid].score);S[c].m.push({nick:nm[pid]||'',score:best[pid]?best[pid].score:-1,me:pid===window.__myPid});}
+      window.__myPid=pid;const S={};for(const c of CLANS)S[c]={clan:c,n:0,sc:[],m:[]};for(const pid in clanMap){const c=clanMap[pid];if(!S[c])S[c]={clan:c,n:0,sc:[],m:[]};S[c].n++;if(best[pid])S[c].sc.push(best[pid].score);S[c].m.push({pid,nick:nm[pid]||'',score:best[pid]?best[pid].score:-1,me:pid===window.__myPid});}
       for(const c in S)S[c].m.sort((a,b)=>b.score-a.score||(a.nick?0:1)-(b.nick?0:1)||a.nick.localeCompare(b.nick));
       const out=Object.values(S).map(o=>{o.sc.sort((a,b)=>b-a);const t=o.sc.slice(0,5);o.avg=t.length?Math.round(t.reduce((a,b)=>a+b,0)/t.length):0;o.k=t.length;return o;}).sort((a,b)=>b.avg-a.avg||b.n-a.n);
       if(rankTab===3)rankList=out;rankLoading=false;}).catch(e=>{rankErr='불러오기 실패: '+e;rankLoading=false;});return;}
   if(rankTab===4){rankLoading=true;rankErr='';
     Promise.all([fetch(RANK.url+'/rest/v1/duo_scores?select=pid_a,pid_b,nick_a,nick_b,clear_time&season=eq.'+SEASON+'&order=clear_time.asc,created_at.asc&limit=200',{headers:rankHdr(),cache:'no-store'}).then(x=>x.ok?x.json():Promise.reject(x.status)),fetch(RANK.url+'/rest/v1/rpc/player_names',{method:'POST',headers:rankHdr(),body:'{}',cache:'no-store'}).then(x=>x.ok?x.json():[]).catch(()=>[])]).then(([d,dn])=>{
       const nm={};for(const r of dn)if(r.pid&&r.nickname)nm[r.pid]=r.nickname;
-      const out=d.map(r=>({a:nm[r.pid_a]||r.nick_a||'이름없음',b:nm[r.pid_b]||r.nick_b||'이름없음',t:Number(r.clear_time)||0,me:r.pid_a===pid||r.pid_b===pid}));if(rankTab===4)rankList=out;rankLoading=false;}).catch(e=>{rankErr='불러오기 실패: '+e;rankLoading=false;});return;}
+      const out=d.map(r=>({a:nm[r.pid_a]||r.nick_a||'이름없음',b:nm[r.pid_b]||r.nick_b||'이름없음',t:Number(r.clear_time)||0,me:r.pid_a===pid||r.pid_b===pid,pa:r.pid_a,pb:r.pid_b}));if(rankTab===4)rankList=out;rankLoading=false;}).catch(e=>{rankErr='불러오기 실패: '+e;rankLoading=false;});return;}
   rankLoading=true;rankErr='';
   const tab=rankTab,q=tab===0?'&mode=eq.main&cleared=eq.true&order=clear_time.asc,score.desc':tab===1?'&mode=eq.main&order=score.desc':'&mode=eq.rush&order=score.desc';
   const get=cols=>fetch(RANK.url+'/rest/v1/scores?select='+cols+'&season='+(tab===0?'in.(2,3,'+SEASON+')':'eq.'+SEASON)+q+'&limit=500',{headers:rankHdr(),cache:'no-store'});
@@ -285,7 +285,7 @@ function fitNick(){const b=document.getElementById('nickBox'),vv=window.visualVi
 if(window.visualViewport){visualViewport.addEventListener('resize',fitNick);visualViewport.addEventListener('scroll',fitNick);}
 let nickForce=false;function askNick(cb,force){nickForce=!!force;document.getElementById('nickSub').textContent=nickForce?'1~12자 · 랭킹과 학교 명단에 표시돼요':'1~12자 · 랭킹에 표시돼요 · 취소하면 기록이 안 올라가요';document.getElementById('nickNo').style.display=nickForce?'none':'';document.getElementById('nickG').style.display=nickForce?'':'none';nickCb=cb;const b=document.getElementById('nickBox'),i=document.getElementById('nickIn');i.value=nick;b.style.display='flex';fitNick();setTimeout(()=>{try{i.focus()}catch(e){}fitNick();},50);}
 let nickBusy=false,nickTaken=false;
-function closeNick(ok){const v=cleanNick(document.getElementById('nickIn').value),er=document.getElementById('nickErr');if(ok&&!v)return;
+function closeNick(ok){const v=cleanNick(document.getElementById('nickIn').value).replace(CROWN_RE,''),er=document.getElementById('nickErr');if(ok&&!v)return;if(ok&&!isGMp(pid)&&/(^|[^a-z])gm([^a-z]|$)|운영자|관리자/i.test(v)){er.textContent='GM·운영자·관리자는 닉네임에 쓸 수 없어요';return;}
   if(ok&&rankOn()&&ptok){if(nickBusy)return;nickBusy=true;er.textContent='확인 중...';
     fetch(RANK.url+'/rest/v1/rpc/claim_nick',{method:'POST',headers:rankHdr(),body:JSON.stringify({p_tok:ptok,p_nick:v})}).then(x=>x.ok?x.json():'err').catch(()=>'err').then(res=>{nickBusy=false;
       if(res==='taken'){er.textContent='이미 다른 사람이 쓰는 닉네임이에요';return;}
@@ -732,7 +732,7 @@ function drawDailyOver(){
   else if(!L.length)txt('아직 기록이 없어요. 첫 1등을 노려보세요!',W/2,y0+fs*1.8,fs,'rgba(255,255,255,0.7)',600);
   else{const mi=L.findIndex(o=>o.pid===pid);const show=L.slice(0,5);if(mi>=5)show.push(L[mi]);
     show.forEach((o,i)=>{const k=L.indexOf(o),y=y0+fs*1.7*(i+1),me=o.pid===pid,c=me?'#e6ccff':k===0?'#ffe066':k===1?'#dfe6ee':'rgba(255,255,255,0.85)';
-      txt((k+1)+'',x0+20,y,fs,c,900);txt(o.nickname||'이름없음',x0+50,y,fs,c,800,'left');txt(fmtMs(o.ms),x0+280,y,fs,c,800,'right');});}
+      txt((k+1)+'',x0+20,y,fs,c,900);nmT(o.nickname||'이름없음',o.pid,x0+50,y,fs,c);txt(fmtMs(o.ms),x0+280,y,fs,c,800,'right');});}
   overBtns=null;overRankBtn=null;if(overT>1){const bw=Math.min(200,W*0.3),bh=Math.max(38,Math.min(46,H*0.1)),g=14,by=H-bh-10;overBtns=[{x:W/2-bw-g/2,y:by,w:bw,h:bh},{x:W/2+g/2,y:by,w:bw,h:bh}];
     overBtns.forEach((q,i)=>{rrect(q.x,q.y,q.w,q.h,10);ctx.fillStyle=i?'rgba(255,255,255,0.08)':'rgba(200,150,255,0.22)';ctx.fill();ctx.strokeStyle=i?'rgba(255,255,255,0.35)':'#d9b8ff';ctx.lineWidth=2;ctx.stroke();txt(i?'순위 보기':'다시 도전',q.x+q.w/2,q.y+q.h/2,16,'#fff',900);});}
 }
@@ -756,7 +756,7 @@ function drawDLobby(){drawBg();ctx.fillStyle='rgba(5,7,15,0.6)';ctx.fillRect(0,0
     ctx.save();ctx.beginPath();ctx.rect(lx+2,top,lw-4,vh);ctx.clip();
     L.forEach((o,k)=>{const y=top+rowH*(k+0.5)-dlScroll;if(y<top-rowH||y>bot+rowH)return;const me=o.pid===pid,c=me?'#e6ccff':k===0?'#ffe066':k===1?'#dfe6ee':k===2?'#f0c8a0':'rgba(255,255,255,0.85)';
       if(me){ctx.fillStyle='rgba(200,150,255,0.14)';ctx.fillRect(lx+6,y-rowH/2+2,lw-12,rowH-4);}
-      txt((k+1)+'',lx+26,y,fs,c,900);txt(o.nickname||'이름없음',lx+52,y,fs,c,800,'left');txt(fmtMs(o.ms),lx+lw-16,y,fs,c,800,'right');});
+      txt((k+1)+'',lx+26,y,fs,c,900);nmT(o.nickname||'이름없음',o.pid,lx+52,y,fs,c);txt(fmtMs(o.ms),lx+lw-16,y,fs,c,800,'right');});
     ctx.restore();if(mx>0){const th=Math.max(24,vh*vh/tot),ty=top+(vh-th)*(dlScroll/mx);rrect(lx+lw-6,ty,3,th,2);ctx.fillStyle='rgba(217,184,255,0.5)';ctx.fill();}}
   const rx=lx+lw+24,rw=W-rx-24,cx=rx+rw/2;
   (DAILY_DESC[tb]||'').split(' · ').forEach((l,i)=>txt(l,cx,ly+fs*1.2+i*fs*1.4,Math.max(10,fs-1),'rgba(255,255,255,0.8)',700));
@@ -1656,6 +1656,8 @@ function drawMarkers(){
     ctx.beginPath();ctx.moveTo(m.x-6,m.y);ctx.lineTo(m.x+6,m.y);ctx.moveTo(m.x,m.y-6);ctx.lineTo(m.x,m.y+6);ctx.stroke();ctx.globalAlpha=1;}
 }
 let DISP_OK=false;try{document.fonts.load('20px "Do Hyeon"','섬광').then(f=>{if(f&&f.length)DISP_OK=true;}).catch(()=>{});}catch(e){}
+const GM_PIDS=['69759a72efd0ad8e2190e657e766a41b31b7efd4f85539f0cecaf19652bc4473'];const isGMp=p=>!!p&&GM_PIDS.includes(p);const CROWN_RE=/[\u{1F451}\u2654-\u265F]/gu;
+function nmT(n,p,x,y,fs,col){const g=isGMp(p),t=g?String(n||''):String(n||'').replace(CROWN_RE,'');txt(t,x,y,fs,col,800,'left');let ex=x+ctx.measureText(t).width;if(g){const gs=Math.max(10,Math.round(fs*0.8));txt('👑GM',ex+6,y,gs,'#ffd34d',900,'left');ex+=6+ctx.measureText('👑GM').width;}return ex;}
 function txt(s,x,y,size,col,weight,align){ctx.font=DISP_OK&&size>=14?`400 ${size*1.05}px "Do Hyeon",${FONT}`:`${weight||700} ${size}px ${FONT}`;ctx.textAlign=align||'center';ctx.textBaseline='middle';ctx.fillStyle=col;ctx.fillText(s,x,y);}
 function drawButton(b,label,active,cd,glow,gl){
   const pr=btnAnim[label==='회피'?'dash':'atk'],r=b.r*(1-pr*0.08);
@@ -2000,7 +2002,7 @@ function drawRank(){
     const L=o.m,maxS=Math.max(0,L.length*rh-lh);rankScroll=clamp(rankScroll,0,maxS);
     ctx.save();ctx.beginPath();ctx.rect(0,lt,W,lh);ctx.clip();
     L.forEach((r,i)=>{const y=lt+rh*(i+0.5)-rankScroll;if(y<lt-rh||y>H+rh)return;if(r.me){ctx.fillStyle='rgba(120,180,255,0.12)';ctx.fillRect(8,y-rh/2+2,W-16,rh-4);}
-      txt(r.score>=0?String(i+1):'-',cx[0],y,15,'#fff',900);txt(r.nick||'이름없음',cx[1],y,15,r.nick?(r.me?'#b8d4ff':'#fff'):'rgba(255,255,255,0.4)',800,'left');txt(r.score>=0?Number(r.score).toLocaleString():'-',cx[2],y,15,'#ffe066',800);});
+      txt(r.score>=0?String(i+1):'-',cx[0],y,15,'#fff',900);nmT(r.nick||'이름없음',r.pid,cx[1],y,15,r.nick?(r.me?'#b8d4ff':'#fff'):'rgba(255,255,255,0.4)');txt(r.score>=0?Number(r.score).toLocaleString():'-',cx[2],y,15,'#ffe066',800);});
     ctx.restore();if(maxS>0){const bh=Math.max(30,lh*lh/(L.length*rh)),by=lt+(lh-bh)*(rankScroll/maxS);ctx.fillStyle='rgba(255,255,255,0.25)';ctx.fillRect(W-7,by,3,bh);}
     return;}
   if(rankTab===3){rankUI.clanRows=[];const top=66,rh=Math.max(30,Math.min(40,(H-top-60)/5)),cx=[W*0.12,W*0.22,W*0.55,W*0.82],hc='rgba(255,255,255,0.5)';
@@ -2014,7 +2016,7 @@ function drawRank(){
     txt('순위',cx[0],top+rh/2,12,hc,700);txt('함께한 두 사람',cx[1],top+rh/2,12,hc,700,'left');txt('클리어 시간',cx[2],top+rh/2,12,hc,700);
     const maxS=Math.max(0,rankList.length*rh-lh);rankScroll=clamp(rankScroll,0,maxS);ctx.save();ctx.beginPath();ctx.rect(0,lt,W,lh);ctx.clip();
     rankList.forEach((r,i)=>{const y=lt+rh*(i+0.5)-rankScroll;if(y<lt-rh||y>H+rh)return;if(r.me){ctx.fillStyle='rgba(200,140,255,0.12)';ctx.fillRect(8,y-rh/2+2,W-16,rh-4);}
-      const c=i===0?'#ffe066':i===1?'#e0e8f0':i===2?'#e8a878':'#fff';txt(String(i+1),cx[0],y,15,c,900);txt(r.a+'  +  '+r.b,cx[1],y,15,r.me?'#e6ccff':'#fff',800,'left');
+      const c=i===0?'#ffe066':i===1?'#e0e8f0':i===2?'#e8a878':'#fff';txt(String(i+1),cx[0],y,15,c,900);{const dc=r.me?'#e6ccff':'#fff';let ex=nmT(r.a,r.pa,cx[1],y,15,dc);txt('+',ex+12,y,15,'rgba(255,255,255,0.6)',800,'left');nmT(r.b,r.pb,ex+30,y,15,dc);}
       txt(Math.floor(r.t/60)+':'+(r.t%60).toFixed(1).padStart(4,'0'),cx[2],y,15,'#5ff4ff',900);});
     ctx.restore();if(maxS>0){const bh=Math.max(30,lh*lh/(rankList.length*rh)),by=lt+(lh-bh)*(rankScroll/maxS);ctx.fillStyle='rgba(255,255,255,0.25)';ctx.fillRect(W-7,by,3,bh);}return;}
   if(!rankList.length){txt(rankTab===0?'아직 웨이브 15를 클리어한 사람이 없어요':'아직 기록이 없어요. 첫 번째가 되어보세요!',W/2,H/2,16,'rgba(255,255,255,0.7)',700);return;}
@@ -2025,7 +2027,7 @@ function drawRank(){
   rankList.forEach((r,i)=>{const y=lt+rh*(i+0.5)-rankScroll;if(y<lt-rh||y>H+rh)return;const me=r.nickname===nick,fs=15;
     if(me){ctx.fillStyle='rgba(200,140,255,0.12)';ctx.fillRect(8,y-rh/2+2,W-16,rh-4);}
     const c=i===0?'#ffe066':i===1?'#e0e8f0':i===2?'#e8a878':'#fff';
-    txt(String(i+1),cx[0],y,fs,c,900);txt(r.nickname,cx[1],y,fs,me?'#e6ccff':'#fff',800,'left');{const cl=clanMap&&r.pid&&clanMap[r.pid];if(cl){ctx.font=`800 ${fs}px ${FONT}`;const tw=ctx.measureText(r.nickname).width;txt(cl,cx[1]+tw+8,y,11,'rgba(184,212,255,0.8)',800,'left');}}
+    txt(String(i+1),cx[0],y,fs,c,900);const nx=nmT(r.nickname,r.pid,cx[1],y,fs,me?'#e6ccff':'#fff');{const cl=clanMap&&r.pid&&clanMap[r.pid];if(cl){txt(cl,nx+8,y,11,'rgba(184,212,255,0.8)',800,'left');}}
     txt(rankTab===0?fmtT(r.clear_time||0):rankTab===2?(r.kills||0)+'마리':'웨이브 '+r.wave+(r.wave>15?' (무한)':''),cx[2],y,fs,rankTab===0?'#5ff4ff':'rgba(255,255,255,0.75)',rankTab===0?900:700);
     txt(Number(r.score).toLocaleString(),cx[3],y,fs,rankTab>=1?'#ffe066':'rgba(255,230,140,0.6)',rankTab===1?900:700);});
   ctx.restore();
