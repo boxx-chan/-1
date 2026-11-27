@@ -142,7 +142,7 @@ const RUSH_LEN=60,RCHAIN_KEEP=2.5,rMul=()=>1+0.25*Math.min(rChain,12);
 let tut=null,tutForce=false,tutSkipR=null;
 let dly=null,echoes=[],dSt=null,dRes=null,dBoard=null,dBoardDay='',dTag='',dLoading=false;
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1127.108';
+const VERSION='1127.109';
 const WCOIN=60,RCOIN_N=3,RCOIN_MAX=600;const today=()=>{const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();};const rcLeft=()=>{const r=META.rd||{};return r.d===today()?Math.max(0,RCOIN_N-(r.n||0)):RCOIN_N;};let overBtns=null,quitRun=false,rcUsed=false;let hitSrc='',runT=0,endless=false,clearBonus=0,clrW=0,clrK=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
 let ult=null,mines=[];const ultMax=()=>U.ultFast?75:100,ultN=()=>rush?4:U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#8a6cff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
@@ -285,7 +285,7 @@ function fitNick(){const b=document.getElementById('nickBox'),vv=window.visualVi
 if(window.visualViewport){visualViewport.addEventListener('resize',fitNick);visualViewport.addEventListener('scroll',fitNick);}
 let nickForce=false;function askNick(cb,force){nickForce=!!force;document.getElementById('nickSub').textContent=nickForce?'1~12자 · 랭킹과 학교 명단에 표시돼요':'1~12자 · 랭킹에 표시돼요 · 취소하면 기록이 안 올라가요';document.getElementById('nickNo').style.display=nickForce?'none':'';document.getElementById('nickG').style.display=nickForce?'':'none';nickCb=cb;const b=document.getElementById('nickBox'),i=document.getElementById('nickIn');i.value=nick;b.style.display='flex';fitNick();setTimeout(()=>{try{i.focus()}catch(e){}fitNick();},50);}
 let nickBusy=false,nickTaken=false;
-function closeNick(ok){const v=cleanNick(document.getElementById('nickIn').value).replace(CROWN_RE,''),er=document.getElementById('nickErr');if(ok&&!v)return;if(ok&&!isGMp(pid)&&/(^|[^a-z])gm([^a-z]|$)|운영자|관리자/i.test(v)){er.textContent='GM·운영자·관리자는 닉네임에 쓸 수 없어요';return;}
+function closeNick(ok){const v=cleanNick(document.getElementById('nickIn').value).replace(CROWN_RE,''),er=document.getElementById('nickErr');if(ok&&!v)return;
   if(ok&&rankOn()&&ptok){if(nickBusy)return;nickBusy=true;er.textContent='확인 중...';
     fetch(RANK.url+'/rest/v1/rpc/claim_nick',{method:'POST',headers:rankHdr(),body:JSON.stringify({p_tok:ptok,p_nick:v})}).then(x=>x.ok?x.json():'err').catch(()=>'err').then(res=>{nickBusy=false;
       if(res==='taken'){er.textContent='이미 다른 사람이 쓰는 닉네임이에요';return;}
@@ -1657,7 +1657,7 @@ function drawMarkers(){
 }
 let DISP_OK=false;try{document.fonts.load('20px "Do Hyeon"','섬광').then(f=>{if(f&&f.length)DISP_OK=true;}).catch(()=>{});}catch(e){}
 const GM_PIDS=['69759a72efd0ad8e2190e657e766a41b31b7efd4f85539f0cecaf19652bc4473'];const isGMp=p=>!!p&&GM_PIDS.includes(p);const CROWN_RE=/[\u{1F451}\u2654-\u265F]/gu;
-function nmT(n,p,x,y,fs,col){const g=isGMp(p),t=g?String(n||''):String(n||'').replace(CROWN_RE,'');txt(t,x,y,fs,col,800,'left');let ex=x+ctx.measureText(t).width;if(g){const gs=Math.max(10,Math.round(fs*0.8));txt('👑GM',ex+6,y,gs,'#ffd34d',900,'left');ex+=6+ctx.measureText('👑GM').width;}return ex;}
+function nmT(n,p,x,y,fs,col){const g=isGMp(p),t=g?String(n||''):String(n||'').replace(CROWN_RE,'');txt(t,x,y,fs,col,800,'left');let ex=x+ctx.measureText(t).width;if(g){const gs=Math.max(10,Math.round(fs*0.8));txt('👑',ex+5,y,gs,'#ffd34d',900,'left');ex+=5+ctx.measureText('👑').width;}return ex;}
 function txt(s,x,y,size,col,weight,align){ctx.font=DISP_OK&&size>=14?`400 ${size*1.05}px "Do Hyeon",${FONT}`:`${weight||700} ${size}px ${FONT}`;ctx.textAlign=align||'center';ctx.textBaseline='middle';ctx.fillStyle=col;ctx.fillText(s,x,y);}
 function drawButton(b,label,active,cd,glow,gl){
   const pr=btnAnim[label==='회피'?'dash':'atk'],r=b.r*(1-pr*0.08);
