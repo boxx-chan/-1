@@ -141,7 +141,7 @@ const RUSH_LEN=60,RCHAIN_KEEP=2.5,rMul=()=>1+0.25*Math.min(rChain,12);
 let tut=null,tutForce=false,tutSkipR=null;
 let spMet=[],spUltK=[];
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1127.87-p4';
+const VERSION='1127.87-p5';
 const WCOIN=60,RCOIN_N=3,RCOIN_MAX=600;const today=()=>{const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();};const rcLeft=()=>{const r=META.rd||{};return r.d===today()?Math.max(0,RCOIN_N-(r.n||0)):RCOIN_N;};let overBtns=null,quitRun=false,rcUsed=false;let hitSrc='',runT=0,endless=false,clearBonus=0,clrW=0,clrK=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
 let ult=null,mines=[];const ultMax=()=>U.ultFast?75:100,ultN=()=>rush?4:U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#8a6cff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
@@ -470,7 +470,7 @@ function killEnemy(e,strike){
   const pts=e.type==='boss'?e.pts:Math.round(e.pts*mult()*(strike?(rush?2:3):1));score+=pts;
   addText(e.x,e.y-e.r-22,'+'+pts,strike?'#7ff':'#9fe',13,0.9);
   if(META.eq==='reaper'){const big=e.type==='boss'?2.2:e.type==='brute'?1.5:1;parts.push({x:e.x,y:e.y,vx:0,vy:-28,t:0,life:0.95,k:'sk',n:true,w:21*big,fr:1});for(let i=0;i<6;i++){const aa=rnd(0,TAU),v=rnd(20,60);parts.push({x:e.x,y:e.y,vx:Math.cos(aa)*v,vy:Math.sin(aa)*v,t:0,life:rnd(0.5,0.8),k:'sm',n:true,w:rnd(6,10)*big,fr:2});}for(let i=0;i<4;i++)parts.push({x:e.x+rnd(-16,16)*big,y:e.y+rnd(-16,16)*big,vx:0,vy:0,t:0,life:rnd(0.3,0.6),k:'st',w:rnd(2.5,5),col:'#ffffff'});}
-  if(META.eq==='spear'){const big=e.type==='boss'?2:e.type==='brute'?1.4:1;parts.push({x:e.x,y:e.y-6,vx:0,vy:-20,t:0,life:0.7,k:'pg',R:11*big,rot:rnd(-0.3,0.3)});spStarDust(e.x,e.y,6,16*big,1);if(hitSrc==='ult'&&spUltK.length<10)spUltK.push({x:e.x,y:e.y,big});}
+  if(META.eq==='spear'){const big=e.type==='boss'?2:e.type==='brute'?1.4:1;parts.push({x:e.x,y:e.y-6,vx:0,vy:-20,t:0,life:0.7,k:'pg',R:11*big,rot:rnd(-0.3,0.3)});spStarDust(e.x,e.y,6,16*big,1);if(hitSrc==='ult'&&spMet.length<12){const sd=[];for(let j=0;j<9;j++)sd.push([Math.random(),rnd(-5,5),rnd(0,TAU)]);spMet.push({x:e.x,y:e.y,big:Math.min(big,1.6),t:-0.12,L:rnd(300,380),sd,hit:0});}}
   if(META.eq==='sakura'){petalBurst(e.x,e.y,e.type==='boss'?40:e.type==='brute'?28:16,e.type==='brute'||e.type==='boss'?320:240);burst(e.x,e.y,6,'#fff',220,0.25,2);ring(e.x,e.y,e.r,e.r*4,'#ffb3d6',0.4,3);}
   else{burst(e.x,e.y,e.type==='brute'?40:20,e.col,e.type==='brute'?520:380,0.6,3);
   burst(e.x,e.y,8,'#fff',260,0.3,2);
