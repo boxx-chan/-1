@@ -142,7 +142,7 @@ const RUSH_LEN=60,RCHAIN_KEEP=2.5,rMul=()=>1+0.25*Math.min(rChain,12);
 let tut=null,tutForce=false,tutSkipR=null;
 let dly=null,echoes=[],dSt=null,dRes=null,dBoard=null,dBoardDay='',dTag='',dLoading=false;
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1127.109';
+const VERSION='1127.110';
 const WCOIN=60,RCOIN_N=3,RCOIN_MAX=600;const today=()=>{const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();};const rcLeft=()=>{const r=META.rd||{};return r.d===today()?Math.max(0,RCOIN_N-(r.n||0)):RCOIN_N;};let overBtns=null,quitRun=false,rcUsed=false;let hitSrc='',runT=0,endless=false,clearBonus=0,clrW=0,clrK=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
 let ult=null,mines=[];const ultMax=()=>U.ultFast?75:100,ultN=()=>rush?4:U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#8a6cff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
@@ -1947,7 +1947,7 @@ function drawTitle(){
   txt(META.cleared?'클리어 ✓  최고 '+fmtT(META.bestClear):'목표: 웨이브 15 보스 처치',W/2,cy+H*0.17,Math.round(H*0.032),META.cleared?'#ffe066':'rgba(255,224,102,0.8)',800);
   txt('FLASH COUNTER',W/2,cy+H*0.12,Math.round(H*0.035),'rgba(200,240,255,0.6)',700);
   const fs=Math.round(clamp(H*0.036,12,17));let y=H*0.485;
-  {const NOTE=[...(rpSale()?['🔥 사신 세트 65% 파격 할인! 100,000 → 35,000 · 12/5까지 (D-'+rpDLeft()+')']:[]),...(rpDay()?['💀 11/26 하루 한정: 사신 세트 무료 체험 (자동 장착)']:[]),'🏫 학교 선택 추가: 오른쪽 위 버튼 · 랭킹에 학교 대항 탭','🤝 2인전 추가 (테스트): 둘이 같이 웨이브 15까지 · 오른쪽 위 버튼','웨이브 15 이후: 적 체력 증가 절반 · 적 수와 등장 속도 증가','한 대 피해 상한: 최대 체력의 35% (최소 3대는 버팀)','체력 강화 회복량 30 → 최대 체력의 30%','일시정지 → 나가기도 랭킹에 기록돼요','닉네임을 바꾸면 이 기기의 랭킹 기록 이름도 함께 바뀌어요','섬광 러시 코인: 처치×2.5 (판당 최대 600) · 하루 3번','웨이브 코인 20 → 60 (15웨이브 클리어 시 약 2,000)'].slice(0,7);
+  {const NOTE=[...(rpSale()?['🔥 사신 세트 65% 파격 할인! 100,000 → 35,000 · 12/5까지 (D-'+rpDLeft()+')']:[]),'⚔ 일일 보스 추가: 매일 다른 보스 · 빨리 잡으면 1~3등 코인 보상 · 오른쪽 위 버튼','🏆 2인전 랭킹 추가: 랭킹 → 2인전 탭 · 둘이 같이 깬 시간 기록','🏫 학교 선택 추가: 오른쪽 위 버튼 · 랭킹에 학교 대항 탭','🤝 2인전 추가 (테스트): 둘이 같이 웨이브 15까지 · 오른쪽 위 버튼'].slice(0,7);
     const bw=Math.min(W-40,fs*26),bh=fs*1.28*NOTE.length+fs*2.1,bx=W/2-bw/2;rrect(bx,y-fs*0.6,bw,bh,10);ctx.fillStyle='rgba(255,224,102,0.07)';ctx.fill();ctx.strokeStyle='rgba(255,224,102,0.35)';ctx.lineWidth=1;ctx.stroke();
     txt('업데이트 공지',W/2,y+fs*0.3,fs,'#ffe066',900);y+=fs*1.7;
     for(const l of NOTE){const hot=l.startsWith('🔥');txt('· '+l,bx+fs,y,Math.round(fs*0.82),hot?`rgba(255,${120+60*(0.5+0.5*Math.sin(time*5))|0},160,1)`:'rgba(255,255,255,0.85)',hot?900:600,'left');y+=fs*1.28;}y=y-fs*0.4;}
