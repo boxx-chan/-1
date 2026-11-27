@@ -139,6 +139,7 @@ let rush=false,rushT=0,rChain=0,rChainT=0,rMax=0,rushSpawnT=0,rushElite={},rushB
 let hc=0,hcQueue=[],hcSpawnT=0,hcCap=2,hcSpd=1,hcNew=false,hcEarn=0,hcSelUI={back:null,tiles:[]},hcBtns=[];
 const RUSH_LEN=60,RCHAIN_KEEP=2.5,rMul=()=>1+0.25*Math.min(rChain,12);
 let tut=null,tutForce=false,tutSkipR=null;
+let spMet=[],spUltK=[];
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
 const VERSION='1127.87';
 const WCOIN=60,RCOIN_N=3,RCOIN_MAX=600;const today=()=>{const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();};const rcLeft=()=>{const r=META.rd||{};return r.d===today()?Math.max(0,RCOIN_N-(r.n||0)):RCOIN_N;};let overBtns=null,quitRun=false,rcUsed=false;let hitSrc='',runT=0,endless=false,clearBonus=0,clrW=0,clrK=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
@@ -293,7 +294,7 @@ function applyU(){DASH_CD=rush?0.48:0.95-U.dashRed;COMBO_WIN=1.2+U.comboAdd;POW_
 function reset(){quitRun=false;tut=null;
   U={slash:1,thrust:1,strike:1,range:1,powDur:0,powMul:0,dashRed:0,comboAdd:0,wave:false,chain:false,shock:false,vamp:false,waveBig:false,ultFast:false,ultMore:false,ultFin:false,bigDmg:false};owned={};applyU();pickNext=false;waves2=[];
   ult=null;P={ult:0,hurtLock:0,chain:0,chainT:0,charge:1,flashCD:0,grace:0,pow:0,chainT:0,x:AW/2,y:AH/2,vx:0,vy:0,r:15,hp:100,maxHp:100,face:0,dashT:0,dashCD:0,dx:1,dy:0,inv:0,just:0,justUsed:true,atkCD:0,comboStep:0,comboWin:0,trail:[],wtr:[],wtT:0};
-  mines=[];enemies=[];bullets=[];parts=[];slashes=[];texts=[];markers=[];lines=[];
+  mines=[];enemies=[];bullets=[];parts=[];slashes=[];texts=[];markers=[];lines=[];spMet=[];spUltK=[];
   runT=0;endless=false;clearTimeRec=null;bonusPick=0;wave=0;waveQueue=[];waveT=1.2;spawnT=0;score=0;combo=0;comboT=0;waveHurt=false;swingHit=false;maxCombo=0;kills=0;flashes=0;
   hitstop=0;trauma=0;ts=1;flashT=0;hurtFlash=0;overT=0;camX=P.x;camY=P.y;bannerT=0;strikeFlash=0;
   rushT=RUSH_LEN;rChain=0;rChainT=0;rMax=0;rushSpawnT=0.6;rushElite={};if(rush){wave=1;waveT=0;P.charge=MAX_CHARGE;}
@@ -469,7 +470,7 @@ function killEnemy(e,strike){
   const pts=e.type==='boss'?e.pts:Math.round(e.pts*mult()*(strike?(rush?2:3):1));score+=pts;
   addText(e.x,e.y-e.r-22,'+'+pts,strike?'#7ff':'#9fe',13,0.9);
   if(META.eq==='reaper'){const big=e.type==='boss'?2.2:e.type==='brute'?1.5:1;parts.push({x:e.x,y:e.y,vx:0,vy:-28,t:0,life:0.95,k:'sk',n:true,w:21*big,fr:1});for(let i=0;i<6;i++){const aa=rnd(0,TAU),v=rnd(20,60);parts.push({x:e.x,y:e.y,vx:Math.cos(aa)*v,vy:Math.sin(aa)*v,t:0,life:rnd(0.5,0.8),k:'sm',n:true,w:rnd(6,10)*big,fr:2});}for(let i=0;i<4;i++)parts.push({x:e.x+rnd(-16,16)*big,y:e.y+rnd(-16,16)*big,vx:0,vy:0,t:0,life:rnd(0.3,0.6),k:'st',w:rnd(2.5,5),col:'#ffffff'});}
-  if(META.eq==='spear'){const big=e.type==='boss'?2:e.type==='brute'?1.4:1;parts.push({x:e.x,y:e.y-6,vx:0,vy:-20,t:0,life:0.7,k:'pg',R:11*big,rot:rnd(-0.3,0.3)});spStarDust(e.x,e.y,6,16*big,1);}
+  if(META.eq==='spear'){const big=e.type==='boss'?2:e.type==='brute'?1.4:1;parts.push({x:e.x,y:e.y-6,vx:0,vy:-20,t:0,life:0.7,k:'pg',R:11*big,rot:rnd(-0.3,0.3)});spStarDust(e.x,e.y,6,16*big,1);if(hitSrc==='ult'&&spUltK.length<10)spUltK.push({x:e.x,y:e.y,big});}
   if(META.eq==='sakura'){petalBurst(e.x,e.y,e.type==='boss'?40:e.type==='brute'?28:16,e.type==='brute'||e.type==='boss'?320:240);burst(e.x,e.y,6,'#fff',220,0.25,2);ring(e.x,e.y,e.r,e.r*4,'#ffb3d6',0.4,3);}
   else{burst(e.x,e.y,e.type==='brute'?40:20,e.col,e.type==='brute'?520:380,0.6,3);
   burst(e.x,e.y,8,'#fff',260,0.3,2);
@@ -526,7 +527,7 @@ function flashStrike(){
 function addUlt(v,fromFlash){if(ult||!v||(rush&&!fromFlash))return;const was=P.ult>=ultMax();P.ult=Math.min(ultMax(),P.ult+v);
   if(!was&&P.ult>=ultMax()){addText(P.x,P.y-58,'난무 준비!','#ffe066',20,1.1);ring(P.x,P.y,10,90,'#ffe066',0.45,4);SFX.tink();}}
 function startUlt(){
-  const p=P;p.ult=0;flashT=0;p.dashT=0;inp.dash=0;inp.atk=0;ult={i:0,t:0.05,last:null};p.just=0;p.justUsed=true;p.inv=Math.max(p.inv,1);
+  const p=P;p.ult=0;flashT=0;p.dashT=0;inp.dash=0;inp.atk=0;ult={i:0,t:0.05,last:null};spUltK=[];p.just=0;p.justUsed=true;p.inv=Math.max(p.inv,1);
   addText(p.x,p.y-50,'난무!','#ffe066',30,1.1);SFX.ult();vib([20,20,20]);ring(p.x,p.y,10,200,'#ffe066',0.5,6);strikeFlash=0.6;
 }
 function ultDash(){
@@ -547,7 +548,7 @@ function ultDash(){
 }
 function updateUlt(rdt){
   ult.t-=rdt;P.inv=Math.max(P.inv,0.5);
-  if(ult.t<=0){if(ult.i>=ultN()){ult=null;P.grace=GRACE;P.inv=0;P.atkCD=0.2;P.comboWin=0;return;}ultDash();if(!ult)return;ult.i++;ult.t=ult.i>=ultN()?0.25:0.12;}
+  if(ult.t<=0){if(ult.i>=ultN()){ult=null;spMeteorGo();P.grace=GRACE;P.inv=0;P.atkCD=0.2;P.comboWin=0;return;}ultDash();if(!ult)return;ult.i++;ult.t=ult.i>=ultN()?0.25:0.12;}
 }
 const BOSS_HP=[150,330,520],DMG_W=0.07,DMG_E=0.12;
 function dmgMul(){const w=Math.max(1,wave);return w<=15?1+DMG_W*(w-1):(1+DMG_W*14)*(1+DMG_E*(w-15));}
@@ -880,6 +881,7 @@ function updateFx(dt){
   for(const s of slashes)s.t+=dt;if(META.eq==='reaper')reaperTick(slashes,P.x,P.y,true);else if(META.eq==='spear')spearTick(slashes,P.x,P.y,true);slashes=slashes.filter(s=>s.t<s.dur);
   for(const t of texts){t.t+=dt;t.y-=40*dt;}texts=texts.filter(t=>t.t<t.life);
   for(const l of lines)l.t+=l.star?Math.max(dt,realDt):dt;lines=lines.filter(l=>l.t<l.dur);
+  if(spMet.length)spMetTick(realDt||dt);
 }
 function update(rdt){
   runT+=rdt;
@@ -1599,6 +1601,32 @@ function drawWaveList(list,sk){
 // ---- 펄: 섬광·난무 때 별로 변해 돌진 (형 ref: shooting star, 2026-11-27)
 const SD_T=0.13;
 function pearlStarOn(){return META.eq==='spear';}
+// 펄: 난무로 죽은 적 자리에 마지막에 푸른 별빛(유성)이 떨어짐 — 시각 효과만
+const SM_FALL=0.2,SM_LIFE=0.95,SM_DX=0.42,SM_DY=-1;
+function spMeteorGo(){if(!spUltK.length)return;spUltK.forEach((m,i)=>{const sd=[];for(let j=0;j<9;j++)sd.push([Math.random(),rnd(-5,5),rnd(0,TAU)]);spMet.push({x:m.x,y:m.y,big:Math.min(m.big,1.6),t:-0.06-i*0.05,L:rnd(300,380),sd,hit:0});});spUltK=[];}
+function spMetTick(dt){for(const m of spMet){m.t+=dt;if(!m.hit&&m.t>=SM_FALL){m.hit=1;spStarDust(m.x,m.y,9,20*m.big,1.1);for(let j=0;j<5;j++){const a=rnd(0,TAU),v=rnd(60,150);parts.push({x:m.x,y:m.y,vx:Math.cos(a)*v,vy:Math.sin(a)*v-30,t:0,life:rnd(0.35,0.6),k:'st',w:rnd(2,3.4),col:'#cfe8ff'});}if(spMet.filter(q=>q.hit).length<=1)SFX.tink();}}spMet=spMet.filter(m=>m.t<SM_LIFE);}
+function spSpark4(x,y,R,al){ctx.globalAlpha=al;ctx.fillStyle='#fff';ctx.beginPath();for(let i=0;i<4;i++){const a=i*Math.PI/2,b=a+Math.PI/4;ctx.lineTo(x+Math.cos(a)*R,y+Math.sin(a)*R);ctx.lineTo(x+Math.cos(b)*R*0.2,y+Math.sin(b)*R*0.2);}ctx.fill();
+  const g=ctx.createRadialGradient(x,y,0,x,y,R*1.1);g.addColorStop(0,`rgba(200,225,255,${0.55*al})`);g.addColorStop(1,'rgba(120,170,255,0)');ctx.fillStyle=g;ctx.globalAlpha=1;ctx.beginPath();ctx.arc(x,y,R*1.1,0,TAU);ctx.fill();}
+function spMetDraw(){ctx.save();ctx.globalCompositeOperation='lighter';const n=Math.hypot(SM_DX,SM_DY),dx=SM_DX/n,dy=SM_DY/n,px=-dy,py=dx;
+  for(const m of spMet){if(m.t<=0)continue;const u=Math.min(1,m.t/SM_FALL),e=u*u,after=Math.max(0,m.t-SM_FALL),fd=after>0?Math.max(0,1-after/(SM_LIFE-SM_FALL)):1,B=m.big;
+    const hx=m.x+dx*m.L*(1-e),hy=m.y+dy*m.L*(1-e),tl=Math.min(m.L,m.L*e+90)*(after>0?1-0.35*after/(SM_LIFE-SM_FALL):1),tx=hx+dx*tl,ty=hy+dy*tl;
+    // tapered tail (glow + core), slightly wavy edge
+    for(const [W,cl,am] of [[7*B,'90,140,255',0.38],[2.6*B,'190,220,255',0.8],[1*B,'255,255,255',0.9]]){ctx.beginPath();const N=22;
+      for(let i=0;i<=N;i++){const k=i/N,w=W*Math.pow(k,1.2)*(1+0.18*Math.sin(k*19+m.t*30));ctx.lineTo(tx+(hx-tx)*k+px*w,ty+(hy-ty)*k+py*w);}
+      for(let i=N;i>=0;i--){const k=i/N,w=W*Math.pow(k,1.2)*(1+0.18*Math.sin(k*23-m.t*26));ctx.lineTo(tx+(hx-tx)*k-px*w,ty+(hy-ty)*k-py*w);}
+      ctx.closePath();const g=ctx.createLinearGradient(tx,ty,hx,hy);g.addColorStop(0,`rgba(${cl},0)`);g.addColorStop(1,`rgba(${cl},${am*fd})`);ctx.fillStyle=g;ctx.fill();}
+    // glitter scattered along tail, drifts down as it fades
+    for(const [k,o,ph] of m.sd){const sx=tx+(hx-tx)*k+px*o*(1+after*6),sy=ty+(hy-ty)*k+py*o+after*30,tw=0.5+0.5*Math.sin(m.t*22+ph);ctx.globalAlpha=fd*tw*(0.4+0.6*k);ctx.fillStyle=k>0.6?'#fff':'#bcd8ff';ctx.fillRect(sx-1,sy-1,2,2);}
+    ctx.globalAlpha=1;
+    if(after<=0)spSpark4(hx,hy,15*B,1);
+    else{const a=after/(SM_LIFE-SM_FALL);
+      // impact: soft uneven double halo + fading sparkle
+      for(const [r0,r1,al] of [[10,46,0.55],[6,30,0.4]]){const R=(r0+(r1-r0)*Math.pow(Math.min(1,a*1.6),0.6))*B;ctx.beginPath();for(let i=0;i<=40;i++){const t=i/40*TAU,rr=R*(1+0.07*Math.sin(t*5+m.L)+0.05*Math.sin(t*9-m.t*8));ctx.lineTo(m.x+Math.cos(t)*rr,m.y+Math.sin(t)*rr*0.9);}
+        ctx.strokeStyle=`rgba(150,190,255,${al*(1-a)})`;ctx.lineWidth=2.2*B;ctx.stroke();}
+      const fg=ctx.createRadialGradient(m.x,m.y,0,m.x,m.y,38*B);fg.addColorStop(0,`rgba(200,225,255,${0.5*Math.max(0,1-a*2.2)})`);fg.addColorStop(1,'rgba(100,150,255,0)');ctx.fillStyle=fg;ctx.beginPath();ctx.arc(m.x,m.y,38*B,0,TAU);ctx.fill();
+      if(a<0.35)spSpark4(m.x,m.y,(15+14*a)*B,1-a/0.35);}}
+  ctx.restore();ctx.globalAlpha=1;}
+
 function starDashFx(sx,sy,ex,ey){const L=Math.hypot(ex-sx,ey-sy)||1,c=(ex-sx)/L,sn=(ey-sy)/L;
   for(let i=0;i<34;i++){const q=Math.random(),o=rnd(-10,10)*(1-q*0.5);parts.push({x:sx+(ex-sx)*q-sn*o,y:sy+(ey-sy)*q+c*o,vx:-c*rnd(10,50)+rnd(-15,15),vy:-sn*rnd(10,50)+rnd(-15,15),t:-q*SD_T,life:rnd(0.45,0.95),k:'st',w:rnd(1.4,3.4),col:Math.random()<0.4?'#fff6d8':'#ffffff',c2:'#ffd98a',fr:2.5,g:12});}}
 function starShape(x,y,R,rot,al,glow){// 8-point star: 4 long + 4 short rays, soft
@@ -2076,7 +2104,7 @@ function render(){
     drawArena();drawMarkers();drawTelegraphs();
     if(xmas)for(const b of bullets){ctx.fillStyle='rgba(120,200,255,0.22)';ctx.beginPath();ctx.arc(b.x,b.y,b.r*2.1,0,TAU);ctx.fill();ctx.fillStyle='rgba(0,0,0,0.35)';ctx.beginPath();ctx.arc(b.x+1.5,b.y+2.5,b.r*1.05,0,TAU);ctx.fill();ctx.fillStyle='#f4fbff';ctx.beginPath();ctx.arc(b.x,b.y,b.r*1.1,0,TAU);ctx.fill();ctx.strokeStyle='#6cc4ff';ctx.lineWidth=2;ctx.stroke();ctx.fillStyle='#cfe8ff';ctx.beginPath();ctx.arc(b.x+b.r*0.3,b.y+b.r*0.35,b.r*0.45,0,TAU);ctx.fill();}
     else for(const b of bullets){ctx.fillStyle='rgba(255,170,40,0.25)';ctx.beginPath();ctx.arc(b.x,b.y,b.r*2.2,0,TAU);ctx.fill();ctx.fillStyle='#ffd27a';ctx.beginPath();ctx.arc(b.x,b.y,b.r,0,TAU);ctx.fill();}
-    drawWalkTrail(P.wtr,META.eqT,P.r);drawDashTrail(P.trail,META.eqT,P.r);drawGroundParts();drawEnemies();drawPlayer();drawComboGauge();drawFlashReady();drawAim();drawSlashes();drawSwordWaves();drawLines();drawParts();drawTexts();drawTutWorld();
+    drawWalkTrail(P.wtr,META.eqT,P.r);drawDashTrail(P.trail,META.eqT,P.r);drawGroundParts();drawEnemies();drawPlayer();drawComboGauge();drawFlashReady();drawAim();drawSlashes();drawSwordWaves();drawLines();if(spMet.length)spMetDraw();drawParts();drawTexts();drawTutWorld();
     ctx.restore();if(xmas)drawSnow();
     if(flashT>0){const g=ctx.createRadialGradient(W/2,H/2,H*0.3,W/2,H/2,W*0.7);g.addColorStop(0,'rgba(40,120,160,0.05)');g.addColorStop(1,'rgba(40,200,255,0.28)');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);}
     if(strikeFlash>0){ctx.fillStyle=`rgba(220,255,255,${strikeFlash*0.35})`;ctx.fillRect(0,0,W,H);}
