@@ -136,7 +136,7 @@ const RUSH_LEN=60,RCHAIN_KEEP=2.5,rMul=()=>1+0.25*Math.min(rChain,12);
 let tut=null,tutForce=false,tutSkipR=null;
 let dly=null,echoes=[],dSt=null,dRes=null,dBoard=null,dBoardDay='',dTag='',dLoading=false;
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1127.112';
+const VERSION='1127.113';
 const WCOIN=60,RCOIN_N=3,RCOIN_MAX=600;const today=()=>{const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();};const rcLeft=()=>{const r=META.rd||{};return r.d===today()?Math.max(0,RCOIN_N-(r.n||0)):RCOIN_N;};let overBtns=null,quitRun=false,rcUsed=false;let hitSrc='',runT=0,endless=false,clearBonus=0,clrW=0,clrK=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
 let ult=null,mines=[];const ultMax=()=>U.ultFast?75:100,ultN=()=>rush?4:U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#8a6cff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
@@ -190,7 +190,7 @@ async function acctSync(first){if(!acct||acctBusy)return;acctBusy=true;acctSynci
     if(!sv){lss('flash_acct',acct.uid);acctSyncing=false;if(await acctUpload())acctNote('구글 계정에 저장했어요');return;}
     let apply=null;
     if(!linked||((+sv.t||0)!==base&&dirty))apply=acctMerge(sv.ls||{});else if((+sv.t||0)!==base)apply=sv.ls||{};
-    if(apply){for(const k of ACK)lss(k,apply[k]===undefined?null:apply[k]);lss('flash_acct',acct.uid);acctSyncing=false;if(apply!==sv.ls){await acctUpload();}else{lss('flash_base',+sv.t||0);lss('flash_dirty',null);}lss('flash_reloadmsg',linked?'다른 기기 진행을 불러왔어요':'구글 계정 진행을 불러왔어요');location.reload();return;}
+    if(apply){const _ot=lsg('flash_tok');for(const k of ACK)lss(k,apply[k]===undefined?null:apply[k]);if(_ot&&lsg('flash_tok')&&lsg('flash_tok')!==_ot)lss('flash_oldtok',_ot);lss('flash_acct',acct.uid);acctSyncing=false;if(apply!==sv.ls){await acctUpload();}else{lss('flash_base',+sv.t||0);lss('flash_dirty',null);}lss('flash_reloadmsg',linked?'다른 기기 진행을 불러왔어요':'구글 계정 진행을 불러왔어요');location.reload();return;}
     lss('flash_acct',acct.uid);acctSyncing=false;if(dirty)await acctUpload();if(first)acctNote('구글 계정 연결됨');
   }catch(e){acctNote('계정 동기화 실패 (인터넷 확인)');}finally{acctBusy=false;acctSyncing=false;if(!nick&&rankOn()&&document.getElementById('nickBox').style.display!=='flex'){askNick(()=>{},true);document.getElementById('nickNote').textContent='처음 오셨네요! 닉네임부터 정해주세요';}}}
 {const m=lsg('flash_reloadmsg');if(m){lss('flash_reloadmsg',null);setTimeout(()=>acctNote(m),300);}}
@@ -247,7 +247,18 @@ let rankList=null,rankErr='',rankLoading=false,pendRec=null,recMsg='',clearTimeR
 const rankOn=()=>!!(RANK.url&&RANK.key);
 function cleanNick(v){return String(v||'').replace(/[\u0000-\u001f\u007f<>]/g,'').trim().slice(0,12);}
 function rankHdr(){const h={'apikey':RANK.key,'Content-Type':'application/json'};if(!RANK.key.startsWith('sb_'))h.Authorization='Bearer '+RANK.key;return h;}
-let runId=null,runReq=false,runSeq=0;function startRunTok(){runId=null;const my=++runSeq;if(!rankOn()||!ptok)return;fetch(RANK.url+'/rest/v1/rpc/start_run',{method:'POST',headers:rankHdr(),body:JSON.stringify({p_tok:ptok}),cache:'no-store'}).then(x=>x.ok?x.json():null).catch(()=>null).then(v=>{if(my===runSeq)runId=v||null;});}
+let runId=null,runReq=false,runSeq=0,runCoins=0,walletOk=false,walletBusy=null,buyBusy=false,pendCodes=[];
+function wRpc(fn,b){return fetch(RANK.url+'/rest/v1/rpc/'+fn,{method:'POST',headers:rankHdr(),body:JSON.stringify(b),cache:'no-store'}).then(x=>x.ok?x.json():null).catch(()=>null);}
+function walletApply(w){if(!w||w.coins===undefined)return;META.coins=Math.max(0,+w.coins||0);META.own=Object.assign({flash:1},w.own||{});META.ownT=Object.assign({},w.ownT||{});if(!ownS(META.eq))META.eq='flash';if(META.eq==='reaper')META.eqT='reaper';else if(META.eqT!=='none'&&(!META.ownT[META.eqT]||META.eqT==='reaper'))META.eqT='none';saveMeta();}
+function walletSync(){if(!rankOn()||!ptok)return Promise.resolve(false);if(walletBusy)return walletBusy;walletBusy=wRpc('wallet_sync',{p_tok:ptok,p_coins:Math.round(+META.coins||0),p_own:META.own||{},p_own_t:META.ownT||{}}).then(w=>{walletBusy=null;if(w&&w.coins!==undefined){walletApply(w);walletOk=true;}return walletOk;});return walletBusy;}
+function walletBoot(){if(!rankOn()||!ptok)return;const old=lsg('flash_oldtok');(old&&old!==ptok?wRpc('wallet_merge',{p_old:old,p_new:ptok}).then(r=>{if(r)lss('flash_oldtok',null);}):Promise.resolve()).then(()=>walletSync()).then(ok=>{if(!ok)return;claimRewards();const cs=pendCodes.splice(0);for(const c of cs)redeemCode(c[0],c[1]);});}
+function redeemCode(code,msg){if(!walletOk){pendCodes.push([code,msg]);return;}wRpc('redeem_code',{p_tok:ptok,p_code:code}).then(r=>{if(r&&r.ok){walletApply(r);renMsg=msg;renUntil=time+5;}else if(r&&r.err==='no_wallet'){walletOk=false;pendCodes.push([code,msg]);walletBoot();}});}
+function earnRun(retry){if(!rankOn()||!ptok||!runId||runCoins<=0)return;const b={p_tok:ptok,p_run:runId,p_mode:rush?'rush':'main',p_wave:wave,p_kills:kills,p_total:Math.round(runCoins)};
+  (walletOk?Promise.resolve(true):walletSync()).then(ok=>{if(!ok){renMsg='코인 지급 실패 (인터넷 확인)';renUntil=time+5;return;}return wRpc('earn_run',b).then(r=>{if(!r){renMsg='코인 지급 실패 (인터넷 확인)';renUntil=time+5;return;}if(r.err==='no_wallet'&&!retry){walletOk=false;return walletSync().then(()=>wRpc('earn_run',b)).then(walletApply);}walletApply(r);if(r.err==='day_cap'){renMsg='오늘 코인 한도(12만)에 도달했어요';renUntil=time+6;}});});}
+function buyItem(kind,k){if(buyBusy)return;if(!walletOk){walletSync();SFX.hurt();pv.msg='인터넷 연결이 필요해요';pv.msgT=1.8;return;}buyBusy=true;pv.msg='구매 중…';pv.msgT=8;
+  wRpc('buy_item',{p_tok:ptok,p_kind:kind,p_id:k.id}).then(r=>{buyBusy=false;if(r&&r.ok){walletApply(r);if(kind==='t')META.eqT=k.id;else{if(k.set)META.eqT=k.id;else if(skinById(META.eq).set)META.eqT='none';META.eq=k.id;}saveMeta();SFX.wave();vib(30);pv.msg=k.name+(kind==='t'?' 트레일':'')+' 구매 완료!';pv.msgT=1.6;}
+    else{if(r)walletApply(r);SFX.hurt();pv.msg=r&&r.err==='poor'?'코인이 부족해요':r&&r.err==='owned'?'이미 가지고 있어요':'구매 실패, 다시 시도해 주세요';pv.msgT=1.8;}});}
+function startRunTok(){runId=null;const my=++runSeq;if(!rankOn()||!ptok)return;fetch(RANK.url+'/rest/v1/rpc/start_run',{method:'POST',headers:rankHdr(),body:JSON.stringify({p_tok:ptok}),cache:'no-store'}).then(x=>x.ok?x.json():null).catch(()=>null).then(v=>{if(my===runSeq)runId=v||null;});}
 function recFail(v){return v==='rejected'?'랭킹 등록 거부 (기록 검증 실패)':v==='no_run'?'랭킹 등록 실패 (게임 시작 때 서버 연결 안 됨)':v==='blocked'?'랭킹 등록이 차단된 기기예요':'랭킹 등록 실패 ('+v+')';}
 function postRec(r){nickTaken=false;if(xmas){pendRec=null;recMsg='이벤트 모드는 랭킹에 기록되지 않아요';return;}if(!rankOn()||!nick){pendRec=r;recMsg=rankOn()?'':'';return;}pendRec=null;recMsg='랭킹 등록 중...';
   if(!r.run){recMsg=recFail('no_run');return;}
@@ -303,12 +314,12 @@ const TPRICES={flash:5000,ghost:10000,ink:10000,bolt:13000,fire:13000,sakura:130
 (async()=>{try{const q=new URLSearchParams(location.search).get('gift');if(!q||!crypto.subtle)return;
   const h=[...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(q)))].map(b=>b.toString(16).padStart(2,'0')).join('');
   history.replaceState(null,'',location.pathname);if(!['6631f24996f1d40542fe1fcea3d2b5714d41c776b96f5ea31fe010ebf406ac12','30beeeab39cf45ccee731d3e93f0ae13f484ccebb4db8e0cabd14046a5f33111'].includes(h))return;
-  META.own.reaper=1;META.ownT.reaper=1;saveMeta();
+  redeemCode(q,'사신 세트 지급 완료 · 상점에서 장착하세요');return;
   const d=document.createElement('div');d.textContent='사신 세트 지급 완료 · 상점에서 장착하세요';d.style.cssText='position:fixed;left:50%;top:12px;transform:translateX(-50%);background:#9b6bff;color:#fff;font:800 15px sans-serif;padding:8px 14px;border-radius:8px;z-index:99';document.body.appendChild(d);setTimeout(()=>d.remove(),3500);}catch(e){}})();
 (async()=>{try{const q=new URLSearchParams(location.search).get('dev');if(!q||!crypto.subtle)return;
   const h=[...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(q)))].map(b=>b.toString(16).padStart(2,'0')).join('');
   history.replaceState(null,'',location.pathname);if(h!=='41c64ab096a2b90401c785d60ddf7c8677d551fc8c49fbb5b6f06e7ad0b99b08')return;
-  for(const k of SKINS){META.own[k.id]=1;META.ownT[k.id]=1;}saveMeta();
+  redeemCode(q,'개발자 모드: 스킨·트레일 전부 해금');return;
   const d=document.createElement('div');d.textContent='개발자 모드: 스킨·트레일 전부 해금';d.style.cssText='position:fixed;left:50%;top:12px;transform:translateX(-50%);background:#5ff4ff;color:#070a14;font:800 15px sans-serif;padding:8px 14px;border-radius:8px;z-index:99';document.body.appendChild(d);setTimeout(()=>d.remove(),3000);}catch(e){}})();
 function saveMeta(){try{localStorage.setItem('flash_meta',JSON.stringify(META))}catch(e){}acctDirty();}
 
@@ -317,7 +328,7 @@ const CHAIN_MUL=[1,1.5,2],CHAIN_KEEP=2,MAX_CHARGE=3,GRACE=0.25,FLASH_CD=3,THRUST
 let DASH_CD=0.95,COMBO_WIN=1.2,POW_DUR=3,POW_MUL=2;
 let bonusPick=0,U,owned,pickOpts=[],pickT=0,pickNext=false;
 function applyU(){DASH_CD=rush?0.48:0.95-U.dashRed;COMBO_WIN=1.2+U.comboAdd;POW_DUR=3+U.powDur;POW_MUL=2+U.powMul;}
-function reset(){quitRun=false;tut=null;runReq=false;runId=null;runSeq++;
+function reset(){quitRun=false;tut=null;runReq=false;runId=null;runSeq++;runCoins=0;
   U={slash:1,thrust:1,strike:1,range:1,powDur:0,powMul:0,dashRed:0,comboAdd:0,wave:false,chain:false,shock:false,vamp:false,waveBig:false,ultFast:false,ultMore:false,ultFin:false,bigDmg:false};owned={};applyU();pickNext=false;waves2=[];
   ult=null;P={ult:0,hurtLock:0,chain:0,chainT:0,charge:1,flashCD:0,grace:0,pow:0,chainT:0,x:AW/2,y:AH/2,vx:0,vy:0,r:15,hp:100,maxHp:100,face:0,dashT:0,dashCD:0,dx:1,dy:0,inv:0,just:0,justUsed:true,atkCD:0,comboStep:0,comboWin:0,trail:[],wtr:[],wtT:0};
   mines=[];enemies=[];bullets=[];parts=[];slashes=[];texts=[];markers=[];lines=[];
@@ -362,7 +373,7 @@ function menuTap(x,y){
   else if(state==='evsel'){if(x===undefined||inR(x,y,evUI.back)){state='title';return;}for(const c of evUI.cards)if(inR(x,y,c)){if(c.id==='daily')openDLobby();else startMode(c.id);return;}}
   else if(state==='over'&&overT>1.0){if(x!==undefined&&overRankBtn&&inR(x,y,overRankBtn)){askNick(()=>{if(pendRec)postRec(pendRec);});return;}if(x!==undefined){if(overBtns&&inR(x,y,overBtns[1])){const wasD=!!dly;dly=null;reset();if(wasD)openDLobby();else state='title';return;}if(!overBtns||!inR(x,y,overBtns[0]))return;}reset();state='play';}
   else if(state==='clear'&&overT>1.0&&x!==undefined){const rs=clearRects();if(inR(x,y,rs[0])){endless=true;state='play';last=performance.now();banner('무한 모드');}
-    else if(inR(x,y,rs[1])){lastEarn=wave*WCOIN+kills;META.coins+=lastEarn;saveMeta();if(score>best){best=score;try{localStorage.setItem('flash_best',best)}catch(e){}acctDirty();}reset();state='title';}}
+    else if(inR(x,y,rs[1])){lastEarn=wave*WCOIN+kills;META.coins+=lastEarn;runCoins+=lastEarn;saveMeta();earnRun();if(score>best){best=score;try{localStorage.setItem('flash_best',best)}catch(e){}acctDirty();}reset();state='title';}}
 }
 cvs.addEventListener('pointerdown',e=>{
   e.preventDefault();initAudio();
@@ -584,7 +595,7 @@ function heal(v){if(rush)return;const p=P,h=Math.min(p.maxHp-p.hp,Math.round(v))
 function endRun(){if(tut){reset();state='title';return;}if(dly){dailyEnd(quitRun?'quit':'dead');return;}state='over';overT=0;flashT=0;ult=null;ts=1;recMsg='';if(hc){lastEarn=0;return;}postRec(makeRec());
   if(rush){lastEarn=0;rcUsed=false;if(rcLeft()>0){lastEarn=Math.min(RCOIN_MAX,Math.round(kills*2.5));if(lastEarn>0){const t=today();if(!META.rd||META.rd.d!==t)META.rd={d:t,n:0};META.rd.n++;rcUsed=true;}}if(score>rushBest){rushBest=score;try{localStorage.setItem('flash_rbest',rushBest)}catch(e){}}}
   else{lastEarn=endless?clrW*WCOIN+clrK+Math.floor(((wave-clrW)*WCOIN+(kills-clrK))/2):wave*WCOIN+kills;if(score>best){best=score;try{localStorage.setItem('flash_best',best)}catch(e){}acctDirty();}}
-  META.coins+=lastEarn;saveMeta();}
+  META.coins+=lastEarn;runCoins+=lastEarn;saveMeta();earnRun();}
 function rushFlash(p){rChain=rChainT>0?rChain+1:1;rChainT=RCHAIN_KEEP;if(rChain>rMax)rMax=rChain;const pts=Math.round(300*rMul());score+=pts;
   if(rChain>=2)addText(p.x,p.y-64,rChain+' 연쇄  x'+rMul().toFixed(2).replace(/0$/,''),rChain>=12?'#ffe066':rChain>=5?'#ff9a6a':'#8ff',16+Math.min(rChain,12),0.9);
   startUlt();}
@@ -711,8 +722,8 @@ function loadDailyBoard(force){if(!rankOn()||dLoading)return;const d=kstDay();if
   Promise.all([fetch(RANK.url+'/rest/v1/daily_scores?select=pid,nickname,ms&day=eq.'+d+'&result=eq.clear&order=ms.asc&limit=500',{headers:rankHdr(),cache:'no-store'}).then(x=>x.ok?x.json():[]).catch(()=>[]),fetch(RANK.url+'/rest/v1/rpc/player_names',{method:'POST',headers:rankHdr(),body:'{}',cache:'no-store'}).then(x=>x.ok?x.json():[]).catch(()=>[])]).then(([rows,nm])=>{
     const N={};for(const r of nm||[])if(r.pid&&r.nickname)N[r.pid]=r.nickname;const seen={},out=[];for(const r of rows){if(!r.pid||seen[r.pid])continue;seen[r.pid]=1;out.push(Object.assign({},r,{nickname:N[r.pid]||r.nickname}));}dBoard=out;dBoardDay=d;dLoading=false;});}
 function claimRewards(){if(!rankOn()||!ptok)return;fetch(RANK.url+'/rest/v1/rpc/claim_rewards',{method:'POST',headers:rankHdr(),body:JSON.stringify({p_tok:ptok}),cache:'no-store'}).then(x=>x.ok?x.json():0).catch(()=>0).then(n=>{
-  n=+n||0;if(n>0){META.coins+=n;saveMeta();try{acctDirty();}catch(e){}renMsg='🏆 오늘의 보스 순위 보상 +'+n.toLocaleString()+' 코인!';renUntil=time+10;SFX.tink();}});}
-setTimeout(claimRewards,3000);
+  n=+n||0;if(n>0){walletSync();renMsg='🏆 오늘의 보스 순위 보상 +'+n.toLocaleString()+' 코인!';renUntil=time+10;SFX.tink();}});}
+setTimeout(()=>walletBoot(),1500);
 function fmtMs(ms){return (ms/1000).toFixed(2)+'초';}
 function drawDailyOver(){
   ctx.fillStyle=`rgba(5,7,15,${Math.min(0.8,overT)})`;ctx.fillRect(0,0,W,H);if(overT<0.4)return;
@@ -968,8 +979,8 @@ function hitBoss(e,dmg,a,kb,strike,pierce){
 function killBoss(e,vul){if(dly){killEnemy(e,vul);burst(e.x,e.y,60,'#9a8fb8',700,0.8,3);ring(e.x,e.y,e.r,e.r*8,'#fff',0.6,8);hitstop=0.3;trauma=1;strikeFlash=1;vib([60,40,120]);banner('처치!');const ms=(runT-e.bornT)*1000;setTimeout(()=>dailyEnd('clear',ms),900);return;}
   {const bt=Math.max(1,runT-(e.bornT||runT)),sb=Math.round(e.k*15000*Math.min(2,BOSS_PAR[Math.min(e.k,3)-1]/bt));score+=sb;addText(P.x,P.y-80,'보스 속도 보너스 +'+sb+' ('+Math.round(bt)+'초)','#ff9a6a',18,2.2);}
   killEnemy(e,vul);burst(e.x,e.y,60,'#ff4a5a',700,0.8,3);ring(e.x,e.y,e.r,e.r*8,'#fff',0.6,8);hitstop=0.3;trauma=1;strikeFlash=1;vib([60,40,120]);
-  heal(P.maxHp*0.5);bonusPick++;const bc=endless?50:100;META.coins+=bc;saveMeta();addText(P.x,P.y-50,'체력 50% 회복 · 강화 +1 · 코인 +'+bc,'#ffe066',18,1.8);banner('보스 처치!');
-  if(e.k===3&&!endless){clrW=wave;clrK=kills;clearBonus=500;META.coins+=500;META.cleared=1;if(!META.bestClear||runT<META.bestClear)META.bestClear=runT;saveMeta();state='clear';overT=0;flashT=0;ult=null;ts=1;clearTimeRec=runT;recMsg='';postRec(makeRec());}
+  heal(P.maxHp*0.5);bonusPick++;const bc=endless?50:100;META.coins+=bc;runCoins+=bc;saveMeta();addText(P.x,P.y-50,'체력 50% 회복 · 강화 +1 · 코인 +'+bc,'#ffe066',18,1.8);banner('보스 처치!');
+  if(e.k===3&&!endless){clrW=wave;clrK=kills;clearBonus=500;META.coins+=500;runCoins+=500;META.cleared=1;if(!META.bestClear||runT<META.bestClear)META.bestClear=runT;saveMeta();state='clear';overT=0;flashT=0;ult=null;ts=1;clearTimeRec=runT;recMsg='';postRec(makeRec());earnRun();}
 }
 function updateBullets(dt){
   const p=P;
@@ -1726,11 +1737,11 @@ function shopTap(x,y){
   for(let i=0;i<shopUI.cards.length;i++)if(inR(x,y,shopUI.cards[i])){const id=shopList()[i].id;if(pv.tab==='t'){if(pv.selT!==id){pv.selT=id;pvReset();}}else if(pv.sel!==id){pv.sel=id;pvReset();}return;}
   if(inR(x,y,shopUI.act)&&pv.tab==='t'){const k=skinById(pv.selT),pr=tPrice(k.id);
     if(META.ownT[k.id]){const wasSet=skinById(META.eq).set;if(META.eqT!==k.id){META.eqT=k.id;pv.msg='장착 완료';}else{META.eqT='none';pv.msg='해제 완료';}if(wasSet){META.eq='flash';pv.msg+=' · 사신 세트 해제됨';}saveMeta();SFX.tink();pv.msgT=1.6;}
-    else if(META.coins>=pr){META.coins-=pr;META.ownT[k.id]=1;META.eqT=k.id;saveMeta();SFX.wave();vib(30);pv.msg=k.name+' 트레일 구매 완료!';pv.msgT=1.6;}
+    else if(META.coins>=pr){buyItem('t',k);}
     else{SFX.hurt();pv.msg='코인이 '+(pr-META.coins).toLocaleString()+' 부족해요';pv.msgT=1.6;}return;}
   if(inR(x,y,shopUI.act)){const k=skinById(pv.sel);
     if(ownS(k.id)){if(META.eq!==k.id){const wasSet=skinById(META.eq).set;META.eq=k.id;if(k.set){META.ownT[k.id]=1;META.eqT=k.id;}else if(wasSet)META.eqT='none';saveMeta();SFX.tink();pv.msg='장착 완료'+(wasSet&&!k.set?' · 사신 세트 해제됨':'');pv.msgT=1.4;}}
-    else if(META.coins>=k.price){META.coins-=k.price;META.own[k.id]=1;if(k.set){META.ownT[k.id]=1;META.eqT=k.id;}else if(skinById(META.eq).set)META.eqT='none';META.eq=k.id;saveMeta();SFX.wave();vib(30);pv.msg=k.name+' 구매 완료!';pv.msgT=1.6;}
+    else if(META.coins>=k.price){buyItem('s',k);}
     else{SFX.hurt();pv.msg='코인이 '+(k.price-META.coins).toLocaleString()+' 부족해요';pv.msgT=1.6;}}
 }
 function rrect(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
@@ -2154,7 +2165,7 @@ requestAnimationFrame(frame);
 const RV='r1';
 const RAID={hpM:1.4,cntM:2,capM:2,bHp:2.75,bG:1.5};
 CAPM=RAID.capM;
-saveMeta=()=>{};let matePid='',mateNick='';
+saveMeta=()=>{};earnRun=function(){};walletBoot=function(){};let matePid='',mateNick='';
 postRec=function(){if(role!=='host'||!remote()||state!=='clear'||clearTimeRec===null){recMsg='';return;}
   if(!rankOn()||!ptok||!/^[0-9a-f]{64}$/.test(matePid)||matePid===pid){recMsg='2인전 랭킹 등록 불가 (상대 정보 없음)';return;}recMsg='2인전 랭킹 등록 중...';
   fetch(RANK.url+'/rest/v1/rpc/post_duo',{method:'POST',headers:rankHdr(),body:JSON.stringify({p_tok:ptok,p_run:runId,p_mate:matePid,p_nick:nick||'',p_mate_nick:mateNick||'',p_season:SEASON,p_t:Math.round(clearTimeRec*10)/10})}).then(x=>x.ok?x.json():'err').catch(()=>'err').then(r=>{recMsg=r==='ok'?'2인전 랭킹 등록 완료':'2인전 랭킹 등록 실패';});};
