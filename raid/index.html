@@ -136,7 +136,7 @@ const RUSH_LEN=60,RCHAIN_KEEP=2.5,rMul=()=>1+0.25*Math.min(rChain,12);
 let tut=null,tutForce=false,tutSkipR=null;
 let dly=null,echoes=[],dSt=null,dRes=null,dBoard=null,dBoardDay='',dTag='',dLoading=false;
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1127.111';
+const VERSION='1127.112';
 const WCOIN=60,RCOIN_N=3,RCOIN_MAX=600;const today=()=>{const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();};const rcLeft=()=>{const r=META.rd||{};return r.d===today()?Math.max(0,RCOIN_N-(r.n||0)):RCOIN_N;};let overBtns=null,quitRun=false,rcUsed=false;let hitSrc='',runT=0,endless=false,clearBonus=0,clrW=0,clrK=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
 let ult=null,mines=[];const ultMax=()=>U.ultFast?75:100,ultN=()=>rush?4:U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#8a6cff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
@@ -247,12 +247,14 @@ let rankList=null,rankErr='',rankLoading=false,pendRec=null,recMsg='',clearTimeR
 const rankOn=()=>!!(RANK.url&&RANK.key);
 function cleanNick(v){return String(v||'').replace(/[\u0000-\u001f\u007f<>]/g,'').trim().slice(0,12);}
 function rankHdr(){const h={'apikey':RANK.key,'Content-Type':'application/json'};if(!RANK.key.startsWith('sb_'))h.Authorization='Bearer '+RANK.key;return h;}
+let runId=null,runReq=false,runSeq=0;function startRunTok(){runId=null;const my=++runSeq;if(!rankOn()||!ptok)return;fetch(RANK.url+'/rest/v1/rpc/start_run',{method:'POST',headers:rankHdr(),body:JSON.stringify({p_tok:ptok}),cache:'no-store'}).then(x=>x.ok?x.json():null).catch(()=>null).then(v=>{if(my===runSeq)runId=v||null;});}
+function recFail(v){return v==='rejected'?'랭킹 등록 거부 (기록 검증 실패)':v==='no_run'?'랭킹 등록 실패 (게임 시작 때 서버 연결 안 됨)':v==='blocked'?'랭킹 등록이 차단된 기기예요':'랭킹 등록 실패 ('+v+')';}
 function postRec(r){nickTaken=false;if(xmas){pendRec=null;recMsg='이벤트 모드는 랭킹에 기록되지 않아요';return;}if(!rankOn()||!nick){pendRec=r;recMsg=rankOn()?'':'';return;}pendRec=null;recMsg='랭킹 등록 중...';
-  const send=b=>fetch(RANK.url+'/rest/v1/scores',{method:'POST',headers:Object.assign(rankHdr(),{'Prefer':'return=minimal'}),body:JSON.stringify(b)});
-  const body=Object.assign({nickname:nick},r);if(pid&&pidOk)body.pid=pid;
-  send(body).then(async x=>{if(!x.ok&&body.pid&&x.status===400){const t=await x.clone().text();if(!t.includes('nick_taken')){delete body.pid;return send(body);}}return x;})
-   .then(async x=>{const t=x.ok?'':await x.text();if(t.includes('nick_taken')){pendRec=r;nickTaken=true;recMsg='닉네임이 이미 사용 중이에요 · 바꾸고 다시 등록';}else recMsg=x.ok?'랭킹 등록 완료 ('+nick+')':'랭킹 등록 실패 ('+x.status+')';rankList=null;}).catch(()=>{recMsg='랭킹 등록 실패 (인터넷 확인)';});}
-function makeRec(){const cl=clearTimeRec!==null;return{season:SEASON,wave:Math.max(1,Math.min(999,wave)),cleared:cl,clear_time:cl?Math.max(60,Math.round(clearTimeRec)):null,score:Math.max(0,Math.round(score)),kills,mode:rush?'rush':'main'};}
+  if(!r.run){recMsg=recFail('no_run');return;}
+  const body={p_tok:ptok,p_run:r.run,p_nick:nick,p_season:r.season,p_mode:r.mode,p_wave:r.wave,p_cleared:r.cleared,p_clear_time:r.clear_time,p_score:r.score,p_kills:r.kills};
+  fetch(RANK.url+'/rest/v1/rpc/submit_score',{method:'POST',headers:rankHdr(),body:JSON.stringify(body)})
+   .then(async x=>{const t=await x.text();let v=t;try{v=JSON.parse(t)}catch(e){}if(!x.ok&&t.includes('nick_taken')){pendRec=r;nickTaken=true;recMsg='닉네임이 이미 사용 중이에요 · 바꾸고 다시 등록';}else if(!x.ok)recMsg='랭킹 등록 실패 ('+x.status+')';else recMsg=v==='ok'?'랭킹 등록 완료 ('+nick+')':recFail(v);rankList=null;}).catch(()=>{recMsg='랭킹 등록 실패 (인터넷 확인)';});}
+function makeRec(){const cl=clearTimeRec!==null;return{season:SEASON,wave:Math.max(1,Math.min(999,wave)),cleared:cl,clear_time:cl?Math.max(60,Math.round(clearTimeRec)):null,score:Math.max(0,Math.round(score)),kills,mode:rush?'rush':'main',run:runId};}
 function loadRank(){if(!rankOn()||rankLoading)return;if(!clanMap)loadClans(()=>{if(rankTab===3){rankList=null;rankLoading=false;loadRank();}});
   if(rankTab===3){if(!clanMap){return;}rankLoading=true;rankErr='';
     const gj=u=>fetch(RANK.url+'/rest/v1/scores?'+u,{headers:rankHdr(),cache:'no-store'}).then(x=>x.ok?x.json():Promise.reject(x.status));
@@ -315,7 +317,7 @@ const CHAIN_MUL=[1,1.5,2],CHAIN_KEEP=2,MAX_CHARGE=3,GRACE=0.25,FLASH_CD=3,THRUST
 let DASH_CD=0.95,COMBO_WIN=1.2,POW_DUR=3,POW_MUL=2;
 let bonusPick=0,U,owned,pickOpts=[],pickT=0,pickNext=false;
 function applyU(){DASH_CD=rush?0.48:0.95-U.dashRed;COMBO_WIN=1.2+U.comboAdd;POW_DUR=3+U.powDur;POW_MUL=2+U.powMul;}
-function reset(){quitRun=false;tut=null;
+function reset(){quitRun=false;tut=null;runReq=false;runId=null;runSeq++;
   U={slash:1,thrust:1,strike:1,range:1,powDur:0,powMul:0,dashRed:0,comboAdd:0,wave:false,chain:false,shock:false,vamp:false,waveBig:false,ultFast:false,ultMore:false,ultFin:false,bigDmg:false};owned={};applyU();pickNext=false;waves2=[];
   ult=null;P={ult:0,hurtLock:0,chain:0,chainT:0,charge:1,flashCD:0,grace:0,pow:0,chainT:0,x:AW/2,y:AH/2,vx:0,vy:0,r:15,hp:100,maxHp:100,face:0,dashT:0,dashCD:0,dx:1,dy:0,inv:0,just:0,justUsed:true,atkCD:0,comboStep:0,comboWin:0,trail:[],wtr:[],wtT:0};
   mines=[];enemies=[];bullets=[];parts=[];slashes=[];texts=[];markers=[];lines=[];
@@ -700,11 +702,11 @@ function drawEchoes(){for(const g of echoes){
 function dailyEnd(res,ms){if(state==='over')return;state='over';overT=0;flashT=0;ult=null;ts=1;recMsg='';lastEarn=0;echoes=[];
   dRes={res,ms:ms||0,best:false};if(res==='clear')dRes.best=dBestSet(Math.round(ms));postDaily(res,ms);}
 function postDaily(res,ms){if(!rankOn()||!pid){dRes.msg='기록 서버에 연결할 수 없어요';return;}
-  const b=enemies.find(e=>e.type==='boss');const body={day:kstDay(),boss:dly,pid,nickname:nick||null,ms:res==='clear'?Math.round(ms):null,result:res,
-    stats:{att:dSt.att,hits:dSt.hits,fl:flashes,ph2:!!(b&&b.ph2)||res==='clear',hpLeft:b?Math.max(0,Math.round(b.hp)):0,t:Math.round((runT-(dSt.bt||0))*10)/10}};
+  const b=enemies.find(e=>e.type==='boss');const body={p_tok:ptok,p_run:runId,p_boss:dly,p_nick:nick||null,p_ms:res==='clear'?Math.round(ms):null,p_result:res,
+    p_stats:{att:dSt.att,hits:dSt.hits,fl:flashes,ph2:!!(b&&b.ph2)||res==='clear',hpLeft:b?Math.max(0,Math.round(b.hp)):0,t:Math.round((runT-(dSt.bt||0))*10)/10}};
   if(res==='clear')dRes.msg='기록 등록 중...';
-  fetch(RANK.url+'/rest/v1/daily_scores',{method:'POST',headers:Object.assign(rankHdr(),{Prefer:'return=minimal'}),body:JSON.stringify(body)}).then(x=>{
-    if(res==='clear')dRes.msg=x.ok?'오늘 순위에 등록됐어요':'기록 등록 실패 ('+x.status+')';dBoard=null;loadDailyBoard(true);}).catch(()=>{if(res==='clear')dRes.msg='기록 등록 실패 (인터넷 확인)';});}
+  fetch(RANK.url+'/rest/v1/rpc/submit_daily',{method:'POST',headers:rankHdr(),body:JSON.stringify(body)}).then(async x=>{const v=x.ok?await x.json().catch(()=>'err'):x.status;
+    if(res==='clear')dRes.msg=v==='ok'?'오늘 순위에 등록됐어요':v==='rejected'?'기록 등록 거부 (기록 검증 실패)':v==='no_run'?'기록 등록 실패 (시작 때 서버 연결 안 됨)':'기록 등록 실패 ('+v+')';dBoard=null;loadDailyBoard(true);}).catch(()=>{if(res==='clear')dRes.msg='기록 등록 실패 (인터넷 확인)';});}
 function loadDailyBoard(force){if(!rankOn()||dLoading)return;const d=kstDay();if(!force&&dBoard&&dBoardDay===d)return;dLoading=true;
   Promise.all([fetch(RANK.url+'/rest/v1/daily_scores?select=pid,nickname,ms&day=eq.'+d+'&result=eq.clear&order=ms.asc&limit=500',{headers:rankHdr(),cache:'no-store'}).then(x=>x.ok?x.json():[]).catch(()=>[]),fetch(RANK.url+'/rest/v1/rpc/player_names',{method:'POST',headers:rankHdr(),body:'{}',cache:'no-store'}).then(x=>x.ok?x.json():[]).catch(()=>[])]).then(([rows,nm])=>{
     const N={};for(const r of nm||[])if(r.pid&&r.nickname)N[r.pid]=r.nickname;const seen={},out=[];for(const r of rows){if(!r.pid||seen[r.pid])continue;seen[r.pid]=1;out.push(Object.assign({},r,{nickname:N[r.pid]||r.nickname}));}dBoard=out;dBoardDay=d;dLoading=false;});}
@@ -1034,7 +1036,7 @@ function updateFx(dt){
   for(const l of lines)l.t+=dt;lines=lines.filter(l=>l.t<l.dur);
 }
 function update(rdt){
-  runT+=rdt;
+  runT+=rdt;if(!runReq&&!tut){runReq=true;startRunTok();}
   if(flashT>0){flashT-=rdt;ts=0.15;if(flashT<=0){ts=1;P.grace=GRACE;}}
   else ts=1;
   if(ult)ts=0.08;
@@ -2155,7 +2157,7 @@ CAPM=RAID.capM;
 saveMeta=()=>{};let matePid='',mateNick='';
 postRec=function(){if(role!=='host'||!remote()||state!=='clear'||clearTimeRec===null){recMsg='';return;}
   if(!rankOn()||!ptok||!/^[0-9a-f]{64}$/.test(matePid)||matePid===pid){recMsg='2인전 랭킹 등록 불가 (상대 정보 없음)';return;}recMsg='2인전 랭킹 등록 중...';
-  fetch(RANK.url+'/rest/v1/rpc/post_duo',{method:'POST',headers:rankHdr(),body:JSON.stringify({p_tok:ptok,p_mate:matePid,p_nick:nick||'',p_mate_nick:mateNick||'',p_season:SEASON,p_t:Math.round(clearTimeRec*10)/10})}).then(x=>x.ok?x.json():'err').catch(()=>'err').then(r=>{recMsg=r==='ok'?'2인전 랭킹 등록 완료':'2인전 랭킹 등록 실패';});};
+  fetch(RANK.url+'/rest/v1/rpc/post_duo',{method:'POST',headers:rankHdr(),body:JSON.stringify({p_tok:ptok,p_run:runId,p_mate:matePid,p_nick:nick||'',p_mate_nick:mateNick||'',p_season:SEASON,p_t:Math.round(clearTimeRec*10)/10})}).then(x=>x.ok?x.json():'err').catch(()=>'err').then(r=>{recMsg=r==='ok'?'2인전 랭킹 등록 완료':'2인전 랭킹 등록 실패';});};
 const myEq=META.eq,myEqT=META.eqT,myCape=META.cape;
 let RON=false,role=null,netMode=null,PL=[],me=null,mate=null,cur=null,EID=1,snapT=0,pktT=0,lastSnap=null,mateName='동료';
 
