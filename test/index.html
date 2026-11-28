@@ -155,7 +155,7 @@ let tut=null,tutForce=false,tutSkipR=null;
 let dly=null,echoes=[],dSt=null,dRes=null,dBoard=null,dBoardDay='',dTag='',dLoading=false;
 let spMet=[],spUltK=[];
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1127.116-t5';
+const VERSION='1127.116-t6';
 const WCOIN=60,RCOIN_N=3,RCOIN_MAX=600;const today=()=>{const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();};const rcLeft=()=>{const r=META.rd||{};return r.d===today()?Math.max(0,RCOIN_N-(r.n||0)):RCOIN_N;};let overBtns=null,quitRun=false,rcUsed=false;let hitSrc='',runT=0,endless=false,clearBonus=0,clrW=0,clrK=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
 let ult=null,mines=[];const ultMax=()=>U.ultFast?75:100,ultN=()=>rush?4:U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#8a6cff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
@@ -481,7 +481,7 @@ function swingCore(){
   }
   const range=108*U.range,arc=2.7,dmg=U.slash,kb=280;
   if(step===2&&U.wave)waves2.push({x:p.x+Math.cos(a)*30,y:p.y+Math.sin(a)*30,a,vx:Math.cos(a)*620,vy:Math.sin(a)*620,t:0,life:U.waveBig?0.65:0.45,hits:new Set(),dmg:U.slash,sc:U.waveBig?1.5:1});
-  slashes.push({a,range,arc,t:0,dur:META.eq==='reaper'?0.26:META.eq==='water'?0.3:META.eq==='thorn'?0.42:META.eq==='spear'?SP_DUR[1]:0.15,step,dir:step===2?-1:1,ws:Math.random()*1e9|0});skinFx(META.eq,p.x,p.y,a,false,range,arc);if(META.eq==='fire'){slashes.push(fireTrail(p.x,p.y,a,range,arc,step===2?-1:1));}
+  slashes.push({a,range,arc,t:0,dur:META.eq==='reaper'?0.26:META.eq==='water'?0.3:META.eq==='thorn'?0.35:META.eq==='spear'?SP_DUR[1]:0.15,step,dir:step===2?-1:1,ws:Math.random()*1e9|0});skinFx(META.eq,p.x,p.y,a,false,range,arc);if(META.eq==='fire'){slashes.push(fireTrail(p.x,p.y,a,range,arc,step===2?-1:1));}
   for(const e of enemies){if(e.dead||e.spawnT>0)continue;const dx=e.x-p.x,dy=e.y-p.y,d=Math.hypot(dx,dy);
     if(d>range+e.r)continue;if(d>e.r+p.r&&Math.abs(angDiff(a,Math.atan2(dy,dx)))>arc/2+0.15)continue;
     hitEnemy(e,dmg,Math.atan2(dy,dx),kb,false);hit++;}
@@ -1939,10 +1939,10 @@ function thornSword(x,y,a,bl,al,fl,m){if(TIMG.sword){if(!TB)tBake();const I=TIMG
   if(m&&D&&al>0.4){const c=Math.cos(a),sn=Math.sin(a),n=Math.random()<0.6?2:1;for(let i=0;i<n;i++){const d=bl*rnd(0.05,1.02),o=rnd(-5,5)*k*3,px=x+c*d-sn*o,py=y+sn*d+c*o;parts.push({x:px,y:py,vx:rnd(-18,18)-c*rnd(10,40),vy:rnd(-75,-30)-sn*rnd(10,40),t:0,life:rnd(0.35,0.7),k:'dk',w:rnd(6,12)*Math.max(0.7,bl/180),rot:rnd(0,TAU),vr:rnd(-3,3),v:(Math.random()*4)|0,n:true,fr:2});}}
   return;}
   if(!TB)tBake();const S=TB.sword,k=bl/S.L;ctx.save();ctx.translate(x,y);ctx.rotate(a);if(fl)ctx.scale(1,-1);ctx.globalAlpha=al;ctx.drawImage(S.c,-S.gx*k,-S.gy*k,S.c.width*k,S.c.height*k);ctx.restore();ctx.globalAlpha=1;}
-function thornSlash(s,x,y,pr){if(!TB)tBake();const R=s.range,dir=s.dir,REV=0.34,k=Math.min(1,pr/REV),prog=1-Math.pow(1-k,3),lt=s.t;
+function thornSlash(s,x,y,pr,md){if(!TB)tBake();const R=s.range,dir=s.dir,REV=0.34,k=Math.min(1,pr/REV),prog=1-Math.pow(1-k,3),lt=s.t;
   const a0=dir>0?s.a-s.arc/2:s.a+s.arc/2,span=dir*s.arc,cur=a0+span*prog;
   const HOLD=0.62,fo=pr<HOLD?0:(pr-HOLD)/(1-HOLD),al=1-fo*fo,G=TB.glass,sc=R/G.RG*(1+0.06*fo);
-  if(al>0&&prog>0.01){ctx.save();
+  if(md!=='f'&&al>0&&prog>0.01){ctx.save();
     // 휘두른 만큼만 보이게 (부채꼴 클립)
     ctx.beginPath();ctx.moveTo(x,y);ctx.arc(x,y,R*0.96,Math.min(a0,cur),Math.max(a0,cur));ctx.closePath();ctx.clip();
     ctx.translate(x,y);ctx.rotate(s.a);ctx.globalAlpha=0.92*al;ctx.drawImage(G.c,-G.cx*sc,-G.cy*sc,G.c.width*sc,G.c.height*sc);
@@ -1951,7 +1951,9 @@ function thornSlash(s,x,y,pr){if(!TB)tBake();const R=s.range,dir=s.dir,REV=0.34,
     const ga=cur-dir*0.22;ctx.save();ctx.rotate(ga);ctx.globalAlpha=0.55*al*(pr<REV+0.1?1:Math.max(0,1-(pr-REV-0.1)*4));ctx.drawImage(TB.gloss,R*0.05,-R*0.09,R*0.95,R*0.18);ctx.restore();
     // 유리 광택 2: 판 전체를 비스듬히 훑는 반사광
     if(pr>0.22&&pr<0.8){const u=(pr-0.22)/0.58;ctx.save();ctx.rotate(s.a+0.75*dir);ctx.globalAlpha=0.42*al*Math.sin(u*Math.PI);ctx.drawImage(TB.gloss,-R*0.1+R*1.3*(u-0.5)-R*0.12,-R*1.1,R*0.24,R*2.2);ctx.restore();}
-    ctx.restore();
+    ctx.restore();}
+  if(md==='g')return;// 유리판은 적 아래 층에 따로 그림 (형 11-28: 적이 가려짐)
+  if(al>0&&prog>0.01){
     // 가장자리 은빛 선
     ctx.save();ctx.globalCompositeOperation='lighter';ctx.beginPath();ctx.arc(x,y,R*0.955,Math.min(a0,cur),Math.max(a0,cur));ctx.strokeStyle=`rgba(225,232,245,${0.55*al})`;ctx.lineWidth=1.4;ctx.stroke();ctx.restore();}
   // 반짝이
@@ -2003,7 +2005,7 @@ function drawSlashList(list,x,y,sk,wide){
     if(s.rw){redWave(s,pr);continue;}
     if(sk==='reaper'){reaperDraw(s,x,y,wide);continue;}
     if(sk==='water'){s.thrust?waterThrust(s,x,y,pr,wide):waterSlash(s,x,y,pr);continue;}
-    if(sk==='thorn'){s.thrust?thornThrust(s,x,y,pr,wide):thornSlash(s,x,y,pr);continue;}
+    if(sk==='thorn'){s.thrust?thornThrust(s,x,y,pr,wide):thornSlash(s,x,y,pr,list===slashes?'f':undefined);continue;}
     if(sk==='spear'){spearDraw(s,x,y,wide);continue;}
     if(s.thrust){const k=Math.min(1,pr*3),c=Math.cos(s.a),sn=Math.sin(s.a),L=s.range*k,w=(wide?24:12)*(1-pr*0.5),ex=x+c*L,ey=y+sn*L;
       const tri=()=>{ctx.beginPath();ctx.moveTo(x-sn*w,y+c*w);ctx.lineTo(ex,ey);ctx.lineTo(x+sn*w,y-c*w);ctx.closePath();};
@@ -2203,7 +2205,7 @@ function updShop(dt){
   if(pv.t>=pv.wait&&pv.tab==='t'){pv.t=0;pv.wait=0.9;pv.dz={t:0,x:-60,y:78};}
   else if(pv.t>=pv.wait){const SS=pvS();pv.t=0;pv.step=pv.step%3+1;const st=pv.step,sv=parts;parts=pv.pt;
     if(st===3){pv.sl.push({a:0,range:THRUST_L,t:0,dur:SS==='reaper'?0.55:SS==='water'?0.5:SS==='thorn'?0.6:SS==='spear'?SP_DUR[3]:0.22,step:3,thrust:true,ws:Math.random()*1e9|0});if(SS==='fire'||SS==='sakura')pv.sl.push({aura:true,t:0,dur:SS==='sakura'?0.75:0.6});if(SS==='sakura')auraPetals(0,0);skinFx(SS,0,0,0,true,THRUST_L,0);pv.wait=1.0;pv.dz={t:-0.35,x:-60,y:78};}
-    else{const a=st===1?-0.2:0.2;pv.sl.push({a,range:108,arc:2.7,t:0,dur:SS==='reaper'?0.26:SS==='water'?0.3:SS==='thorn'?0.42:SS==='spear'?SP_DUR[1]:0.15,step:st,dir:st===2?-1:1,ws:Math.random()*1e9|0});skinFx(SS,0,0,a,false,108,2.7);if(SS==='fire'){pv.sl.push(fireTrail(0,0,a,108,2.7,st===2?-1:1));}
+    else{const a=st===1?-0.2:0.2;pv.sl.push({a,range:108,arc:2.7,t:0,dur:SS==='reaper'?0.26:SS==='water'?0.3:SS==='thorn'?0.35:SS==='spear'?SP_DUR[1]:0.15,step:st,dir:st===2?-1:1,ws:Math.random()*1e9|0});skinFx(SS,0,0,a,false,108,2.7);if(SS==='fire'){pv.sl.push(fireTrail(0,0,a,108,2.7,st===2?-1:1));}
       if(st===2)pv.wv.push({x:Math.cos(a)*30,y:Math.sin(a)*30,a,vx:Math.cos(a)*620,vy:Math.sin(a)*620,t:0,life:0.45});pv.wait=0.5;}
     pv.pt=parts;parts=sv;SFX.swing(st,SS);}
 }
@@ -2589,7 +2591,7 @@ function render(){
     drawArena();drawMarkers();drawTelegraphs();
     if(xmas)for(const b of bullets){ctx.fillStyle='rgba(120,200,255,0.22)';ctx.beginPath();ctx.arc(b.x,b.y,b.r*2.1,0,TAU);ctx.fill();ctx.fillStyle='rgba(0,0,0,0.35)';ctx.beginPath();ctx.arc(b.x+1.5,b.y+2.5,b.r*1.05,0,TAU);ctx.fill();ctx.fillStyle='#f4fbff';ctx.beginPath();ctx.arc(b.x,b.y,b.r*1.1,0,TAU);ctx.fill();ctx.strokeStyle='#6cc4ff';ctx.lineWidth=2;ctx.stroke();ctx.fillStyle='#cfe8ff';ctx.beginPath();ctx.arc(b.x+b.r*0.3,b.y+b.r*0.35,b.r*0.45,0,TAU);ctx.fill();}
     else for(const b of bullets){ctx.fillStyle=b.hom?'rgba(110,130,255,0.25)':'rgba(255,170,40,0.25)';ctx.beginPath();ctx.arc(b.x,b.y,b.r*2.2,0,TAU);ctx.fill();ctx.fillStyle=b.hom?(Math.floor(time*30)%2?'#eef2ff':'#9fb4ff'):'#ffd27a';ctx.beginPath();ctx.arc(b.x,b.y,b.r,0,TAU);ctx.fill();}
-    drawWalkTrail(P.wtr,META.eqT,P.r);drawDashTrail(P.trail,META.eqT,P.r);drawGroundParts();drawEnemies();if(echoes.length)drawEchoes();drawPlayer();drawComboGauge();drawFlashReady();drawAim();drawSlashes();drawSwordWaves();drawLines();if(spMet.length)spMetDraw();drawParts();drawTexts();drawTutWorld();
+    drawWalkTrail(P.wtr,META.eqT,P.r);drawDashTrail(P.trail,META.eqT,P.r);drawGroundParts();if(META.eq==='thorn')for(const s of slashes)if(!s.thrust&&!s.aura&&!s.ft&&!s.rw)thornSlash(s,P.x,P.y,s.t/s.dur,'g');drawEnemies();if(echoes.length)drawEchoes();drawPlayer();drawComboGauge();drawFlashReady();drawAim();drawSlashes();drawSwordWaves();drawLines();if(spMet.length)spMetDraw();drawParts();drawTexts();drawTutWorld();
     ctx.restore();if(xmas)drawSnow();
     if(flashT>0){const g=ctx.createRadialGradient(W/2,H/2,H*0.3,W/2,H/2,W*0.7);g.addColorStop(0,'rgba(40,120,160,0.05)');g.addColorStop(1,'rgba(40,200,255,0.28)');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);}
     if(strikeFlash>0){ctx.fillStyle=`rgba(220,255,255,${strikeFlash*0.35})`;ctx.fillRect(0,0,W,H);}
