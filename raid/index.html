@@ -140,7 +140,7 @@ const RUSH_LEN=60,RCHAIN_KEEP=2.5,rMul=()=>1+0.25*Math.min(rChain,12);
 let tut=null,tutForce=false,tutSkipR=null;
 let dly=null,echoes=[],dSt=null,dRes=null,dBoard=null,dBoardDay='',dTag='',dLoading=false;
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1127.119';
+const VERSION='1127.120';
 const WCOIN=60,RCOIN_N=3,RCOIN_MAX=600;const today=()=>{const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();};const rcLeft=()=>{const r=META.rd||{};return r.d===today()?Math.max(0,RCOIN_N-(r.n||0)):RCOIN_N;};let overBtns=null,quitRun=false,rcUsed=false;let hitSrc='',runT=0,endless=false,clearBonus=0,clrW=0,clrK=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
 let ult=null,mines=[];const ultMax=()=>U.ultFast?75:100,ultN=()=>rush?4:U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#8a6cff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
@@ -1997,7 +1997,8 @@ function drawClanSel(){drawBg();ctx.fillStyle='rgba(5,7,15,0.7)';ctx.fillRect(0,
   txt('목록에 없으면 \'우리 학교가 없어요\'를 눌러 학교 이름을 보내 주세요 · 많이 요청된 학교부터 추가해요',W/2,y0+bh+26,Math.round(clamp(H*0.03,11,13)),'rgba(255,180,220,0.8)',700);
   if(clanMsg&&time<clanMsgT)txt(clanMsg,W/2,y0+bh+54,15,clanMsg.includes('실패')||clanMsg.includes('한 번')?'#ff8da6':'#8ff',800);}
 function drawRenMsg(){if(time<renUntil)txt(renMsg,W/2,H-14,13,renMsg.includes('실패')?'#ff8da6':'#8ff',800);}
-const KING_IMG=new Image();KING_IMG.src='img/tiers/king.webp';
+const TIER_IMG=['king','kingslayer','grandmaster','master'].map(n=>{const m=new Image();m.src='img/tiers/'+n+'.webp';return m;});
+const TIER_OF=i=>i<1?0:i<3?1:i<5?2:i<7?3:-1; // 100명 미만 표: 킹1 킹슬2~3 그마4~5 마스터6~7 (형 11-28)
 function drawRank(){
   drawBg();ctx.fillStyle='rgba(5,7,15,0.7)';ctx.fillRect(0,0,W,H);
   const bk={x:14,y:14,w:96,h:38};rankUI.back=bk;rrect(bk.x,bk.y,bk.w,bk.h,10);ctx.fillStyle='rgba(255,255,255,0.06)';ctx.fill();ctx.strokeStyle='rgba(255,255,255,0.3)';ctx.lineWidth=1.5;ctx.stroke();txt('← 뒤로',bk.x+bk.w/2,bk.y+bk.h/2,14,'#fff',800);
@@ -2040,7 +2041,7 @@ function drawRank(){
   rankList.forEach((r,i)=>{const y=lt+rh*(i+0.5)-rankScroll;if(y<lt-rh||y>H+rh)return;const me=r.nickname===nick,fs=15;
     if(me){ctx.fillStyle='rgba(200,140,255,0.12)';ctx.fillRect(8,y-rh/2+2,W-16,rh-4);}
     const c=i===0?'#ffe066':i===1?'#e0e8f0':i===2?'#e8a878':'#fff';
-    txt(String(i+1),cx[0],y,fs,c,900);let nx=nmT(r.nickname,r.pid,cx[1],y,fs,me?'#e6ccff':'#fff');if(i===0&&rankTab<=1&&KING_IMG.complete&&KING_IMG.naturalWidth){const kh=Math.round(fs*1.6),kw=Math.round(kh*KING_IMG.naturalWidth/KING_IMG.naturalHeight);ctx.drawImage(KING_IMG,nx+6,y-kh/2,kw,kh);nx+=6+kw;}{const cl=clanMap&&r.pid&&clanMap[r.pid];if(cl){txt(cl,nx+8,y,11,'rgba(184,212,255,0.8)',800,'left');}}
+    txt(String(i+1),cx[0],y,fs,c,900);let nx=nmT(r.nickname,r.pid,cx[1],y,fs,me?'#e6ccff':'#fff');{const ti=rankTab<=1?TIER_OF(i):-1,tm=ti>=0&&TIER_IMG[ti];if(tm&&tm.complete&&tm.naturalWidth){const kh=Math.round(fs*1.6),kw=Math.round(kh*tm.naturalWidth/tm.naturalHeight);ctx.drawImage(tm,nx+6,y-kh/2,kw,kh);nx+=6+kw;}}{const cl=clanMap&&r.pid&&clanMap[r.pid];if(cl){txt(cl,nx+8,y,11,'rgba(184,212,255,0.8)',800,'left');}}
     txt(rankTab===0?fmtT(r.clear_time||0):rankTab===2?(r.kills||0)+'마리':'웨이브 '+r.wave+(r.wave>15?' (무한)':''),cx[2],y,fs,rankTab===0?'#5ff4ff':'rgba(255,255,255,0.75)',rankTab===0?900:700);
     txt(Number(r.score).toLocaleString(),cx[3],y,fs,rankTab>=1?'#ffe066':'rgba(255,230,140,0.6)',rankTab===1?900:700);});
   ctx.restore();
