@@ -140,7 +140,7 @@ const RUSH_LEN=60,RCHAIN_KEEP=2.5,rMul=()=>1+0.25*Math.min(rChain,12);
 let tut=null,tutForce=false,tutSkipR=null;
 let dly=null,echoes=[],dSt=null,dRes=null,dBoard=null,dBoardDay='',dTag='',dLoading=false;
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1127.117';
+const VERSION='1127.118';
 const WCOIN=60,RCOIN_N=3,RCOIN_MAX=600;const today=()=>{const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();};const rcLeft=()=>{const r=META.rd||{};return r.d===today()?Math.max(0,RCOIN_N-(r.n||0)):RCOIN_N;};let overBtns=null,quitRun=false,rcUsed=false;let hitSrc='',runT=0,endless=false,clearBonus=0,clrW=0,clrK=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
 let ult=null,mines=[];const ultMax=()=>U.ultFast?75:100,ultN=()=>rush?4:U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#8a6cff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
@@ -263,6 +263,7 @@ function buyItem(kind,k){if(buyBusy)return;if(!walletOk){walletSync();SFX.hurt()
   wRpc('buy_item',{p_tok:ptok,p_kind:kind,p_id:k.id}).then(r=>{buyBusy=false;if(r&&r.ok){walletApply(r);if(kind==='t')META.eqT=k.id;else{if(k.set)META.eqT=k.id;else if(skinById(META.eq).set)META.eqT='none';META.eq=k.id;}saveMeta();SFX.wave();vib(30);pv.msg=k.name+(kind==='t'?' 트레일':'')+' 구매 완료!';pv.msgT=1.6;}
     else{if(r)walletApply(r);SFX.hurt();pv.msg=r&&r.err==='poor'?'코인이 부족해요':r&&r.err==='owned'?'이미 가지고 있어요':'구매 실패, 다시 시도해 주세요';pv.msgT=1.8;}});}
 function startRunTok(){runId=null;const my=++runSeq;if(!rankOn()||!ptok)return;fetch(RANK.url+'/rest/v1/rpc/start_run',{method:'POST',headers:rankHdr(),body:JSON.stringify({p_tok:ptok}),cache:'no-store'}).then(x=>x.ok?x.json():null).catch(()=>null).then(v=>{if(my===runSeq)runId=v||null;});}
+function runProg(){if(!runId||!rankOn()||!ptok||tut||hc||dly)return;try{fetch(RANK.url+'/rest/v1/rpc/run_progress',{method:'POST',headers:rankHdr(),body:JSON.stringify({p_tok:ptok,p_run:runId,p_wave:wave,p_score:Math.round(score),p_kills:kills}),cache:'no-store'}).catch(()=>{});}catch(e){}}
 function recFail(v){return v==='rejected'?'랭킹 등록 거부 (기록 검증 실패)':v==='no_run'?'랭킹 등록 실패 (게임 시작 때 서버 연결 안 됨)':v==='blocked'?'랭킹 등록이 차단된 기기예요':'랭킹 등록 실패 ('+v+')';}
 function postRec(r){nickTaken=false;if(xmas){pendRec=null;recMsg='이벤트 모드는 랭킹에 기록되지 않아요';return;}if(!rankOn()||!nick){pendRec=r;recMsg=rankOn()?'':'';return;}pendRec=null;recMsg='랭킹 등록 중...';
   if(!r.run){recMsg=recFail('no_run');return;}
@@ -606,7 +607,7 @@ function rushFlash(p){rChain=rChainT>0?rChain+1:1;rChainT=RCHAIN_KEEP;if(rChain>
 const RUSH_W=[['grunt',24],['shield',10],['shadow',14],['bomber',10],['brute',6],['shooter',36]];
 function rushType(){const W2=RUSH_W.map(([t,w])=>[t,w]);let r=Math.random()*W2.reduce((a,b)=>a+b[1],0);for(const [t,w] of W2){r-=w;if(r<=0)return t;}return 'grunt';}
 function rushMarker(type){let x,y,tries=0;do{x=rnd(60,AW-60);y=rnd(60,AH-60);tries++;}while(Math.hypot(x-P.x,y-P.y)<260&&tries<30);markers.push({x,y,type,t:0,dur:0.7});}
-function updateRush(dt){const rd=realDt||dt;rushT-=rd;P.charge=MAX_CHARGE;
+function updateRush(dt){const rd=realDt||dt;const _rq=Math.floor((RUSH_LEN-rushT)/15);rushT-=rd;if(Math.floor((RUSH_LEN-rushT)/15)>_rq&&rushT>1)runProg();P.charge=MAX_CHARGE;
   if(flashT<=0&&!ult&&rChainT>0){rChainT-=rd;if(rChainT<=0)rChain=0;}
   const el=RUSH_LEN-rushT;
   for(const at of [20,40])if(el>=at&&!rushElite[at]){rushElite[at]=1;banner('정예 무리');for(let i=0;i<2;i++)rushMarker('brute');for(let i=0;i<3;i++)rushMarker('shadow');}
@@ -1007,7 +1008,7 @@ function updateWaves(dt){
   if(hc){updateHC(dt);return;}
   if(tut){updateTut(dt);return;}
   if(dly){updateDaily(dt);return;}
-  if(waveT>0){waveT-=dt;if(waveT<=0&&pickNext){openPick();return;}if(waveT<=0){wave++;waveQueue=buildWave(wave);banner(wave%5===0?'BOSS':'WAVE '+wave);SFX.wave();spawnT=0.3;}return;}
+  if(waveT>0){waveT-=dt;if(waveT<=0&&pickNext){openPick();return;}if(waveT<=0){wave++;runProg();waveQueue=buildWave(wave);banner(wave%5===0?'BOSS':'WAVE '+wave);SFX.wave();spawnT=0.3;}return;}
   spawnT-=dt;
   if(waveQueue.length&&enemies.length+markers.length<(wave>15?Math.min(26,16+(wave-15)):Math.round(Math.min(16,3+Math.round(wave*1.3))*CAPM))&&spawnT<=0){
     spawnT=wave>15?Math.max(0.16,0.28-0.012*(wave-15)):0.28;const type=waveQueue.shift();let x,y,tries=0;
