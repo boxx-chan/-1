@@ -35,7 +35,7 @@ canvas{position:fixed;left:0;top:0;display:block;touch-action:none}
 'use strict';
 // installed main-game app must never stay on this test page: send it back to the game
 try{if((matchMedia('(display-mode: standalone)').matches||navigator.standalone)&&!/[?&]app=1/.test(location.search)){location.replace('../');}}catch(e){}
-const PVER='p23';document.getElementById('pv').textContent=PVER;
+const PVER='p24';document.getElementById('pv').textContent=PVER;
 /* ---------- setup ---------- */
 const cvs=document.getElementById('c'),ctx=cvs.getContext('2d');
 const AW=900,AH=520,TAU=Math.PI*2,FONT='system-ui,-apple-system,"Noto Sans KR",sans-serif';
@@ -232,7 +232,7 @@ function botResolve(m,just){const reply=r=>onNet(Object.assign({t:'r',id:m.id},r
   if(B.inv>0){reply({res:'miss'});return;}
   const dmg=Math.round(m.k==='slash'?DMG.slash:m.k==='thrust'?DMG.thrust:DMG.strike*(m.mul||1));B.hp=Math.max(0,B.hp-dmg);
   const ka=Math.atan2(B.y-m.y,B.x-m.x),kb=m.k==='slash'?300:m.k==='thrust'?560:620;B.vx+=Math.cos(ka)*kb;B.vy+=Math.sin(ka)*kb;B.hurtLock=0.3;B.inv=0.12;
-  addText(B.x,B.y-34,'-'+dmg,'#ffe066',18,0.7);reply({res:'hit',dmg,k:m.k});
+  botState();addText(B.x,B.y-34,'-'+dmg,'#ffe066',18,0.7);reply({res:'hit',dmg,k:m.k});
   if(B.hp<=0&&phase==='fight')endRound(0);}
 function botUpdate(dt){const p=B;if(!p)return;p.atkCD-=dt;p.comboWin-=dt;p.inv-=dt;p.dashCD-=dt;if(p.hurtLock>0)p.hurtLock-=dt;if(p.flashT>0)p.flashT-=dt;
   const dx=me.x-p.x,dy=me.y-p.y,d=Math.hypot(dx,dy),a=Math.atan2(dy,dx);botT-=dt;
