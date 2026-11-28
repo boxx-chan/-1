@@ -140,7 +140,7 @@ const RUSH_LEN=60,RCHAIN_KEEP=2.5,rMul=()=>1+0.25*Math.min(rChain,12);
 let tut=null,tutForce=false,tutSkipR=null;
 let dly=null,echoes=[],dSt=null,dRes=null,dBoard=null,dBoardDay='',dTag='',dLoading=false;
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1127.116';
+const VERSION='1127.117';
 const WCOIN=60,RCOIN_N=3,RCOIN_MAX=600;const today=()=>{const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();};const rcLeft=()=>{const r=META.rd||{};return r.d===today()?Math.max(0,RCOIN_N-(r.n||0)):RCOIN_N;};let overBtns=null,quitRun=false,rcUsed=false;let hitSrc='',runT=0,endless=false,clearBonus=0,clrW=0,clrK=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
 let ult=null,mines=[];const ultMax=()=>U.ultFast?75:100,ultN=()=>rush?4:U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#8a6cff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
@@ -242,7 +242,7 @@ function srvMark(){document.querySelectorAll('#srvW button').forEach(b=>b.classL
 function sendSrv(){if(srvBusy)return;const e=document.getElementById('srvErr');if(!srvW){e.textContent='1번 시즌 기간을 골라 주세요';return;}if(!rankOn()||!ptok){e.textContent='지금은 보낼 수 없어요 (잠시 후 다시)';return;}
   const r=document.getElementById('srvR').value.trim().slice(0,200),i=document.getElementById('srvI').value.trim().slice(0,200);srvBusy=true;e.textContent='보내는 중...';
   fetch(RANK.url+'/rest/v1/rpc/submit_survey',{method:'POST',headers:rankHdr(),body:JSON.stringify({p_tok:ptok,p_nick:nick||'',p_weeks:srvW,p_reward:r,p_idea:i})}).then(x=>x.ok?x.json():'err').catch(()=>'err').then(v=>{srvBusy=false;
-    if(v==='ok'){try{localStorage.setItem('flash_srv1',JSON.stringify({w:srvW,r,i}));}catch(_){}srvDone=true;document.getElementById('srvBox').style.display='none';renMsg='설문 고마워요!';renUntil=time+3;}else e.textContent='보내기 실패 (잠시 후 다시)';});}
+    if(v==='ok'){try{localStorage.setItem('flash_srv1',JSON.stringify({w:srvW,r,i}));}catch(_){}srvDone=true;document.getElementById('srvBox').style.display='none';renMsg='설문 고마워요!';renUntil=time+3;setTimeout(claimRewards,800);}else e.textContent='보내기 실패 (잠시 후 다시)';});}
 function setClan(v){if(clanBusy||!rankOn()||!ptok)return;if(v===myClan){clanMsg='이미 '+(v||'선택 안 함')+'이에요';clanMsgT=time+2.5;return;}clanBusy=true;clanMsg='저장 중...';clanMsgT=time+9;
   fetch(RANK.url+'/rest/v1/rpc/set_clan',{method:'POST',headers:rankHdr(),body:JSON.stringify({p_tok:ptok,p_clan:v})}).then(x=>x.ok?x.json():'err').catch(()=>'err').then(r=>{clanBusy=false;
     if(r==='ok'){myClan=v;clanPick=null;try{localStorage.setItem('flash_clan',v);}catch(e){}clanMsg=v?v+' 선택 완료!':'학교 선택을 해제했어요';clanMap=null;}
@@ -726,7 +726,7 @@ function loadDailyBoard(force){if(!rankOn()||dLoading)return;const d=kstDay();if
   Promise.all([fetch(RANK.url+'/rest/v1/daily_scores?select=pid,nickname,ms&day=eq.'+d+'&result=eq.clear&order=ms.asc&limit=500',{headers:rankHdr(),cache:'no-store'}).then(x=>x.ok?x.json():[]).catch(()=>[]),fetch(RANK.url+'/rest/v1/rpc/player_names',{method:'POST',headers:rankHdr(),body:'{}',cache:'no-store'}).then(x=>x.ok?x.json():[]).catch(()=>[])]).then(([rows,nm])=>{
     const N={};for(const r of nm||[])if(r.pid&&r.nickname)N[r.pid]=r.nickname;const seen={},out=[];for(const r of rows){if(!r.pid||seen[r.pid])continue;seen[r.pid]=1;out.push(Object.assign({},r,{nickname:N[r.pid]||r.nickname}));}dBoard=out;dBoardDay=d;dLoading=false;});}
 function claimRewards(){if(!rankOn()||!ptok)return;fetch(RANK.url+'/rest/v1/rpc/claim_rewards',{method:'POST',headers:rankHdr(),body:JSON.stringify({p_tok:ptok}),cache:'no-store'}).then(x=>x.ok?x.json():0).catch(()=>0).then(n=>{
-  n=+n||0;if(n>0){walletSync();renMsg='🏆 오늘의 보스 순위 보상 +'+n.toLocaleString()+' 코인!';renUntil=time+10;SFX.tink();}});}
+  n=+n||0;if(n>0){walletSync();renMsg='🎁 보상 +'+n.toLocaleString()+' 코인 지급!';renUntil=time+10;SFX.tink();}});}
 setTimeout(()=>walletBoot(),1500);
 function fmtMs(ms){return (ms/1000).toFixed(2)+'초';}
 function drawDailyOver(){
@@ -1969,7 +1969,7 @@ function drawTitle(){
   if(best)txt('최고 '+best.toLocaleString(),W-16,20,13,'rgba(255,255,255,0.5)',600,'right');
   txt('v'+VERSION,16,20,11,'rgba(255,255,255,0.3)',600,'left');bgmUI=null;joyUI=null;gfxBtnR=null;helpBtnR=null;iosBtnR=null;andBtnR=null;qaBtnR=null;acctBtnR=null;voteR=[];
   {const r={x:14,y:34,w:136,h:44};setBtnR=r;rrect(r.x,r.y,r.w,r.h,10);ctx.fillStyle='rgba(255,255,255,0.07)';ctx.fill();ctx.strokeStyle='rgba(255,255,255,0.45)';ctx.lineWidth=1.5;ctx.stroke();txt('⚙ 설정',r.x+r.w/2,r.y+r.h/2,15,'#fff',800);if(!isStandalone()){ctx.fillStyle='#ff3d6e';ctx.beginPath();ctx.arc(r.x+r.w-8,r.y+8,5,0,TAU);ctx.fill();}}
-  {const r={x:14,y:86,w:136,h:40};srvBtnR=r;rrect(r.x,r.y,r.w,r.h,10);ctx.fillStyle='rgba(143,208,255,0.1)';ctx.fill();ctx.strokeStyle='rgba(143,208,255,0.6)';ctx.lineWidth=1.5;ctx.stroke();txt('📋 설문조사',r.x+r.w/2,r.y+r.h/2,15,'#cfe8ff',800);if(!srvDone){ctx.fillStyle='#ff3d6e';ctx.beginPath();ctx.arc(r.x+r.w-8,r.y+8,5,0,TAU);ctx.fill();}}
+  {const r={x:14,y:86,w:136,h:40};srvBtnR=r;rrect(r.x,r.y,r.w,r.h,10);ctx.fillStyle='rgba(143,208,255,0.1)';ctx.fill();ctx.strokeStyle='rgba(143,208,255,0.6)';ctx.lineWidth=1.5;ctx.stroke();txt('📋 설문조사',r.x+r.w/2,r.y+r.h/2,15,'#cfe8ff',800);if(!srvDone){ctx.fillStyle='#ff3d6e';ctx.beginPath();ctx.arc(r.x+r.w-8,r.y+8,5,0,TAU);ctx.fill();txt('설문하면 2000코인',r.x+r.w+8,r.y+r.h/2,13,'#ffe066',800,'left');}}
   const sb={x:W-150,y:34,w:136,h:40};shopBtnR=sb;rrect(sb.x,sb.y,sb.w,sb.h,10);ctx.fillStyle='rgba(255,224,102,0.12)';ctx.fill();ctx.strokeStyle='rgba(255,224,102,0.6)';ctx.lineWidth=1.5;ctx.stroke();
   txt('상점  ◆ '+META.coins.toLocaleString(),sb.x+sb.w/2,sb.y+sb.h/2,14,'#ffe066',800);if(rpSale()&&!META.own.reaper)saleTag(sb.x+sb.w-24,sb.y-4,'SALE -65%',11);
   {const r={x:W-150,y:84,w:136,h:40};dlyBtnR=r;const tb=todayBoss(),pu=0.5+0.5*Math.sin(time*5);rrect(r.x,r.y,r.w,r.h,10);ctx.fillStyle=`rgba(200,150,255,${tb?0.16+0.14*pu:0.06})`;ctx.fill();ctx.strokeStyle=tb?`rgba(225,200,255,${0.6+0.4*pu})`:'rgba(200,150,255,0.35)';ctx.lineWidth=tb?2:1.5;ctx.stroke();
