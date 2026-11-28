@@ -35,7 +35,7 @@ canvas{position:fixed;left:0;top:0;display:block;touch-action:none}
 'use strict';
 // installed main-game app must never stay on this test page: send it back to the game
 try{if((matchMedia('(display-mode: standalone)').matches||navigator.standalone)&&!/[?&]app=1/.test(location.search)){location.replace('../');}}catch(e){}
-const PVER='p22';document.getElementById('pv').textContent=PVER;
+const PVER='p23';document.getElementById('pv').textContent=PVER;
 /* ---------- setup ---------- */
 const cvs=document.getElementById('c'),ctx=cvs.getContext('2d');
 const AW=900,AH=520,TAU=Math.PI*2,FONT='system-ui,-apple-system,"Noto Sans KR",sans-serif';
@@ -194,7 +194,7 @@ function updateMe(dt){const p=me,mx=inp.jx,my=inp.jy,mm=Math.hypot(mx,my);
   if(inp.dash>0&&p.dashCD<=0&&p.dashT<=0&&p.hurtLock<=0){inp.dash=0;const a=mm>0.2?Math.atan2(my,mx):p.face;p.dx=Math.cos(a);p.dy=Math.sin(a);p.face=a;p.dashT=0.15;p.dashCD=DASH_CD;p.just=0.2;p.justUsed=false;p.jx0=p.x;p.jy0=p.y;SFX.dash();vib(8);}
   if(p.dashT>0){p.dashT-=dt;p.vx=p.dx*1050;p.vy=p.dy*1050;p.trail.push({x:p.x,y:p.y,t:0});if(p.dashT<=0){p.vx*=0.25;p.vy*=0.25;}}
   else{if(inp.atk>0&&p.atkCD<=0&&p.hurtLock<=0){inp.atk=0;if(flashT>0)flashStrike();else swing();if(!atkDrag)inp.aimA=null;}
-    const sp=p.atkCD>0.06?80:250,k=Math.min(1,dt*13);p.vx+=(mx*sp-p.vx)*k;p.vy+=(my*sp-p.vy)*k;}
+    const sp=p.atkCD>0.06?80:200,k=Math.min(1,dt*13);p.vx+=(mx*sp-p.vx)*k;p.vy+=(my*sp-p.vy)*k;}
   p.x=clamp(p.x+p.vx*dt,p.r,AW-p.r);p.y=clamp(p.y+p.vy*dt,p.r,AH-p.r);
   for(const tr of p.trail)tr.t+=dt;p.trail=p.trail.filter(tr=>tr.t<0.25);}
 let sendT=0,dashDenyT=0;
@@ -246,7 +246,7 @@ function botUpdate(dt){const p=B;if(!p)return;p.atkCD-=dt;p.comboWin-=dt;p.inv-=
       if(p.flashT>0){const len=d+me.r+55,ex=clamp(p.x+Math.cos(a)*len,p.r,AW-p.r),ey=clamp(p.y+Math.sin(a)*len,p.r,AH-p.r);onAttack({t:'a',id,k:'strike',x:p.x,y:p.y,a,ex,ey,mul:1});p.x=ex;p.y=ey;p.flashT=0;p.atkCD=0.28;p.comboWin=0;p.inv=0.4;SFX.strike();}
       else{const step=p.comboWin>0?(p.comboStep%3)+1:1;p.comboStep=step;const fin=step===3;p.atkCD=fin?0.5:0.32;p.comboWin=COMBO_WIN;p.vx+=Math.cos(a)*(fin?340:170);p.vy+=Math.sin(a)*(fin?340:170);onAttack({t:'a',id,k:fin?'thrust':'slash',x:p.x,y:p.y,a,step});}}
     else if(p.dashCD<=0&&d<150&&Math.random()<dt*BOT.dashRate)botDash(a+(Math.random()<0.5?1.6:-1.6));
-    const sp=p.atkCD>0.06?67:210,k=Math.min(1,dt*13);p.vx+=(mx*sp-p.vx)*k;p.vy+=(my*sp-p.vy)*k;}
+    const sp=p.atkCD>0.06?67:170,k=Math.min(1,dt*13);p.vx+=(mx*sp-p.vx)*k;p.vy+=(my*sp-p.vy)*k;}
   p.x=clamp(p.x+p.vx*dt,p.r,AW-p.r);p.y=clamp(p.y+p.vy*dt,p.r,AH-p.r);p.face=p.dashT>0?Math.atan2(p.dy,p.dx):a;botState();}
 
 /* ---------- input ---------- */
