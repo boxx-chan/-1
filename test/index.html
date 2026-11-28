@@ -154,7 +154,7 @@ let tut=null,tutForce=false,tutSkipR=null;
 let dly=null,echoes=[],dSt=null,dRes=null,dBoard=null,dBoardDay='',dTag='',dLoading=false;
 let spMet=[],spUltK=[];
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1127.116-t2';
+const VERSION='1127.116-t3';
 const WCOIN=60,RCOIN_N=3,RCOIN_MAX=600;const today=()=>{const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();};const rcLeft=()=>{const r=META.rd||{};return r.d===today()?Math.max(0,RCOIN_N-(r.n||0)):RCOIN_N;};let overBtns=null,quitRun=false,rcUsed=false;let hitSrc='',runT=0,endless=false,clearBonus=0,clrW=0,clrK=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
 let ult=null,mines=[];const ultMax=()=>U.ultFast?75:100,ultN=()=>rush?4:U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#8a6cff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
@@ -2044,8 +2044,8 @@ function updShop(dt){
   if(pv.dz){pv.dz.t+=dt;const u=Math.max(0,Math.min(1,pv.dz.t/0.2));pv.dz.x=-60+170*u;pv.dz.y=78;if(pv.dz.t>=0&&u<1){pv.tr.push({x:pv.dz.x,y:pv.dz.y,t:0,a:0});const sv=parts;parts=pv.pt;emitDash(pvT(),pv.dz.x,pv.dz.y,0);pv.pt=parts;parts=sv;}if(pv.dz.t>0.5)pv.dz=null;}
   if(pv.t>=pv.wait&&pv.tab==='t'){pv.t=0;pv.wait=0.9;pv.dz={t:0,x:-60,y:78};}
   else if(pv.t>=pv.wait){const SS=pvS();pv.t=0;pv.step=pv.step%3+1;const st=pv.step,sv=parts;parts=pv.pt;
-    if(st===3){pv.sl.push({a:0,range:THRUST_L,t:0,dur:SS==='reaper'?0.55:SS==='spear'?SP_DUR[3]:0.22,step:3,thrust:true});if(SS==='fire'||SS==='sakura')pv.sl.push({aura:true,t:0,dur:SS==='sakura'?0.75:0.6});if(SS==='sakura')auraPetals(0,0);skinFx(SS,0,0,0,true,THRUST_L,0);pv.wait=1.0;pv.dz={t:-0.35,x:-60,y:78};}
-    else{const a=st===1?-0.2:0.2;pv.sl.push({a,range:108,arc:2.7,t:0,dur:SS==='reaper'?0.26:SS==='spear'?SP_DUR[1]:0.15,step:st,dir:st===2?-1:1});skinFx(SS,0,0,a,false,108,2.7);if(SS==='fire'){pv.sl.push(fireTrail(0,0,a,108,2.7,st===2?-1:1));}
+    if(st===3){pv.sl.push({a:0,range:THRUST_L,t:0,dur:SS==='reaper'?0.55:SS==='water'?0.5:SS==='spear'?SP_DUR[3]:0.22,step:3,thrust:true,ws:Math.random()*1e9|0});if(SS==='fire'||SS==='sakura')pv.sl.push({aura:true,t:0,dur:SS==='sakura'?0.75:0.6});if(SS==='sakura')auraPetals(0,0);skinFx(SS,0,0,0,true,THRUST_L,0);pv.wait=1.0;pv.dz={t:-0.35,x:-60,y:78};}
+    else{const a=st===1?-0.2:0.2;pv.sl.push({a,range:108,arc:2.7,t:0,dur:SS==='reaper'?0.26:SS==='water'?0.3:SS==='spear'?SP_DUR[1]:0.15,step:st,dir:st===2?-1:1,ws:Math.random()*1e9|0});skinFx(SS,0,0,a,false,108,2.7);if(SS==='fire'){pv.sl.push(fireTrail(0,0,a,108,2.7,st===2?-1:1));}
       if(st===2)pv.wv.push({x:Math.cos(a)*30,y:Math.sin(a)*30,a,vx:Math.cos(a)*620,vy:Math.sin(a)*620,t:0,life:0.45});pv.wait=0.5;}
     pv.pt=parts;parts=sv;SFX.swing(st,SS);}
 }
