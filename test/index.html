@@ -109,11 +109,12 @@ const SFX={
     if(sk==='bolt'){if(s===3)playSamp('bolt3',0.55,0,0.15);else playSamp('bolt12',0.5,0,0.08,s===2?rnd(1.1,1.16):rnd(0.96,1.02));return;}
     if(sk==='fire'){if(s===3)playSamp('fire3',0.5,0,0.15);else playSamp('fire12',0.38,0,0.08,s===2?rnd(1.08,1.14):rnd(0.96,1.02));return;sNoise(s===3?0.22:0.3,s===3?700:380,0.7,0.36,'lowpass',s===3?3200:2200,{a:s===3?0.03:0.07});sNoise(0.18,1600,0.8,0.08,'bandpass',600,{a:0.04});
       for(let i=0;i<3;i++)sNoise(0.008,rnd(2500,4500),1.2,0.16,'bandpass',null,{d:rnd(0.06,0.28)});return;}
-    if(sk==='water'){this.swingB(s,0.55,0);const t3=s===3;
-      sNoise(t3?0.45:0.28,t3?450:650,0.8,t3?0.42:0.3,'lowpass',t3?2600:2000,{a:0.03,rv:0.25});
-      sNoise(0.22,1800,1.2,0.12,'bandpass',900,{a:0.02,d:0.04,rv:0.2});
-      for(let i=0;i<(t3?7:4);i++){const f=rnd(450,1000);sTone(f,f*rnd(1.8,2.5),0.06,0.05,'sine',{d:rnd(0.03,t3?0.35:0.22),sw:0.05});}
-      if(t3)sNoise(0.6,200,0.7,0.28,'lowpass',90,{a:0.05,rv:0.4});return;}
+    if(sk==='water'){this.swingB(s,0.5,0);const t3=s===3,v=t3?1.25:1;
+      // 촤악: 넓은 대역 물 튀는 소리 + 쉬익 꼬리 + 묵직한 몸통
+      sNoise(t3?0.5:0.34,5200,0.6,0.34*v,'bandpass',1400,{a:0.012,rv:0.18});
+      sNoise(t3?0.6:0.42,3000,0.5,0.22*v,'highpass',6500,{a:0.02,d:0.04,rv:0.22});
+      sNoise(t3?0.42:0.26,900,0.7,0.26*v,'lowpass',350,{a:0.01,rv:0.15});
+      if(t3)sNoise(0.55,220,0.7,0.24,'lowpass',90,{a:0.04,rv:0.35});return;}
     if(sk==='sakura'){sNoise(0.18,s===2?2000:2800,1.1,0.12,'bandpass',s===2?3600:1500,{a:0.03});const f=[880,1109,1319][s-1];
       sTone(f,f,0.75,0.075,'sine',{rv:0.65,a:0.004});sTone(f*2.01,f*2.01,0.4,0.022,'sine',{rv:0.65,a:0.004});if(s===3)sTone(f*1.5,f*1.5,0.6,0.04,'triangle',{d:0.07,rv:0.65});return;}
     this.swingB(s,1,0);},
@@ -153,7 +154,7 @@ let tut=null,tutForce=false,tutSkipR=null;
 let dly=null,echoes=[],dSt=null,dRes=null,dBoard=null,dBoardDay='',dTag='',dLoading=false;
 let spMet=[],spUltK=[];
 let waves2=[],realDt=0,hitstop=0,trauma=0,ts=1,flashT=0,hurtFlash=0,overT=0,camX=AW/2,camY=AH/2,time=0,bannerT=0,bannerText='',strikeFlash=0;
-const VERSION='1127.116-t1';
+const VERSION='1127.116-t2';
 const WCOIN=60,RCOIN_N=3,RCOIN_MAX=600;const today=()=>{const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();};const rcLeft=()=>{const r=META.rd||{};return r.d===today()?Math.max(0,RCOIN_N-(r.n||0)):RCOIN_N;};let overBtns=null,quitRun=false,rcUsed=false;let hitSrc='',runT=0,endless=false,clearBonus=0,clrW=0,clrK=0;const BOSS_NAMES=['검은 파수꾼','붉은 포격수','심연의 파수꾼'];
 let ult=null,mines=[];const ultMax=()=>U.ultFast?75:100,ultN=()=>rush?4:U.ultMore?8:6;
 const SKINS=[{id:'flash',name:'섬광',price:0,col:'#bff8ff'},{id:'ghost',name:'잔상',price:500,col:'#8a6cff'},{id:'ink',name:'먹물',price:1200,col:'#e8e8ee'},
